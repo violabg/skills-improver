@@ -22,6 +22,7 @@
 **Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
 **Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
 **Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Runtime preference**: Node.js / TypeScript with Next.js App Router (recommended). If another runtime is chosen, justify trade-offs.
 **Project Type**: [single/web/mobile - determines source structure]  
 **Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
 **Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
@@ -29,9 +30,19 @@
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-[Gates determined based on constitution file]
+Gates determined from the project constitution (required checks before Phase 0):
+
+- **Learner-Centered Design**: Plan MUST include measurable learner outcomes and at least one acceptance scenario that demonstrates value.
+- **Evidence-Based Assessment**: Any assessment/measurement introduced MUST include a description of signals/data used and a plan for validation (datasets or simulations).
+- **Privacy & Data Minimization**: Plans that collect user data MUST list the minimal data elements, retention period, and encryption/access controls.
+- **Test-First Development**: Plan MUST list required tests (unit, contract, integration) and how they will be executed in CI.
+- **Simplicity & Incremental Delivery**: Plan MUST provide an MVP checkpoint with measurable success criteria and an incremental delivery path.
+
+- **AI Output Validation**: Any plan that uses AI for assessments MUST include schema definitions (Zod or similar) and a validation/fallback strategy.
+- **Evidence & Privacy**: Plans that request user evidence uploads MUST include consent copy, minimal data elements, and retention policy entries.
+- **Vector DB Strategy**: If using a vector DB, the plan MUST state whether it is Phase 1 (deferred) or Phase 2 (required), list the provider options, and justify costs.
 
 ## Project Structure
 
@@ -48,6 +59,7 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+
 <!--
   ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
   for this feature. Delete unused options and expand the chosen structure with
@@ -98,7 +110,7 @@ directories captured above]
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
