@@ -23,13 +23,14 @@ enum AssessmentStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  githubId  String?  @unique
-  email     String?  @unique
-  name      String?
-  avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(uuid())
+  githubId      String?   @unique
+  email         String?   @unique
+  emailVerified Boolean   @default(false)
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   assessments Assessment[]
   evidences   Evidence[]

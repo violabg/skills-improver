@@ -1,4 +1,5 @@
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,24 +23,25 @@ export async function DashboardContent() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div className="bg-background min-h-screen">
       {/* Header */}
-      <header className="bg-white border-slate-200 border-b">
+      <header className="bg-card border-border border-b">
         <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">
           <div className="flex items-center gap-2">
-            <div className="flex justify-center items-center bg-blue-600 rounded-lg w-8 h-8 font-bold text-white text-sm">
+            <div className="flex justify-center items-center bg-primary rounded-lg w-8 h-8 font-bold text-primary-foreground text-sm">
               SI
             </div>
-            <span className="font-semibold text-slate-900 text-lg">
+            <span className="font-semibold text-foreground text-lg">
               Skills Improver
             </span>
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-slate-600 text-sm">
+            <span className="text-muted-foreground text-sm">
               {session.user.name || session.user.email}
             </span>
             <SignOutButton />
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -48,8 +50,10 @@ export async function DashboardContent() {
       <main className="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-7xl">
         <div className="space-y-8">
           <div className="space-y-2">
-            <h1 className="font-bold text-slate-900 text-3xl">Welcome back!</h1>
-            <p className="text-slate-600 text-lg">
+            <h1 className="font-bold text-foreground text-3xl">
+              Welcome back!
+            </h1>
+            <p className="text-muted-foreground text-lg">
               Let's discover your skill gaps and create your growth plan
             </p>
           </div>

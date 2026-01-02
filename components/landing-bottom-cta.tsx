@@ -9,12 +9,12 @@ export async function LandingBottomCTA() {
   });
 
   return (
-    <section className="bg-blue-600 text-white">
+    <section className="bg-primary text-primary-foreground">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-16 max-w-7xl text-center">
         <h2 className="mb-4 font-bold text-3xl">
           Ready to discover your skill gaps?
         </h2>
-        <p className="mb-8 text-blue-100 text-lg">
+        <p className="opacity-90 mb-8 text-lg">
           Start your personalized assessment and get a 30-day growth plan
         </p>
         {session ? (

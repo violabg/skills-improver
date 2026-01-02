@@ -6,13 +6,13 @@ import { Suspense } from "react";
 
 function HeaderSkeleton() {
   return (
-    <header className="bg-white border-slate-200 border-b">
+    <header className="bg-card border-border border-b">
       <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">
         <div className="flex items-center gap-2">
-          <div className="bg-slate-200 rounded-lg w-8 h-8 animate-pulse" />
-          <div className="bg-slate-200 rounded w-32 h-6 animate-pulse" />
+          <div className="bg-muted rounded-lg w-8 h-8 animate-pulse" />
+          <div className="bg-muted rounded w-32 h-6 animate-pulse" />
         </div>
-        <div className="bg-slate-200 rounded w-20 h-10 animate-pulse" />
+        <div className="bg-muted rounded w-20 h-10 animate-pulse" />
       </div>
     </header>
   );
@@ -20,7 +20,7 @@ function HeaderSkeleton() {
 
 export default function LandingPage() {
   return (
-    <div className="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div className="bg-background min-h-screen">
       {/* Header */}
       <Suspense fallback={<HeaderSkeleton />}>
         <LandingHeader />
@@ -31,10 +31,10 @@ export default function LandingPage() {
         <div className="space-y-12">
           {/* Main Headline */}
           <div className="space-y-6 text-center">
-            <h1 className="font-bold text-slate-900 text-4xl sm:text-5xl tracking-tight">
+            <h1 className="font-bold text-foreground text-4xl sm:text-5xl tracking-tight">
               Discover what's holding your career back
             </h1>
-            <p className="mx-auto max-w-2xl text-slate-600 text-lg">
+            <p className="mx-auto max-w-2xl text-muted-foreground text-lg">
               AI-powered skill gap analysis for your next role. Hard skills +
               soft skills, no courses to sell.
             </p>
@@ -49,11 +49,11 @@ export default function LandingPage() {
           <div className="gap-4 grid md:grid-cols-3 pt-12">
             <Card>
               <CardContent className="pt-6 text-center">
-                <div className="mb-2 font-bold text-blue-600 text-3xl">✓</div>
-                <p className="font-medium text-slate-900 text-sm">
+                <div className="mb-2 font-bold text-primary text-3xl">✓</div>
+                <p className="font-medium text-foreground text-sm">
                   No courses to sell
                 </p>
-                <p className="mt-1 text-slate-600 text-xs">
+                <p className="mt-1 text-muted-foreground text-xs">
                   We recommend external resources, not ours
                 </p>
               </CardContent>
@@ -61,11 +61,11 @@ export default function LandingPage() {
 
             <Card>
               <CardContent className="pt-6 text-center">
-                <div className="mb-2 font-bold text-blue-600 text-3xl">⏱️</div>
-                <p className="font-medium text-slate-900 text-sm">
+                <div className="mb-2 font-bold text-primary text-3xl">⏱️</div>
+                <p className="font-medium text-foreground text-sm">
                   Takes ~20 minutes
                 </p>
-                <p className="mt-1 text-slate-600 text-xs">
+                <p className="mt-1 text-muted-foreground text-xs">
                   Quick assessment, deep insights
                 </p>
               </CardContent>
@@ -73,11 +73,11 @@ export default function LandingPage() {
 
             <Card>
               <CardContent className="pt-6 text-center">
-                <div className="mb-2 font-bold text-blue-600 text-3xl">🎯</div>
-                <p className="font-medium text-slate-900 text-sm">
+                <div className="mb-2 font-bold text-primary text-3xl">🎯</div>
+                <p className="font-medium text-foreground text-sm">
                   Actionable results
                 </p>
-                <p className="mt-1 text-slate-600 text-xs">
+                <p className="mt-1 text-muted-foreground text-xs">
                   30-day growth plan, not theory
                 </p>
               </CardContent>
@@ -90,7 +90,7 @@ export default function LandingPage() {
       <section className="mx-auto px-4 sm:px-6 lg:px-8 py-16 max-w-7xl">
         <div className="space-y-8">
           <div className="text-center">
-            <h2 className="font-bold text-slate-900 text-3xl">How it works</h2>
+            <h2 className="font-bold text-foreground text-3xl">How it works</h2>
           </div>
 
           <div className="gap-8 grid md:grid-cols-4">
@@ -118,13 +118,15 @@ export default function LandingPage() {
             ].map((step) => (
               <Card key={step.number}>
                 <CardHeader>
-                  <div className="flex justify-center items-center bg-blue-100 mb-3 rounded-full w-8 h-8 font-bold text-blue-600 text-sm">
+                  <div className="flex justify-center items-center bg-primary/10 mb-3 rounded-full w-8 h-8 font-bold text-primary text-sm">
                     {step.number}
                   </div>
                   <CardTitle className="text-lg">{step.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-600 text-sm">{step.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {step.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -133,13 +135,13 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <Suspense fallback={<div className="bg-blue-600 h-32" />}>
+      <Suspense fallback={<div className="bg-primary h-32" />}>
         <LandingBottomCTA />
       </Suspense>
 
       {/* Footer */}
-      <footer className="bg-white border-slate-200 border-t">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl text-slate-600 text-sm text-center">
+      <footer className="bg-card border-border border-t">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl text-muted-foreground text-sm text-center">
           <p>© 2026 Skills Improver. All rights reserved.</p>
         </div>
       </footer>

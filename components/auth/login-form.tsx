@@ -46,8 +46,8 @@ export function LoginForm() {
       <CardContent className="space-y-4">
         {/* Error message */}
         {error && (
-          <div className="bg-red-50 p-3 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">{error}</p>
+          <div className="bg-destructive/10 p-3 border border-destructive/20 rounded-lg">
+            <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
 
@@ -55,7 +55,7 @@ export function LoginForm() {
         <Button
           onClick={handleGitHubLogin}
           disabled={loading}
-          className="bg-slate-900 hover:bg-slate-800 w-full h-10 text-white"
+          className="w-full h-10"
         >
           {loading ? (
             <span className="flex items-center gap-2">
@@ -71,8 +71,8 @@ export function LoginForm() {
         </Button>
 
         {/* Privacy Notice */}
-        <div className="bg-blue-50 p-3 border border-blue-200 rounded-lg">
-          <p className="text-blue-700 text-xs leading-relaxed">
+        <div className="bg-accent/50 p-3 border border-border rounded-lg">
+          <p className="text-xs leading-relaxed text-accent-foreground">
             <strong>Privacy & Data:</strong> We only store minimal profile
             information from GitHub. Evidence uploads require explicit consent.
             No courses or content is hosted on our platform.

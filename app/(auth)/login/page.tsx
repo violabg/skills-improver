@@ -20,24 +20,24 @@ export default async function LoginPage() {
 
       {/* Features Preview */}
       <div className="space-y-3 pt-4">
-        <h3 className="font-semibold text-slate-900 text-sm">
-          What you'll get:
+        <h3 className="font-semibold text-foreground text-sm">
+          What you&apos;ll get:
         </h3>
-        <ul className="space-y-2 text-slate-600 text-sm">
+        <ul className="space-y-2 text-muted-foreground text-sm">
           <li className="flex gap-3">
-            <CheckIcon className="flex-shrink-0 mt-0.5 w-5 h-5 text-green-600" />
+            <CheckIcon className="mt-0.5 w-5 h-5 text-green-600 shrink-0" />
             <span>AI-powered skill gap analysis</span>
           </li>
           <li className="flex gap-3">
-            <CheckIcon className="flex-shrink-0 mt-0.5 w-5 h-5 text-green-600" />
+            <CheckIcon className="mt-0.5 w-5 h-5 text-green-600 shrink-0" />
             <span>Hard + soft skill assessment</span>
           </li>
           <li className="flex gap-3">
-            <CheckIcon className="flex-shrink-0 mt-0.5 w-5 h-5 text-green-600" />
+            <CheckIcon className="mt-0.5 w-5 h-5 text-green-600 shrink-0" />
             <span>30-day actionable growth plan</span>
           </li>
           <li className="flex gap-3">
-            <CheckIcon className="flex-shrink-0 mt-0.5 w-5 h-5 text-green-600" />
+            <CheckIcon className="mt-0.5 w-5 h-5 text-green-600 shrink-0" />
             <span>Personalized resource recommendations</span>
           </li>
         </ul>
