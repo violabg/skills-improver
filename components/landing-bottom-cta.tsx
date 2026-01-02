@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -18,16 +18,24 @@ export async function LandingBottomCTA() {
           Start your personalized assessment and get a 30-day growth plan
         </p>
         {session ? (
-          <Link href="/assessment/start">
-            <Button size="lg" variant="secondary">
-              Start Assessment
-            </Button>
+          <Link
+            href="/assessment/start"
+            className={`${buttonVariants({
+              variant: "secondary",
+              size: "lg",
+            })}`}
+          >
+            Start Assessment
           </Link>
         ) : (
-          <Link href="/login?redirect=/assessment/start">
-            <Button size="lg" variant="secondary">
-              Sign in to begin
-            </Button>
+          <Link
+            href="/login?redirect=/assessment/start"
+            className={`${buttonVariants({
+              variant: "secondary",
+              size: "lg",
+            })}`}
+          >
+            Sign in to begin
           </Link>
         )}
       </div>
