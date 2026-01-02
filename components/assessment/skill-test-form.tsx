@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 interface Question {
   id: string;
@@ -65,7 +65,7 @@ const QUESTIONS: Question[] = [
 
 export function SkillTestForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentAnswer, setCurrentAnswer] = useState("");
@@ -98,20 +98,19 @@ export function SkillTestForm() {
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
+    startTransition(async () => {
+      try {
+        // TODO: Submit answers via oRPC for AI evaluation
+        // await orpc.assessment.submitAnswers({ answers })
 
-    try {
-      // TODO: Submit answers via oRPC for AI evaluation
-      // await orpc.assessment.submitAnswers({ answers })
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      router.push("/assessment/evidence");
-    } catch (error) {
-      console.error("Failed to submit answers:", error);
-      setLoading(false);
-    }
+        router.push("/assessment/evidence");
+      } catch (error) {
+        console.error("Failed to submit answers:", error);
+      }
+    });
   };
 
   const getTypeLabel = (type: Question["type"]) => {
@@ -189,7 +188,7 @@ export function SkillTestForm() {
               type="button"
               variant="outline"
               onClick={handleBack}
-              disabled={loading}
+              disabled={isPending}
             >
               Back
             </Button>
@@ -205,7 +204,7 @@ export function SkillTestForm() {
                     setCurrentQuestionIndex((prev) => prev + 1);
                   }
                 }}
-                disabled={loading}
+                disabled={isPending}
                 className="text-muted-foreground"
               >
                 Skip
@@ -213,9 +212,9 @@ export function SkillTestForm() {
 
               <Button
                 onClick={handleNext}
-                disabled={!currentAnswer.trim() || loading}
+                disabled={!currentAnswer.trim() || isPending}
               >
-                {loading
+                {isPending
                   ? "Submitting..."
                   : isLastQuestion
                   ? "Submit Answers"

@@ -1,21 +1,37 @@
 "use client";
 
+import { FileUploadField, InputField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+const EvidenceUploadSchema = z.object({
+  portfolioUrl: z.string(),
+});
+
+type EvidenceUploadData = z.infer<typeof EvidenceUploadSchema>;
 
 export function EvidenceUploadForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [connectingGithub, setConnectingGithub] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
-  const [portfolioUrl, setPortfolioUrl] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
 
+  const form = useForm<EvidenceUploadData>({
+    // @ts-expect-error - Zod version mismatch with @hookform/resolvers
+    resolver: zodResolver(EvidenceUploadSchema),
+    defaultValues: {
+      portfolioUrl: "",
+    },
+  });
+
   const handleGithubConnect = async () => {
-    setLoading(true);
+    setConnectingGithub(true);
     try {
       // TODO: Implement GitHub OAuth connection via oRPC
       // await orpc.assessment.connectGithub()
@@ -26,63 +42,44 @@ export function EvidenceUploadForm() {
     } catch (error) {
       console.error("Failed to connect GitHub:", error);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type and size
-      const validTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ];
-      const maxSize = 5 * 1024 * 1024; // 5MB
-
-      if (!validTypes.includes(file.type)) {
-        alert("Please upload a PDF or Word document");
-        return;
-      }
-
-      if (file.size > maxSize) {
-        alert("File size must be less than 5MB");
-        return;
-      }
-
-      setCvFile(file);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // TODO: Upload evidence via oRPC
-      // await orpc.assessment.uploadEvidence({
-      //   githubConnected,
-      //   portfolioUrl,
-      //   cvFile,
-      // })
-
-      // Simulate upload
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      router.push("/assessment/processing");
-    } catch (error) {
-      console.error("Failed to upload evidence:", error);
-      setLoading(false);
+      setConnectingGithub(false);
     }
   };
 
   const handleSkip = () => {
-    router.push("/assessment/processing");
+    startTransition(async () => {
+      router.push("/assessment/processing");
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={form.handleSubmit(() => {
+        startTransition(async () => {
+          try {
+            // TODO: Upload evidence via oRPC with data
+            // const portfolioUrl = form.getValues("portfolioUrl");
+            // await orpc.assessment.uploadEvidence({
+            //   githubConnected,
+            //   portfolioUrl,
+            //   cvFile,
+            // })
+            console.log("Upload data:", {
+              cvFile,
+              portfolioUrl: form.getValues("portfolioUrl"),
+            });
+
+            // Simulate upload
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            router.push("/assessment/processing");
+          } catch (error) {
+            console.error("Failed to upload evidence:", error);
+          }
+        });
+      })}
+      className="space-y-6"
+    >
       {/* GitHub Connection */}
       <Card className="bg-card p-6">
         <div className="flex justify-between items-start gap-4">
@@ -103,80 +100,46 @@ export function EvidenceUploadForm() {
             type="button"
             variant={githubConnected ? "outline" : "default"}
             onClick={handleGithubConnect}
-            disabled={loading || githubConnected}
+            disabled={connectingGithub || githubConnected}
           >
-            {githubConnected ? "Connected" : "Connect"}
+            {connectingGithub
+              ? "Connecting..."
+              : githubConnected
+              ? "Connected"
+              : "Connect"}
           </Button>
         </div>
       </Card>
 
       {/* Portfolio URL */}
       <Card className="bg-card p-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="portfolio">Portfolio Website</Label>
-            <p className="text-muted-foreground text-sm">
-              Share a link to your portfolio, personal website, or LinkedIn
-              profile
-            </p>
-          </div>
-          <Input
-            id="portfolio"
-            type="url"
-            value={portfolioUrl}
-            onChange={(e) => setPortfolioUrl(e.target.value)}
-            placeholder="https://yourportfolio.com"
-            disabled={loading}
-          />
-        </div>
+        <InputField
+          label="Portfolio Website"
+          description="Share a link to your portfolio, personal website, or LinkedIn profile"
+          control={form.control}
+          name="portfolioUrl"
+          type="url"
+          placeholder="https://yourportfolio.com"
+          disabled={isPending}
+        />
       </Card>
 
-      {/* CV/Resume Upload */}
+      {/* Resume / CV Upload */}
       <Card className="bg-card p-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="cv">Resume / CV</Label>
-            <p className="text-muted-foreground text-sm">
-              Upload your resume or CV (PDF or Word document, max 5MB)
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Input
-              id="cv"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleFileChange}
-              disabled={loading}
-              className="cursor-pointer"
-            />
-            {cvFile && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setCvFile(null)}
-                disabled={loading}
-              >
-                Remove
-              </Button>
-            )}
-          </div>
-
-          {cvFile && (
-            <p className="text-muted-foreground text-sm">
-              ✓ {cvFile.name} ({(cvFile.size / 1024).toFixed(0)} KB)
-            </p>
-          )}
-        </div>
+        <FileUploadField
+          label="Resume / CV"
+          description="Upload your resume or CV (PDF or Word document, max 10MB)"
+          onFileSelect={(file) => setCvFile(file)}
+          disabled={isPending}
+        />
       </Card>
 
       {/* Privacy Notice */}
-      <Card className="bg-primary/5 p-4 border-primary/50">
-        <div className="flex gap-3">
-          <div className="text-primary">
+      <Card className="bg-muted/50 p-6">
+        <div className="flex items-start gap-4">
+          <div className="bg-primary/10 p-2 rounded-lg">
             <svg
-              className="w-5 h-5"
+              className="w-5 h-5 text-primary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -205,7 +168,7 @@ export function EvidenceUploadForm() {
           type="button"
           variant="outline"
           onClick={() => router.back()}
-          disabled={loading}
+          disabled={isPending}
         >
           Back
         </Button>
@@ -215,12 +178,12 @@ export function EvidenceUploadForm() {
             type="button"
             variant="ghost"
             onClick={handleSkip}
-            disabled={loading}
+            disabled={isPending}
           >
             Skip This Step
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Uploading..." : "Continue"}
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Uploading..." : "Continue"}
           </Button>
         </div>
       </div>

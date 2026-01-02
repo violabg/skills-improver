@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 interface SkillRating {
   id: string;
@@ -66,7 +66,7 @@ const CONFIDENCE_LEVELS = [
 
 export function SelfEvaluationForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
   const handleRatingChange = (skillId: string, rating: number) => {
@@ -78,22 +78,21 @@ export function SelfEvaluationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!allRated || loading) return;
+    if (!allRated || isPending) return;
 
-    setLoading(true);
+    startTransition(async () => {
+      try {
+        // TODO: Save self-evaluation via oRPC
+        // await orpc.assessment.saveSelfEvaluation({ ratings })
 
-    try {
-      // TODO: Save self-evaluation via oRPC
-      // await orpc.assessment.saveSelfEvaluation({ ratings })
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      router.push("/assessment/test");
-    } catch (error) {
-      console.error("Failed to save self-evaluation:", error);
-      setLoading(false);
-    }
+        router.push("/assessment/test");
+      } catch (error) {
+        console.error("Failed to save self-evaluation:", error);
+      }
+    });
   };
 
   const getCategoryTitle = (category: "hard" | "soft" | "meta") => {
@@ -161,7 +160,7 @@ export function SelfEvaluationForm() {
           type="button"
           variant="outline"
           onClick={() => router.back()}
-          disabled={loading}
+          disabled={isPending}
         >
           Back
         </Button>
@@ -170,8 +169,8 @@ export function SelfEvaluationForm() {
           <p className="text-muted-foreground text-sm">
             {Object.keys(ratings).length} of {SKILLS.length} rated
           </p>
-          <Button type="submit" disabled={!allRated || loading}>
-            {loading ? "Saving..." : "Continue"}
+          <Button type="submit" disabled={!allRated || isPending}>
+            {isPending ? "Saving..." : "Continue"}
           </Button>
         </div>
       </div>

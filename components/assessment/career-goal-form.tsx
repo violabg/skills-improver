@@ -1,5 +1,6 @@
 "use client";
 
+import { InputField, RadioGroupField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,10 +9,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+const CareerGoalSchema = z
+  .object({
+    goalType: z.string().min(1, "Please select a career goal"),
+    customGoal: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.goalType === "custom") {
+        return data.customGoal && data.customGoal.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Please describe your custom goal",
+      path: ["customGoal"],
+    }
+  );
+
+type CareerGoalData = z.infer<typeof CareerGoalSchema>;
 
 const COMMON_GOALS = [
   {
@@ -42,30 +64,32 @@ const COMMON_GOALS = [
 
 export function CareerGoalForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [customGoal, setCustomGoal] = useState("");
-  const [showCustom, setShowCustom] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const form = useForm<CareerGoalData>({
+    // @ts-expect-error - Zod version mismatch with @hookform/resolvers
+    resolver: zodResolver(CareerGoalSchema),
+    defaultValues: {
+      goalType: "",
+      customGoal: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // TODO: Save goal to assessment session via oRPC
-      // For now, just navigate to next step
-      router.push("/assessment/self-evaluation");
-    } catch (error) {
-      console.error("Failed to save goal:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isValid = selectedGoal || (showCustom && customGoal.trim());
+  const goalType = form.watch("goalType");
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form
+      onSubmit={form.handleSubmit(() => {
+        startTransition(async () => {
+          try {
+            // TODO: Save goal to assessment session via oRPC with data
+            // For now, just navigate to next step
+            router.push("/assessment/self-evaluation");
+          } catch (error) {
+            console.error("Failed to save goal:", error);
+          }
+        });
+      })}
+    >
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -75,62 +99,70 @@ export function CareerGoalForm() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {COMMON_GOALS.map((goal) => (
+            <RadioGroupField
+              control={form.control}
+              name="goalType"
+              label="Goal Type"
+              options={COMMON_GOALS.map((g) => ({
+                value: g.id,
+                label: g.title,
+              }))}
+              required
+            />
+            <div className="space-y-3">
+              {COMMON_GOALS.map((goal) => (
+                <button
+                  key={goal.id}
+                  type="button"
+                  onClick={() => form.setValue("goalType", goal.id)}
+                  disabled={isPending}
+                  className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
+                    form.getValues("goalType") === goal.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-card hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">{goal.icon}</div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-foreground">
+                        {goal.title}
+                      </div>
+                      <div className="mt-1 text-muted-foreground text-sm">
+                        {goal.description}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+
               <button
-                key={goal.id}
                 type="button"
-                onClick={() => {
-                  setSelectedGoal(goal.id);
-                  setShowCustom(false);
-                }}
+                onClick={() => form.setValue("goalType", "custom")}
+                disabled={isPending}
                 className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
-                  selectedGoal === goal.id
+                  form.getValues("goalType") === "custom"
                     ? "border-primary bg-primary/5"
                     : "border-border bg-card hover:border-primary/50"
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-2xl">{goal.icon}</div>
+                  <div className="text-2xl">✏️</div>
                   <div className="flex-1">
                     <div className="font-semibold text-foreground">
-                      {goal.title}
+                      Custom Goal
                     </div>
                     <div className="mt-1 text-muted-foreground text-sm">
-                      {goal.description}
+                      Define your own career target
                     </div>
                   </div>
                 </div>
               </button>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowCustom(true);
-                setSelectedGoal(null);
-              }}
-              className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
-                showCustom
-                  ? "border-primary bg-primary/5"
-                  : "border-border bg-card hover:border-primary/50"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">✏️</div>
-                <div className="flex-1">
-                  <div className="font-semibold text-foreground">
-                    Custom Goal
-                  </div>
-                  <div className="mt-1 text-muted-foreground text-sm">
-                    Define your own career target
-                  </div>
-                </div>
-              </div>
-            </button>
+            </div>
           </CardContent>
         </Card>
 
-        {showCustom && (
+        {goalType === "custom" && (
           <Card>
             <CardHeader>
               <CardTitle>Describe Your Goal</CardTitle>
@@ -139,15 +171,13 @@ export function CareerGoalForm() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="customGoal">Target role or goal</Label>
-                <Input
-                  id="customGoal"
-                  placeholder="e.g., Principal Engineer, Staff Designer, VP Engineering"
-                  value={customGoal}
-                  onChange={(e) => setCustomGoal(e.target.value)}
-                />
-              </div>
+              <InputField
+                label="Target role or goal"
+                control={form.control}
+                name="customGoal"
+                placeholder="e.g., Principal Engineer, Staff Designer, VP Engineering"
+                disabled={isPending}
+              />
             </CardContent>
           </Card>
         )}
@@ -157,17 +187,18 @@ export function CareerGoalForm() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
+            disabled={isPending}
             className="w-32"
           >
             Back
           </Button>
           <Button
             type="submit"
-            disabled={!isValid || loading}
+            disabled={!form.formState.isValid || isPending}
             className="flex-1"
             size="lg"
           >
-            {loading ? "Saving..." : "Continue"}
+            {isPending ? "Saving..." : "Continue"}
           </Button>
         </div>
       </div>

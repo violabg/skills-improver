@@ -22,6 +22,13 @@ const serverEnvSchema = z.object({
   // Database
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
+  // Cloudflare R2 Storage
+  R2_ACCOUNT_ID: z.string().min(1, "R2_ACCOUNT_ID is required"),
+  R2_ACCESS_KEY_ID: z.string().min(1, "R2_ACCESS_KEY_ID is required"),
+  R2_SECRET_ACCESS_KEY: z.string().min(1, "R2_SECRET_ACCESS_KEY is required"),
+  R2_BUCKET_NAME: z.string().min(1, "R2_BUCKET_NAME is required"),
+  R2_PUBLIC_URL: z.string().optional(), // Optional: custom domain for public access
+
   // AI Services (Groq)
   GROQ_API_KEY: z.string().optional(), // Optional: AI features disabled if missing
 
@@ -73,6 +80,24 @@ export const env: ServerEnv = new Proxy({} as ServerEnv, {
     return validated[prop as keyof ServerEnv];
   },
 });
+
+/**
+ * Helper to check if R2 is configured (all required fields present)
+ * This is safe to call and will return false if env vars are missing
+ */
+export function isR2Configured(): boolean {
+  try {
+    const validated = validateEnv();
+    return !!(
+      validated.R2_ACCOUNT_ID &&
+      validated.R2_ACCESS_KEY_ID &&
+      validated.R2_SECRET_ACCESS_KEY &&
+      validated.R2_BUCKET_NAME
+    );
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Helper to check if AI services are configured

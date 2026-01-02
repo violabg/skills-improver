@@ -109,9 +109,24 @@ export async function POST(request: Request) { ... }
 ### Form Handling Pattern
 
 - **ALWAYS use react-hook-form with Zod** for form validation
-- **ALWAYS use `<Field>` component from shadcn** for form fields
+- **ALWAYS use custom rhf-inputs components** - InputField, SelectField, TextareaField, FileUploadField, etc.
+- **NEVER use generic Field component** - use specific rhf-inputs components instead
 - **ALWAYS show loading states** - use `useTransition` or `useFormState`, disable submit, show spinner
 - Never use raw `<input>` elements in forms
+
+**Available rhf-inputs components**:
+
+- `InputField` - Text input with character counter
+- `SelectField` - Dropdown with options array
+- `TextareaField` - Multi-line input with character counter
+- `FileUploadField` - Drag-drop upload with validation
+- `RadioGroupField` - Radio button groups
+- `CheckboxField` - Single checkbox
+- `PasswordField` - Password with visibility toggle
+- `SliderField` - Range slider
+- `SwitchField` - Toggle switch
+- `MultiSelectField` - Multiple selection
+- `InputWithTagField` - Input with tag badges
 
 ```tsx
 "use client";
@@ -119,19 +134,25 @@ export async function POST(request: Request) { ... }
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Field } from "@/components/ui/field";
+import {
+  InputField,
+  SelectField,
+  TextareaField,
+} from "@/components/rhf-inputs";
 import { z } from "zod";
 
 const FormSchema = z.object({
   email: z.string().email(),
   name: z.string().min(2),
+  role: z.string().min(1),
+  bio: z.string().max(500),
 });
 
 export function MyForm() {
   const [isPending, startTransition] = useTransition();
   const form = useForm({
     resolver: zodResolver(FormSchema),
-    defaultValues: { email: "", name: "" },
+    defaultValues: { email: "", name: "", role: "", bio: "" },
   });
 
   return (
@@ -143,12 +164,45 @@ export function MyForm() {
         });
       })}
     >
-      <Field
+      <InputField
         label="Name"
         control={form.control}
         name="name"
-        render={({ field }) => <Input {...field} disabled={isPending} />}
+        required
+        disabled={isPending}
       />
+
+      <InputField
+        label="Email"
+        type="email"
+        control={form.control}
+        name="email"
+        required
+        disabled={isPending}
+      />
+
+      <SelectField
+        label="Role"
+        control={form.control}
+        name="role"
+        placeholder="Select your role"
+        required
+        disabled={isPending}
+        options={[
+          { value: "developer", label: "Developer" },
+          { value: "designer", label: "Designer" },
+        ]}
+      />
+
+      <TextareaField
+        label="Bio"
+        description="Tell us about yourself"
+        control={form.control}
+        name="bio"
+        maxLength={500}
+        disabled={isPending}
+      />
+
       <Button type="submit" disabled={isPending}>
         {isPending ? "Submitting..." : "Submit"}
       </Button>
@@ -282,7 +336,7 @@ types/                  # TypeScript type definitions
 5. **❌ Old auth API** - use `toNextJsHandler()` not `handler`
 6. **❌ Forgetting `suppressHydrationWarning`** - causes hydration errors with theme provider
 7. **❌ Creating API routes instead of Server Actions** - prefer Server Actions for form submissions
-8. **❌ Using raw `<input>` in forms** - always use react-hook-form with `<Field>` component
+8. **❌ Using generic Field component** - always use specific rhf-inputs components (InputField, SelectField, etc.)
 9. **❌ Missing loading states** - forms must show pending state and disable submit; data queries need Skeleton fallback
 
 ## Type Safety

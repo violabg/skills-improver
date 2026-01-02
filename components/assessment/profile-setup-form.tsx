@@ -1,5 +1,5 @@
 "use client";
-
+import { RadioGroupField, SelectField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,16 +8,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+const ProfileSetupSchema = z.object({
+  currentRole: z.string().min(1, "Please select your role"),
+  yearsExperience: z.string().min(1, "Please select years of experience"),
+  industry: z.string().min(1, "Please select your industry"),
+  careerIntent: z.string().min(1, "Please select your career intent"),
+});
+
+type ProfileSetupData = z.infer<typeof ProfileSetupSchema>;
 
 const ROLES = [
   "Frontend Developer",
@@ -65,37 +69,32 @@ const CAREER_INTENTS = [
 
 export function ProfileSetupForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    currentRole: "",
-    yearsExperience: "",
-    industry: "",
-    careerIntent: "",
+  const [isPending, startTransition] = useTransition();
+  const form = useForm<ProfileSetupData>({
+    // @ts-expect-error - Zod version mismatch with @hookform/resolvers
+    resolver: zodResolver(ProfileSetupSchema),
+    defaultValues: {
+      currentRole: "",
+      yearsExperience: "",
+      industry: "",
+      careerIntent: "",
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // TODO: Call oRPC assessment.start
-      // For now, just navigate to next step
-      router.push("/assessment/goal");
-    } catch (error) {
-      console.error("Failed to start assessment:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isValid =
-    formData.currentRole &&
-    formData.yearsExperience &&
-    formData.industry &&
-    formData.careerIntent;
-
   return (
-    <form onSubmit={handleSubmit}>
+    <form
+      onSubmit={form.handleSubmit(() => {
+        startTransition(async () => {
+          try {
+            // TODO: Call oRPC assessment.start with data
+            // For now, just navigate to next step
+            router.push("/assessment/goal");
+          } catch (error) {
+            console.error("Failed to start assessment:", error);
+          }
+        });
+      })}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Tell us about yourself</CardTitle>
@@ -105,111 +104,61 @@ export function ProfileSetupForm() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Current Role */}
-          <div className="space-y-2">
-            <Label htmlFor="role">Current role</Label>
-            <Select
-              value={formData.currentRole}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, currentRole: value }))
-              }
-            >
-              <SelectTrigger id="role">
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SelectField
+            label="Current role"
+            control={form.control}
+            name="currentRole"
+            placeholder="Select your role"
+            required
+            options={ROLES.map((role) => ({ value: role, label: role }))}
+          />
 
           {/* Years Experience */}
-          <div className="space-y-2">
-            <Label>Years of experience</Label>
-            <div className="gap-3 grid grid-cols-2 sm:grid-cols-4">
-              {["0-2", "3-5", "6-10", "10+"].map((range) => (
-                <button
-                  key={range}
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, yearsExperience: range }))
-                  }
-                  className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
-                    formData.yearsExperience === range
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-card hover:border-primary/50"
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-          </div>
+          <SelectField
+            label="Years of experience"
+            control={form.control}
+            name="yearsExperience"
+            placeholder="Select range"
+            required
+            options={["0-2", "3-5", "6-10", "10+"].map((r) => ({
+              value: r,
+              label: r,
+            }))}
+          />
 
           {/* Industry */}
-          <div className="space-y-2">
-            <Label htmlFor="industry">Industry</Label>
-            <Select
-              value={formData.industry}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, industry: value }))
-              }
-            >
-              <SelectTrigger id="industry">
-                <SelectValue placeholder="Select your industry" />
-              </SelectTrigger>
-              <SelectContent>
-                {INDUSTRIES.map((industry) => (
-                  <SelectItem key={industry} value={industry}>
-                    {industry}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SelectField
+            label="Industry"
+            control={form.control}
+            name="industry"
+            placeholder="Select your industry"
+            required
+            options={INDUSTRIES.map((industry) => ({
+              value: industry,
+              label: industry,
+            }))}
+          />
 
           {/* Career Intent */}
-          <div className="space-y-2">
-            <Label>Career intent</Label>
-            <div className="space-y-3">
-              {CAREER_INTENTS.map((intent) => (
-                <button
-                  key={intent.value}
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      careerIntent: intent.value,
-                    }))
-                  }
-                  className={`w-full rounded-lg border-2 p-4 text-left transition-colors ${
-                    formData.careerIntent === intent.value
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-card hover:border-primary/50"
-                  }`}
-                >
-                  <div className="font-medium text-foreground">
-                    {intent.label}
-                  </div>
-                  <div className="mt-1 text-muted-foreground text-sm">
-                    {intent.description}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+          <RadioGroupField
+            label="Career intent"
+            control={form.control}
+            name="careerIntent"
+            options={CAREER_INTENTS.map((i) => ({
+              value: i.value,
+              label: i.label,
+            }))}
+            required
+          />
 
           {/* Submit */}
           <Button
             type="submit"
-            disabled={!isValid || loading}
+            disabled={!form.formState.isValid || isPending}
             className="w-full"
             size="lg"
           >
-            {loading ? "Starting..." : "Continue"}
+            {isPending ? "Starting..." : "Continue"}
           </Button>
         </CardContent>
       </Card>

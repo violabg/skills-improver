@@ -69,7 +69,7 @@ export async function DashboardContent() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="mb-4 text-slate-600 text-sm">
+                <p className="mb-4 text-muted-foreground text-sm">
                   Get AI-powered evaluation of your hard and soft skills against
                   a target role. Takes about 20 minutes.
                 </p>
@@ -88,7 +88,7 @@ export async function DashboardContent() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="mb-4 text-slate-600 text-sm">
+                <p className="mb-4 text-muted-foreground text-sm">
                   Review your skill gap reports, track improvements, and revisit
                   your growth plans.
                 </p>
@@ -107,12 +107,14 @@ export async function DashboardContent() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <p className="font-medium text-slate-900 text-sm">Email</p>
-                  <p className="text-slate-600 text-sm">{session.user.email}</p>
+                  <p className="font-medium text-foreground text-sm">Email</p>
+                  <p className="text-muted-foreground text-sm">
+                    {session.user.email}
+                  </p>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900 text-sm">Name</p>
-                  <p className="text-slate-600 text-sm">
+                  <p className="font-medium text-foreground text-sm">Name</p>
+                  <p className="text-muted-foreground text-sm">
                     {session.user.name || "Not set"}
                   </p>
                 </div>
