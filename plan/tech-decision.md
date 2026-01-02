@@ -8,6 +8,7 @@ Date: 2026-01-02
 
 - Runtime & Language: Node.js 18+ with TypeScript for frontend and server (Next.js App Router for server routes and server components).
 - Backend architecture: Next.js server routes + oRPC procedures for typed RPC. Domain services live in `packages/server`.
+- Authentication: use `better-auth` library; MVP uses GitHub login only (OAuth via better-auth). Documented flow: GitHub OAuth → better-auth session → map to `User` in DB.
 - ORM & Primary Data Store: Prisma ORM with Neon (Postgres) as the single source of truth for the skill graph and analytics.
 - API contracts & validation: oRPC + Zod for all procedure inputs/outputs. Contract tests required.
 - AI orchestration: AI SDK v6 or equivalent (Groq/Kimi2 recommended early). Pattern: structured input → AI → Zod validation → domain write.

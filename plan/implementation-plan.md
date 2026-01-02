@@ -22,6 +22,8 @@ Build a web application that generates continuously adaptive, outcome-focused le
 **Constraints**: Keep costs low in MVP (use Groq/Kimi2 free tiers, cache AI evaluations); defer vector DB to Phase 2 unless embedding use-case validated
 **Scale/Scope**: MVP supports 1k monthly active users; plan for scaling to 10k+ in Phase 2
 
+- **Authentication**: Use `better-auth` with GitHub OAuth for MVP login only. Map better-auth sessions to `User` records.
+
 ## Constitution Check
 
 Gates required before Phase 0 research and re-check after Phase 1 design:

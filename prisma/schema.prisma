@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SkillCategory {
+  HARD
+  SOFT
+  META
+}
+
+enum AssessmentStatus {
+  IN_PROGRESS
+  COMPLETED
+  REVIEW_PENDING
+}
+
+model User {
+  id        String   @id @default(uuid())
+  githubId  String?  @unique
+  email     String?  @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessments Assessment[]
+  evidences   Evidence[]
+  sessions    Session[]
+  accounts    Account[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                String   @id
+  accountId         String
+  providerId        String
+  userId            String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope             String?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+model Skill {
+  id              String        @id @default(uuid())
+  name            String        @unique
+  category        SkillCategory
+  domain          String?
+  difficulty      Int?
+  marketRelevance Float?
+  assessable      Boolean       @default(true)
+  transferable    Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  fromRelations     SkillRelation[]    @relation("fromSkill")
+  toRelations       SkillRelation[]    @relation("toSkill")
+  assessmentResults AssessmentResult[]
+
+  @@index([category])
+  @@index([domain])
+}
+
+model SkillRelation {
+  id          String   @id @default(uuid())
+  fromSkillId String
+  toSkillId   String
+  strength    Float    @default(1.0)
+  createdAt   DateTime @default(now())
+
+  fromSkill Skill @relation("fromSkill", fields: [fromSkillId], references: [id], onDelete: Cascade)
+  toSkill   Skill @relation("toSkill", fields: [toSkillId], references: [id], onDelete: Cascade)
+
+  @@unique([fromSkillId, toSkillId])
+  @@index([fromSkillId])
+  @@index([toSkillId])
+}
+
+model Assessment {
+  id          String           @id @default(uuid())
+  userId      String
+  targetRole  String?
+  status      AssessmentStatus @default(IN_PROGRESS)
+  startedAt   DateTime         @default(now())
+  completedAt DateTime?
+
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results AssessmentResult[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AssessmentResult {
+  id           String   @id @default(uuid())
+  assessmentId String
+  skillId      String
+  level        Int
+  confidence   Float
+  notes        String?
+  rawAIOutput  Json?
+  createdAt    DateTime @default(now())
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  skill      Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, skillId])
+  @@index([assessmentId])
+  @@index([skillId])
+}
+
+model Resource {
+  id            String   @id @default(uuid())
+  provider      String
+  url           String
+  title         String?
+  cost          String?
+  estimatedTime Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([provider])
+}
+
+model Evidence {
+  id             String    @id @default(uuid())
+  userId         String
+  provider       String?
+  referenceUrl   String?
+  signals        Json?
+  rawStored      Boolean   @default(false)
+  retentionUntil DateTime?
+  createdAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

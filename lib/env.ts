@@ -1,0 +1,88 @@
+/**
+ * Environment Variable Validation
+ *
+ * Centralized validation for all required environment variables.
+ * Uses Zod for type-safe validation with helpful error messages.
+ *
+ * IMPORTANT: This module uses lazy validation to prevent errors when
+ * imported transitively by client components. The env object is a Proxy
+ * that validates on first access.
+ *
+ * Usage:
+ * ```ts
+ * import { env } from '@/lib/env';
+ * console.log(env.DATABASE_URL); // Validates and returns value
+ * ```
+ */
+
+import { z } from "zod/v4";
+
+// Schema for server-side environment variables
+const serverEnvSchema = z.object({
+  // Database
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+
+  // AI Services (Groq)
+  GROQ_API_KEY: z.string().optional(), // Optional: AI features disabled if missing
+
+  // Auth
+  BETTER_AUTH_SECRET: z.string().optional(),
+  BETTER_AUTH_URL: z.string().optional(),
+
+  // Node environment
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+});
+
+// Type for validated environment
+export type ServerEnv = z.infer<typeof serverEnvSchema>;
+
+// Validation function with caching
+let cachedEnv: ServerEnv | null = null;
+
+function validateEnv(): ServerEnv {
+  if (cachedEnv) {
+    return cachedEnv;
+  }
+
+  const parsed = serverEnvSchema.safeParse(process.env);
+
+  if (!parsed.success) {
+    const errors = parsed.error.issues
+      .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
+      .join("\n");
+
+    throw new Error(
+      `❌ Invalid environment variables:\n${errors}\n\nPlease check your .env file or environment configuration.`
+    );
+  }
+
+  cachedEnv = parsed.data;
+  return cachedEnv;
+}
+
+/**
+ * Lazy-validated environment variables.
+ * Validation only runs when a property is first accessed.
+ * This prevents errors when the module is imported by client components.
+ */
+export const env: ServerEnv = new Proxy({} as ServerEnv, {
+  get(_target, prop: string) {
+    const validated = validateEnv();
+    return validated[prop as keyof ServerEnv];
+  },
+});
+
+/**
+ * Helper to check if AI services are configured
+ * This is safe to call and will return false if env vars are missing
+ */
+export function isAIConfigured(): boolean {
+  try {
+    const validated = validateEnv();
+    return !!validated.GROQ_API_KEY;
+  } catch {
+    return false;
+  }
+}
