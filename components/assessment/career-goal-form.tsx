@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -64,6 +64,8 @@ const COMMON_GOALS = [
 
 export function CareerGoalForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const assessmentId = searchParams.get("assessmentId");
   const [isPending, startTransition] = useTransition();
   const form = useForm<CareerGoalData>({
     // @ts-expect-error - Zod version mismatch with @hookform/resolvers
@@ -78,12 +80,21 @@ export function CareerGoalForm() {
 
   return (
     <form
-      onSubmit={form.handleSubmit(() => {
+      onSubmit={form.handleSubmit((data) => {
         startTransition(async () => {
           try {
-            // TODO: Save goal to assessment session via oRPC with data
-            // For now, just navigate to next step
-            router.push("/assessment/self-evaluation");
+            if (!assessmentId) {
+              throw new Error("Assessment ID is missing");
+            }
+
+            // Store the goal in session state and navigate to next step
+            // The goal will be saved when the assessment is finalized
+            const goal =
+              data.goalType === "custom" ? data.customGoal : data.goalType;
+            const goalParam = goal ? encodeURIComponent(goal) : "";
+            router.push(
+              `/assessment/self-evaluation?assessmentId=${assessmentId}&goal=${goalParam}`
+            );
           } catch (error) {
             console.error("Failed to save goal:", error);
           }

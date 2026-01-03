@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useRouter } from "next/navigation";
+import { client } from "@/lib/orpc/client";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 interface Question {
@@ -65,6 +66,8 @@ const QUESTIONS: Question[] = [
 
 export function SkillTestForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const assessmentId = searchParams.get("assessmentId");
   const [isPending, startTransition] = useTransition();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -98,15 +101,25 @@ export function SkillTestForm() {
   };
 
   const handleSubmit = async () => {
+    if (!assessmentId) return;
+
     startTransition(async () => {
       try {
-        // TODO: Submit answers via oRPC for AI evaluation
-        // await orpc.assessment.submitAnswers({ answers })
+        // Submit each answer via oRPC for AI evaluation
+        for (const question of QUESTIONS) {
+          const answer = answers[question.id];
+          if (answer) {
+            await client.assessment.submitAnswer({
+              assessmentId,
+              skillId: question.skill, // In production, map to actual skill ID
+              question: question.question,
+              answer,
+            });
+          }
+        }
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        router.push("/assessment/evidence");
+        // Move to next step
+        router.push(`/assessment/evidence?assessmentId=${assessmentId}`);
       } catch (error) {
         console.error("Failed to submit answers:", error);
       }

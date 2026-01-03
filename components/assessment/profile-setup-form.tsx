@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -19,6 +20,7 @@ const ProfileSetupSchema = z.object({
   yearsExperience: z.string().min(1, "Please select years of experience"),
   industry: z.string().min(1, "Please select your industry"),
   careerIntent: z.string().min(1, "Please select your career intent"),
+  targetRole: z.string().min(1, "Target role is required"),
 });
 
 type ProfileSetupData = z.infer<typeof ProfileSetupSchema>;
@@ -83,12 +85,21 @@ export function ProfileSetupForm() {
 
   return (
     <form
-      onSubmit={form.handleSubmit(() => {
+      onSubmit={form.handleSubmit((data) => {
         startTransition(async () => {
           try {
-            // TODO: Call oRPC assessment.start with data
-            // For now, just navigate to next step
-            router.push("/assessment/goal");
+            // Call oRPC assessment.start with target role
+            const assessment = await client.assessment.start({
+              targetRole:
+                data.currentRole === "Other"
+                  ? data.careerIntent
+                  : data.currentRole,
+            });
+
+            // Navigate to next step with assessment ID
+            if (assessment.id) {
+              router.push(`/assessment/goal?assessmentId=${assessment.id}`);
+            }
           } catch (error) {
             console.error("Failed to start assessment:", error);
           }

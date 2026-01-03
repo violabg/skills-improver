@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { Assessment } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -73,7 +74,11 @@ const MOCK_RESULTS = {
   ] as SkillGap[],
 };
 
-export function ResultsContent() {
+export function ResultsContent({
+  assessment,
+}: {
+  assessment: Assessment & { results: any[] };
+}) {
   const router = useRouter();
   const [expandedGap, setExpandedGap] = useState<string | null>(null);
 
@@ -209,7 +214,7 @@ export function ResultsContent() {
                     </div>
 
                     <svg
-                      className={`text-muted-foreground h-5 w-5 flex-shrink-0 transition-transform ${
+                      className={`text-muted-foreground h-5 w-5 shrink-0 transition-transform ${
                         expandedGap === gap.skill ? "rotate-180" : ""
                       }`}
                       fill="none"

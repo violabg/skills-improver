@@ -1,5 +1,6 @@
 import { ResultsContent } from "@/components/assessment/results-content";
 import { auth } from "@/lib/auth";
+import db from "@/lib/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -17,7 +18,7 @@ function ResultsSkeleton() {
   );
 }
 
-async function ResultsPageContent() {
+async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -26,16 +27,42 @@ async function ResultsPageContent() {
     redirect("/login?redirect=/assessment/results");
   }
 
-  // TODO: Fetch assessment results via oRPC
-  // const results = await orpc.assessment.getResults.query()
+  // Fetch assessment results via database
+  const assessment = await db.assessment.findFirst({
+    where: {
+      id: assessmentId,
+      userId: session.user.id,
+    },
+    include: {
+      results: {
+        include: {
+          skill: true,
+        },
+      },
+    },
+  });
 
-  return <ResultsContent />;
+  if (!assessment) {
+    redirect("/assessment/start");
+  }
+
+  return <ResultsContent assessment={assessment} />;
 }
 
-export default function ResultsPage() {
+export default function ResultsPage({
+  searchParams,
+}: {
+  searchParams: { assessmentId?: string };
+}) {
+  const assessmentId = searchParams.assessmentId;
+
+  if (!assessmentId) {
+    return redirect("/assessment/start");
+  }
+
   return (
     <Suspense fallback={<ResultsSkeleton />}>
-      <ResultsPageContent />
+      <ResultsPageContent assessmentId={assessmentId} />
     </Suspense>
   );
 }

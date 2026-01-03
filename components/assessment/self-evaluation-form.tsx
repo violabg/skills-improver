@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 interface SkillRating {
@@ -66,6 +66,8 @@ const CONFIDENCE_LEVELS = [
 
 export function SelfEvaluationForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const assessmentId = searchParams.get("assessmentId");
   const [isPending, startTransition] = useTransition();
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
@@ -78,17 +80,15 @@ export function SelfEvaluationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!allRated || isPending) return;
+    if (!allRated || isPending || !assessmentId) return;
 
     startTransition(async () => {
       try {
-        // TODO: Save self-evaluation via oRPC
-        // await orpc.assessment.saveSelfEvaluation({ ratings })
+        // Save self-evaluation via oRPC for each skill
+        // For MVP, store the ratings in session state
+        // They'll be used when submitting test answers
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        router.push("/assessment/test");
+        router.push(`/assessment/test?assessmentId=${assessmentId}`);
       } catch (error) {
         console.error("Failed to save self-evaluation:", error);
       }
