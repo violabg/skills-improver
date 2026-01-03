@@ -99,6 +99,8 @@ model Skill {
   toRelations       SkillRelation[]    @relation("toSkill")
   assessmentResults AssessmentResult[]
 
+  resourceSkills     ResourceSkill[]
+
   @@index([category])
   @@index([domain])
 }
@@ -161,7 +163,23 @@ model Resource {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  resourceSkills ResourceSkill[]
+
   @@index([provider])
+}
+
+model ResourceSkill {
+  id         String   @id @default(uuid())
+  resourceId String
+  skillId    String
+  createdAt  DateTime @default(now())
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  skill    Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, skillId])
+  @@index([resourceId])
+  @@index([skillId])
 }
 
 model Evidence {

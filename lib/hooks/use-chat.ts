@@ -1,0 +1,43 @@
+"use client";
+
+import { orpcClient } from "@/lib/orpc/client";
+import { useState, useTransition } from "react";
+
+export function useChat() {
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const sendMessage = async (
+    message: string
+  ): Promise<{
+    message: string;
+    suggestions?: string[];
+  } | null> => {
+    setError(null);
+
+    try {
+      const response = await new Promise<{
+        message: string;
+        suggestions?: string[];
+      }>((resolve, reject) => {
+        startTransition(async () => {
+          try {
+            const result = await orpcClient.chat.sendMessage({ message });
+            resolve(result);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
+
+      return response;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to send message";
+      setError(errorMessage);
+      return null;
+    }
+  };
+
+  return { sendMessage, isPending, error };
+}

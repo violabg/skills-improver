@@ -1,102 +1,167 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRef, useState, useTransition } from "react";
+import { useChat } from "@/lib/hooks/use-chat";
+import { useRef, useState } from "react";
 
 type Message = {
   id: string;
   from: "user" | "bot";
   text: string;
+  suggestions?: string[];
 };
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome",
+      from: "bot",
+      text: "Hi! I'm your career advisor. I can help you understand your skill gaps, suggest learning resources, and guide your career transition. What would you like to know?",
+      suggestions: [
+        "What should I focus on first?",
+        "How can I improve my JavaScript skills?",
+        "Tell me about my assessment results",
+      ],
+    },
+  ]);
   const [input, setInput] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const { sendMessage, isPending, error } = useChat();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async (messageText?: string) => {
+    const textToSend = messageText || input;
+    if (!textToSend.trim()) return;
+
     const userMsg: Message = {
       id: Date.now().toString(),
       from: "user",
-      text: input,
+      text: textToSend,
     };
     setMessages((m) => [...m, userMsg]);
     setInput("");
 
-    startTransition(async () => {
-      // Simulate bot reply
-      await new Promise((r) => setTimeout(r, 700));
+    const response = await sendMessage(textToSend);
+
+    if (response) {
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         from: "bot",
-        text: `Echo: ${userMsg.text}`,
+        text: response.message,
+        suggestions: response.suggestions,
       };
       setMessages((m) => [...m, botMsg]);
-      scrollRef.current?.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    });
+
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }, 100);
+    } else if (error) {
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        from: "bot",
+        text: `Sorry, I encountered an error: ${error}. Please try again.`,
+      };
+      setMessages((m) => [...m, errorMsg]);
+    }
   };
 
   return (
     <div className="mx-auto p-6 max-w-3xl">
-      <h1 className="mb-4 font-semibold text-2xl">Chat</h1>
+      <div className="mb-4">
+        <h1 className="font-semibold text-2xl">Career Advisor Chat</h1>
+        <p className="text-muted-foreground text-sm">
+          Get personalized guidance based on your assessment
+        </p>
+      </div>
 
       <div
         ref={scrollRef}
-        className="space-y-4 p-4 border rounded-lg h-96 overflow-auto"
+        className="space-y-4 bg-muted/30 p-4 border border-border rounded-lg h-[500px] overflow-auto"
       >
-        {messages.length === 0 && (
-          <p className="text-muted-foreground">No messages yet — say hi!</p>
-        )}
         {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex gap-3 ${
-              m.from === "user" ? "justify-end" : "justify-start"
-            }`}
-          >
-            {m.from === "bot" && (
-              <div className="flex justify-center items-center bg-card rounded-full w-8 h-8 text-xs">
-                AI
-              </div>
-            )}
+          <div key={m.id} className="space-y-2">
             <div
-              className={`p-3 rounded-lg max-w-[70%] ${
-                m.from === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-foreground"
+              className={`flex gap-3 ${
+                m.from === "user" ? "justify-end" : "justify-start"
               }`}
             >
-              {m.text}
+              {m.from === "bot" && (
+                <div className="flex justify-center items-center bg-primary rounded-full w-8 h-8 font-medium text-primary-foreground text-xs shrink-0">
+                  AI
+                </div>
+              )}
+              <div
+                className={`p-3 rounded-lg max-w-[75%] ${
+                  m.from === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-foreground border border-border"
+                }`}
+              >
+                <p className="whitespace-pre-wrap">{m.text}</p>
+              </div>
+              {m.from === "user" && (
+                <div className="flex justify-center items-center bg-muted border border-border rounded-full w-8 h-8 font-medium text-foreground text-xs shrink-0">
+                  You
+                </div>
+              )}
             </div>
-            {m.from === "user" && (
-              <div className="flex justify-center items-center bg-primary rounded-full w-8 h-8 text-xs">
-                You
+
+            {/* Suggestions */}
+            {m.from === "bot" && m.suggestions && m.suggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2 ml-11">
+                {m.suggestions.map((suggestion, idx) => (
+                  <Badge
+                    key={idx}
+                    variant="outline"
+                    className="hover:bg-muted transition-colors cursor-pointer"
+                    onClick={() => handleSendMessage(suggestion)}
+                  >
+                    {suggestion}
+                  </Badge>
+                ))}
               </div>
             )}
           </div>
         ))}
+
+        {isPending && (
+          <div className="flex justify-start gap-3">
+            <div className="flex justify-center items-center bg-primary rounded-full w-8 h-8 font-medium text-primary-foreground text-xs">
+              AI
+            </div>
+            <div className="bg-card p-3 border border-border rounded-lg">
+              <div className="flex gap-1">
+                <div className="bg-muted-foreground rounded-full w-2 h-2 animate-bounce" />
+                <div className="bg-muted-foreground rounded-full w-2 h-2 animate-bounce [animation-delay:0.2s]" />
+                <div className="bg-muted-foreground rounded-full w-2 h-2 animate-bounce [animation-delay:0.4s]" />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-3 mt-4">
         <Input
-          placeholder="Type a message..."
+          placeholder="Ask me anything about your career development..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              sendMessage();
+              handleSendMessage();
             }
           }}
+          disabled={isPending}
         />
-        <Button onClick={sendMessage} disabled={isPending || !input.trim()}>
-          Send
+        <Button
+          onClick={() => handleSendMessage()}
+          disabled={isPending || !input.trim()}
+        >
+          {isPending ? "Sending..." : "Send"}
         </Button>
       </div>
     </div>
