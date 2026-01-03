@@ -82,8 +82,6 @@ export function ProfileSetupForm() {
     },
   });
 
-  const { formState } = form;
-
   return (
     <form
       onSubmit={form.handleSubmit((data) => {
