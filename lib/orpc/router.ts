@@ -2,7 +2,7 @@ import { assessSkill } from "@/lib/ai/assessSkill";
 import { gapAnalysisModel } from "@/lib/ai/models";
 import { GapAnalysisSchema } from "@/lib/ai/schemas/gapExplanation.schema";
 import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "./procedures";
 
@@ -419,9 +419,9 @@ export const router = {
           .join("\n");
 
         // Call AI to analyze gaps
-        const aiAnalysis = await generateObject({
+        const aiAnalysis = await generateText({
           model: gapAnalysisModel,
-          schema: GapAnalysisSchema,
+          output: Output.object({ schema: GapAnalysisSchema }),
           prompt: buildGapAnalysisPrompt(
             assessment.targetRole,
             assessmentSummary,
@@ -433,7 +433,7 @@ export const router = {
           assessmentId: input.assessmentId,
           targetRole: assessment.targetRole,
           generatedAt: new Date().toISOString(),
-          analysis: aiAnalysis.object,
+          analysis: aiAnalysis.output,
         };
       }),
   },

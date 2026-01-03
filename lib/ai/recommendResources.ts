@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { gapAnalysisModel } from "./models";
 import {
   ResourceListSchema,
@@ -20,13 +20,13 @@ export async function recommendResources(
   const prompt = buildResourcePrompt(input);
 
   try {
-    const { object } = await generateObject({
+    const { output } = await generateText({
       model: gapAnalysisModel,
-      schema: ResourceListSchema,
+      output: Output.object({ schema: ResourceListSchema }),
       prompt,
     });
 
-    return object.recommendations;
+    return output.recommendations;
   } catch (error) {
     console.error("Resource recommendation failed:", error);
 

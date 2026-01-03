@@ -272,9 +272,20 @@ const result = await orpc.assessment.submitAnswer({
 ## AI Integration (Planned)
 
 - **AI SDK v6** with Groq (Kimi 2 model)
-- **Structured outputs**: Use `generateObject()` with Zod schemas
+- **Structured outputs**: Use `generateText()` with Zod schemas
 - **AI layer**: Server-side only, never expose raw outputs
 - **Pattern**: AI returns JSON → validate with Zod → store in Prisma → return typed response
+
+```typescript
+const { output } = await generateText({
+  model: groq("moonshotai/kimi-k2-instruct-0905"),
+  output: Output.object({ schema: SkillEvaluationSchema }),
+  prompt: buildPrompt(input),
+  temperature: 0.3,
+});
+
+return output;
+```
 
 ## Assessment Flow (Current Implementation)
 

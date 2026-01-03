@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { skillEvaluationModel } from "./models";
 import {
   SkillEvaluationSchema,
@@ -20,15 +20,15 @@ export async function assessSkill(
   const prompt = buildAssessmentPrompt(input);
 
   try {
-    const { object } = await generateObject({
+    const { output } = await generateText({
       model: skillEvaluationModel,
-      schema: SkillEvaluationSchema,
+      output: Output.object({ schema: SkillEvaluationSchema }),
       prompt,
     });
 
     // Ensure skillId matches input
     return {
-      ...object,
+      ...output,
       skillId: input.skillId,
     };
   } catch (error) {

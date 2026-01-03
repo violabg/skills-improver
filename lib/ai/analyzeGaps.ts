@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { gapAnalysisModel } from "./models";
 import {
   GapAnalysisSchema,
@@ -23,13 +23,13 @@ export async function analyzeGaps(
   const prompt = buildGapAnalysisPrompt(input);
 
   try {
-    const { object } = await generateObject({
+    const { output } = await generateText({
       model: gapAnalysisModel,
-      schema: GapAnalysisSchema,
+      output: Output.object({ schema: GapAnalysisSchema }),
       prompt,
     });
 
-    return object;
+    return output;
   } catch (error) {
     console.error("Gap analysis failed:", error);
 

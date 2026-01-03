@@ -240,7 +240,7 @@ Based on the attached plan files and oRPC documentation, this implementation fol
 
 3. Create assessment evaluation functions in `lib/ai/`:
 
-   - `assessSkill.ts`: use `generateObject` from AI SDK
+   - `assessSkill.ts`: use `generateText()` from AI SDK
    - Validate outputs with Zod before returning
    - Handle AI errors gracefully with fallbacks
    - Cache evaluations to control costs
@@ -351,14 +351,14 @@ All AI outputs must follow this pattern:
 5. Return typed result
 
 ```typescript
-const result = await generateObject({
-  model: groq("kimi2"),
-  schema: SkillEvaluationSchema,
+const result = await generateText({
+  model: groq("moonshotai/kimi-k2-instruct-0905"),
+  output: Output.object({ schema: SkillEvaluationSchema }),
   prompt: buildPrompt(input),
   temperature: 0.3,
 });
 
-// Validation happens inside generateObject
+// Validation happens inside generateText
 // If invalid, error is thrown
 // Only valid data reaches this point
 
