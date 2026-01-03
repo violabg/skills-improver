@@ -1,5 +1,6 @@
 "use client";
 
+import { client } from "@/lib/orpc/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -19,23 +20,33 @@ interface ProcessingContentProps {
 export function ProcessingContent({ assessmentId }: ProcessingContentProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
 
     const processSteps = async () => {
-      for (let i = 0; i < PROCESSING_STEPS.length; i++) {
-        setCurrentStep(i);
-        await new Promise((resolve) => {
-          timeout = setTimeout(resolve, PROCESSING_STEPS[i].duration);
+      try {
+        for (let i = 0; i < PROCESSING_STEPS.length; i++) {
+          setCurrentStep(i);
+          await new Promise((resolve) => {
+            timeout = setTimeout(resolve, PROCESSING_STEPS[i].duration);
+          });
+        }
+
+        // Finalize assessment to mark as completed
+        await client.assessment.finalize({
+          assessmentId,
         });
+
+        // Navigate to results with assessment ID
+        router.push(`/assessment/results?assessmentId=${assessmentId}`);
+      } catch (err) {
+        console.error("Assessment finalization failed:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to process assessment"
+        );
       }
-
-      // TODO: Trigger AI evaluation via oRPC
-      // await orpc.assessment.processResults()
-
-      // Navigate to results with assessment ID
-      router.push(`/assessment/results?assessmentId=${assessmentId}`);
     };
 
     processSteps();
@@ -43,9 +54,45 @@ export function ProcessingContent({ assessmentId }: ProcessingContentProps) {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [router]);
+  }, [router, assessmentId]);
 
   const progress = ((currentStep + 1) / PROCESSING_STEPS.length) * 100;
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center bg-background px-4 min-h-screen">
+        <div className="space-y-6 w-full max-w-md text-center">
+          <div className="flex justify-center items-center bg-red-500/10 mx-auto rounded-full w-24 h-24">
+            <svg
+              className="w-12 h-12 text-red-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h1 className="font-bold text-foreground text-2xl">
+              Something went wrong
+            </h1>
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+          <button
+            onClick={() => (window.location.href = "/assessment/start")}
+            className="bg-primary hover:bg-primary/90 px-4 py-2 rounded-lg text-primary-foreground"
+          >
+            Start Over
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center bg-background px-4 min-h-screen">
