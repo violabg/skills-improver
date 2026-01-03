@@ -12,7 +12,11 @@ function ProcessingSkeleton() {
   );
 }
 
-async function ProcessingPageContent() {
+async function ProcessingPageContent({
+  assessmentId,
+}: {
+  assessmentId: string;
+}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -21,13 +25,24 @@ async function ProcessingPageContent() {
     redirect("/login?redirect=/assessment/processing");
   }
 
-  return <ProcessingContent />;
+  return <ProcessingContent assessmentId={assessmentId} />;
 }
 
-export default function ProcessingPage() {
+export default async function ProcessingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ assessmentId?: string }>;
+}) {
+  const params = await searchParams;
+  const assessmentId = params.assessmentId;
+
+  if (!assessmentId) {
+    return redirect("/assessment/start");
+  }
+
   return (
     <Suspense fallback={<ProcessingSkeleton />}>
-      <ProcessingPageContent />
+      <ProcessingPageContent assessmentId={assessmentId} />
     </Suspense>
   );
 }

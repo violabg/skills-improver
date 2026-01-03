@@ -15,7 +15,11 @@ const EvidenceUploadSchema = z.object({
 
 type EvidenceUploadData = z.infer<typeof EvidenceUploadSchema>;
 
-export function EvidenceUploadForm() {
+interface EvidenceUploadFormProps {
+  assessmentId: string;
+}
+
+export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [connectingGithub, setConnectingGithub] = useState(false);
@@ -48,7 +52,7 @@ export function EvidenceUploadForm() {
 
   const handleSkip = () => {
     startTransition(async () => {
-      router.push("/assessment/processing");
+      router.push(`/assessment/processing?assessmentId=${assessmentId}`);
     });
   };
 
@@ -72,7 +76,7 @@ export function EvidenceUploadForm() {
             // Simulate upload
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
-            router.push("/assessment/processing");
+            router.push(`/assessment/processing?assessmentId=${assessmentId}`);
           } catch (error) {
             console.error("Failed to upload evidence:", error);
           }

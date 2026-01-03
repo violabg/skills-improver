@@ -12,7 +12,11 @@ const PROCESSING_STEPS = [
   { id: 6, text: "Generating personalized recommendations...", duration: 2500 },
 ];
 
-export function ProcessingContent() {
+interface ProcessingContentProps {
+  assessmentId: string;
+}
+
+export function ProcessingContent({ assessmentId }: ProcessingContentProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -30,8 +34,8 @@ export function ProcessingContent() {
       // TODO: Trigger AI evaluation via oRPC
       // await orpc.assessment.processResults()
 
-      // Navigate to results
-      router.push("/assessment/results");
+      // Navigate to results with assessment ID
+      router.push(`/assessment/results?assessmentId=${assessmentId}`);
     };
 
     processSteps();

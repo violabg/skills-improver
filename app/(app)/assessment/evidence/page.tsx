@@ -15,7 +15,7 @@ function EvidenceSkeleton() {
   );
 }
 
-async function EvidenceContent() {
+async function EvidenceContent({ assessmentId }: { assessmentId: string }) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -38,16 +38,27 @@ async function EvidenceContent() {
           </p>
         </div>
 
-        <EvidenceUploadForm />
+        <EvidenceUploadForm assessmentId={assessmentId} />
       </div>
     </div>
   );
 }
 
-export default function EvidencePage() {
+export default async function EvidencePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ assessmentId?: string }>;
+}) {
+  const params = await searchParams;
+  const assessmentId = params.assessmentId;
+
+  if (!assessmentId) {
+    return redirect("/assessment/start");
+  }
+
   return (
     <Suspense fallback={<EvidenceSkeleton />}>
-      <EvidenceContent />
+      <EvidenceContent assessmentId={assessmentId} />
     </Suspense>
   );
 }

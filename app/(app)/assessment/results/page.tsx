@@ -49,12 +49,13 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
   return <ResultsContent assessment={assessment} />;
 }
 
-export default function ResultsPage({
+export default async function ResultsPage({
   searchParams,
 }: {
-  searchParams: { assessmentId?: string };
+  searchParams: Promise<{ assessmentId?: string }>;
 }) {
-  const assessmentId = searchParams.assessmentId;
+  const params = await searchParams;
+  const assessmentId = params.assessmentId;
 
   if (!assessmentId) {
     return redirect("/assessment/start");

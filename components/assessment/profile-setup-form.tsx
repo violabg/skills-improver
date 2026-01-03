@@ -20,7 +20,6 @@ const ProfileSetupSchema = z.object({
   yearsExperience: z.string().min(1, "Please select years of experience"),
   industry: z.string().min(1, "Please select your industry"),
   careerIntent: z.string().min(1, "Please select your career intent"),
-  targetRole: z.string().min(1, "Target role is required"),
 });
 
 type ProfileSetupData = z.infer<typeof ProfileSetupSchema>;
@@ -82,6 +81,8 @@ export function ProfileSetupForm() {
       careerIntent: "",
     },
   });
+
+  const { formState } = form;
 
   return (
     <form
@@ -165,7 +166,7 @@ export function ProfileSetupForm() {
           {/* Submit */}
           <Button
             type="submit"
-            disabled={!form.formState.isValid || isPending}
+            disabled={isPending}
             className="w-full"
             size="lg"
           >
