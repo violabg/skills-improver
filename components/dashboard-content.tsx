@@ -61,7 +61,7 @@ export async function DashboardContent() {
           </div>
 
           {/* Assessment Options */}
-          <div className="gap-6 grid md:grid-cols-2">
+          <div className="gap-6 grid md:grid-cols-3">
             {/* New Assessment Card */}
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -77,6 +77,25 @@ export async function DashboardContent() {
                 </p>
                 <Link href="/assessment/start">
                   <Button className="w-full">Begin Assessment</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Skills Graph Card */}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle>Skills Knowledge Graph</CardTitle>
+                <CardDescription>Explore skill relationships</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-muted-foreground text-sm">
+                  Interactive visualization of how skills connect and depend on
+                  each other.
+                </p>
+                <Link href="/skills">
+                  <Button variant="outline" className="w-full">
+                    View Graph
+                  </Button>
                 </Link>
               </CardContent>
             </Card>

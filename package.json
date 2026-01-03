@@ -38,6 +38,7 @@
     "react-aria-components": "^1.14.0",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.69.0",
+    "reactflow": "^11.11.4",
     "shadcn": "^3.6.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
@@ -54,6 +55,7 @@
     "eslint-config-next": "16.1.1",
     "prisma": "^7.2.0",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
