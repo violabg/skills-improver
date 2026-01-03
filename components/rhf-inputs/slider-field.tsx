@@ -35,7 +35,7 @@ export function SliderField<T extends FieldValues>({
         <div className="space-y-2">
           <Slider
             value={[field.value]}
-            onValueChange={(values) => field.onChange(values[0])}
+            onValueChange={(values) => field.onChange((values as number[])[0])}
             {...sliderProps}
           />
           {showValue && (

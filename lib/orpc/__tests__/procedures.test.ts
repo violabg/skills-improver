@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import db from "@/lib/db";
 import { router } from "@/lib/orpc/router";
 import type { User } from "@prisma/client";
 import { describe, expect, it } from "vitest";

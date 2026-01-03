@@ -1,49 +1,43 @@
 import { auth } from "@/lib/auth";
-import { ORPCError, createMiddleware, createProcedure } from "@orpc/server";
-import type { AuthenticatedContext, BaseContext } from "./context";
+import { os } from "@orpc/server";
+import type { BaseContext } from "./context";
 
 // Base procedure with db in context
-export const baseProcedure = createProcedure<BaseContext>();
+export const baseProcedure = os;
 
 // Auth middleware that validates session and extends context with user
-const withAuth = createMiddleware<BaseContext, AuthenticatedContext>(
-  async ({ ctx, next }) => {
-    // Get session from better-auth using request headers
-    const session = await auth.api.getSession({
-      headers: ctx.headers,
-    });
+const authMiddleware = os.middleware(async ({ context, next }) => {
+  const ctx = context as BaseContext;
 
-    if (!session?.user) {
-      throw new ORPCError({
-        code: "UNAUTHORIZED",
-        message: "Not authenticated",
-      });
-    }
+  // Get session from better-auth using request headers
+  const session = await auth.api.getSession({
+    headers: ctx.headers,
+  });
 
-    // Fetch full user from database
-    const user = await ctx.db.user.findUnique({
-      where: { id: session.user.id },
-    });
-
-    if (!user) {
-      throw new ORPCError({
-        code: "UNAUTHORIZED",
-        message: "User not found",
-      });
-    }
-
-    // Extend context with user
-    return next({
-      ctx: {
-        ...ctx,
-        user,
-      },
-    });
+  if (!session?.user) {
+    throw new Error("Not authenticated");
   }
-);
+
+  // Fetch full user from database
+  const user = await ctx.db.user.findUnique({
+    where: { id: session.user.id },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Extend context with user
+  return next({
+    context: {
+      ...ctx,
+      user,
+    },
+  });
+});
 
 // Public procedure (no auth required)
 export const publicProcedure = baseProcedure;
 
 // Protected procedure (auth required)
-export const protectedProcedure = baseProcedure.use(withAuth);
+export const protectedProcedure = baseProcedure.use(authMiddleware);

@@ -1,8 +1,9 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -118,7 +119,7 @@ export function ResultsContent() {
             {MOCK_RESULTS.careerGoal}
           </h1>
           <p className="text-muted-foreground text-lg">
-            Here's your personalized skill gap analysis and growth roadmap
+            {"Here's your personalized skill gap analysis and growth roadmap"}
           </p>
         </div>
 
@@ -273,13 +274,12 @@ export function ResultsContent() {
           <Button size="lg" onClick={() => router.push("/dashboard")}>
             Go to Dashboard
           </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => router.push("/chat")}
+          <Link
+            href="/chat"
+            className={`${buttonVariants({ variant: "outline", size: "lg" })}`}
           >
             Talk to Career Advisor
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

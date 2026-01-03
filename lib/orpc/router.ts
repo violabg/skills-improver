@@ -1,11 +1,11 @@
 import { assessSkill } from "@/lib/ai/assessSkill";
-import { createRouter } from "@orpc/server";
+import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "./procedures";
 
-export const router = createRouter({
+export const router = {
   health: {
-    ping: publicProcedure.query(() => {
+    ping: publicProcedure.handler(async () => {
       return { ok: true, timestamp: new Date().toISOString() };
     }),
   },
@@ -18,7 +18,8 @@ export const router = createRouter({
           targetRole: z.string().min(1, "Target role is required"),
         })
       )
-      .mutation(async ({ input, ctx }) => {
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
         const assessment = await ctx.db.assessment.create({
           data: {
             userId: ctx.user.id,
@@ -40,7 +41,8 @@ export const router = createRouter({
           question: z.string().min(1, "Question is required"),
         })
       )
-      .mutation(async ({ input, ctx }) => {
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
         // Verify assessment belongs to user
         const assessment = await ctx.db.assessment.findFirst({
           where: {
@@ -96,7 +98,8 @@ export const router = createRouter({
           assessmentId: z.string().uuid(),
         })
       )
-      .query(async ({ input, ctx }) => {
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
         const assessment = await ctx.db.assessment.findFirst({
           where: {
             id: input.assessmentId,
@@ -119,7 +122,8 @@ export const router = createRouter({
       }),
 
     // List user's assessments
-    list: protectedProcedure.query(async ({ ctx }) => {
+    list: protectedProcedure.handler(async ({ context }) => {
+      const ctx = context as AuthenticatedContext;
       const assessments = await ctx.db.assessment.findMany({
         where: {
           userId: ctx.user.id,
@@ -142,7 +146,7 @@ export const router = createRouter({
 
   skills: {
     // Get all skills (public)
-    list: publicProcedure
+    list: protectedProcedure
       .input(
         z
           .object({
@@ -151,7 +155,8 @@ export const router = createRouter({
           })
           .optional()
       )
-      .query(async ({ input, ctx }) => {
+      .handler(async ({ input, context }) => {
+        const ctx = context as BaseContext;
         const skills = await ctx.db.skill.findMany({
           where: {
             ...(input?.category && { category: input.category }),
@@ -172,7 +177,8 @@ export const router = createRouter({
           id: z.string().uuid(),
         })
       )
-      .query(async ({ input, ctx }) => {
+      .handler(async ({ input, context }) => {
+        const ctx = context as BaseContext;
         const skill = await ctx.db.skill.findUnique({
           where: { id: input.id },
           include: {
@@ -197,7 +203,8 @@ export const router = createRouter({
       }),
 
     // Get skill graph (public)
-    getGraph: publicProcedure.query(async ({ ctx }) => {
+    getGraph: publicProcedure.handler(async ({ context }) => {
+      const ctx = context as BaseContext;
       const skills = await ctx.db.skill.findMany({
         include: {
           fromRelations: {
@@ -214,7 +221,8 @@ export const router = createRouter({
 
   user: {
     // Get current user profile
-    me: protectedProcedure.query(async ({ ctx }) => {
+    me: protectedProcedure.handler(async ({ context }) => {
+      const ctx = context as AuthenticatedContext;
       return ctx.user;
     }),
 
@@ -225,7 +233,8 @@ export const router = createRouter({
           name: z.string().optional(),
         })
       )
-      .mutation(async ({ input, ctx }) => {
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
         const user = await ctx.db.user.update({
           where: { id: ctx.user.id },
           data: input,
@@ -234,6 +243,6 @@ export const router = createRouter({
         return user;
       }),
   },
-});
+};
 
 export type Router = typeof router;

@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import db from "@/lib/db";
 import { router } from "@/lib/orpc/router";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
