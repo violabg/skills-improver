@@ -1,4 +1,5 @@
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { AssessmentsList } from "@/components/dashboard/assessments-list";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export async function DashboardContent() {
   const session = await auth.api.getSession({
@@ -79,7 +81,7 @@ export async function DashboardContent() {
               </CardContent>
             </Card>
 
-            {/* View Assessments Card */}
+            {/* Previous Assessments Info Card */}
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle>Your Assessments</CardTitle>
@@ -90,13 +92,36 @@ export async function DashboardContent() {
               <CardContent>
                 <p className="mb-4 text-muted-foreground text-sm">
                   Review your skill gap reports, track improvements, and revisit
-                  your growth plans.
+                  your growth plans below.
                 </p>
-                <Button variant="outline" className="w-full" disabled>
-                  View Results (Coming soon)
-                </Button>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Saved Assessments Section */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-semibold text-foreground text-xl">
+                Your Assessment History
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                View and manage your skill assessments
+              </p>
+            </div>
+            <Suspense
+              fallback={
+                <Card className="bg-muted/50">
+                  <CardHeader>
+                    <div className="space-y-2">
+                      <div className="bg-slate-200 rounded w-32 h-6 animate-pulse" />
+                      <div className="bg-slate-200 rounded w-48 h-4 animate-pulse" />
+                    </div>
+                  </CardHeader>
+                </Card>
+              }
+            >
+              <AssessmentsList />
+            </Suspense>
           </div>
 
           {/* Profile Card */}
