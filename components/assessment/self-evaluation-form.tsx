@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { client } from "@/lib/orpc/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -84,13 +85,26 @@ export function SelfEvaluationForm() {
 
     startTransition(async () => {
       try {
-        // Save self-evaluation via oRPC for each skill
-        // For MVP, store the ratings in session state
-        // They'll be used when submitting test answers
+        // Map UI skill keys to DB skill IDs by fetching skills
+        const skills = await client.skills.list();
+
+        const evaluations: Array<{ skillId: string; level: number }> = [];
+        for (const [key, level] of Object.entries(ratings)) {
+          const match = skills.find((s) => s.name.toLowerCase().includes(key));
+          if (match) evaluations.push({ skillId: match.id, level });
+        }
+
+        if (evaluations.length > 0) {
+          await client.assessment.saveSelfEvaluations({
+            assessmentId,
+            evaluations,
+          });
+        }
 
         router.push(`/assessment/test?assessmentId=${assessmentId}`);
       } catch (error) {
         console.error("Failed to save self-evaluation:", error);
+        router.push(`/assessment/test?assessmentId=${assessmentId}`);
       }
     });
   };

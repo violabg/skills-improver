@@ -1,6 +1,6 @@
 "use client";
 
-import { InputField, RadioGroupField } from "@/components/rhf-inputs";
+import { InputField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -88,10 +89,22 @@ export function CareerGoalForm() {
             }
 
             // Store the goal in session state and navigate to next step
-            // The goal will be saved when the assessment is finalized
+            // Persist selected goal to the assessment (best-effort)
             const goal =
               data.goalType === "custom" ? data.customGoal : data.goalType;
             const goalParam = goal ? encodeURIComponent(goal) : "";
+
+            try {
+              await client.assessment.updateGoal({
+                assessmentId,
+                targetRole: data.goalType,
+              });
+            } catch (err) {
+              // Log and continue navigation; saving is best-effort
+
+              console.error("Failed to save goal:", err);
+            }
+
             router.push(
               `/assessment/self-evaluation?assessmentId=${assessmentId}&goal=${goalParam}`
             );
@@ -110,16 +123,6 @@ export function CareerGoalForm() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <RadioGroupField
-              control={form.control}
-              name="goalType"
-              label="Goal Type"
-              options={COMMON_GOALS.map((g) => ({
-                value: g.id,
-                label: g.title,
-              }))}
-              required
-            />
             <div className="space-y-3">
               {COMMON_GOALS.map((goal) => (
                 <button
@@ -205,7 +208,7 @@ export function CareerGoalForm() {
           </Button>
           <Button
             type="submit"
-            disabled={!form.formState.isValid || isPending}
+            disabled={!goalType || isPending}
             className="flex-1"
             size="lg"
           >

@@ -78,8 +78,34 @@ export const router = {
           answer: input.answer,
         });
 
-        // Persist validated AI output
-        const result = await ctx.db.assessmentResult.create({
+        // Persist validated AI output. Use upsert semantics to avoid unique
+        // constraint failures when a self-evaluation row already exists for
+        // the (assessmentId, skillId) pair.
+        const existing = await ctx.db.assessmentResult.findFirst({
+          where: {
+            assessmentId: input.assessmentId,
+            skillId: input.skillId,
+          },
+        });
+
+        if (existing) {
+          const updated = await ctx.db.assessmentResult.update({
+            where: { id: existing.id },
+            data: {
+              level: evaluation.level,
+              confidence: evaluation.confidence,
+              notes: evaluation.notes,
+              rawAIOutput: {
+                strengths: evaluation.strengths,
+                weaknesses: evaluation.weaknesses,
+              },
+            },
+          });
+
+          return updated;
+        }
+
+        const created = await ctx.db.assessmentResult.create({
           data: {
             assessmentId: input.assessmentId,
             skillId: input.skillId,
@@ -93,7 +119,86 @@ export const router = {
           },
         });
 
-        return result;
+        return created;
+      }),
+
+    // Update assessment target role (persist career goal)
+    updateGoal: protectedProcedure
+      .input(
+        z.object({
+          assessmentId: z.string().uuid(),
+          targetRole: z.string().min(1),
+        })
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+        const assessment = await ctx.db.assessment.findFirst({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+        });
+
+        if (!assessment) throw new Error("Assessment not found");
+
+        const updated = await ctx.db.assessment.update({
+          where: { id: input.assessmentId },
+          data: { targetRole: input.targetRole },
+        });
+
+        return updated;
+      }),
+
+    // Save self-evaluation ratings as AssessmentResult rows (upsert semantics)
+    saveSelfEvaluations: protectedProcedure
+      .input(
+        z.object({
+          assessmentId: z.string().uuid(),
+          evaluations: z.array(
+            z.object({ skillId: z.string().uuid(), level: z.number().int() })
+          ),
+        })
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        const assessment = await ctx.db.assessment.findFirst({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+        });
+
+        if (!assessment) throw new Error("Assessment not found");
+
+        const results: Array<any> = [];
+
+        for (const ev of input.evaluations) {
+          // Try update existing result
+          const existing = await ctx.db.assessmentResult.findFirst({
+            where: {
+              assessmentId: input.assessmentId,
+              skillId: ev.skillId,
+            },
+          });
+
+          if (existing) {
+            const updated = await ctx.db.assessmentResult.update({
+              where: { id: existing.id },
+              data: { level: ev.level, confidence: 0.5 },
+            });
+            results.push(updated);
+            continue;
+          }
+
+          // Create new AssessmentResult row
+          const created = await ctx.db.assessmentResult.create({
+            data: {
+              assessmentId: input.assessmentId,
+              skillId: ev.skillId,
+              level: ev.level,
+              confidence: 0.5,
+            },
+          });
+
+          results.push(created);
+        }
+
+        return { ok: true, saved: results.length };
       }),
 
     // Get assessment results

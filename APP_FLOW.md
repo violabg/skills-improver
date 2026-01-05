@@ -4,13 +4,9 @@
 
 The Skills Improver application is an AI-powered career growth platform that guides users through a 6-step assessment process to analyze skill gaps and generate personalized learning paths for frontend developers transitioning to senior/lead roles.
 
-## Application Architecture
-
-- **Frontend**: Next.js 16 with App Router (Cache Components Mode)
 - **Backend**: oRPC procedures (type-safe API layer)
 - **Database**: PostgreSQL with Prisma ORM
 - **AI**: Groq API with structured outputs
-- **Authentication**: GitHub OAuth via better-auth
 
 ## Assessment Flow Steps
 
@@ -22,8 +18,9 @@ The Skills Improver application is an AI-powered career growth platform that gui
 
 - `ProfileSetupForm` (client component with react-hook-form + Zod validation)
 - Form fields: currentRole, yearsExperience, industry, careerIntent
-
-**API Calls**:
+  **API Calls**:
+  - Persistence: Selected goal is saved to the `Assessment.targetRole` field via the oRPC procedure `assessment.updateGoal` when the user continues (best-effort; UI still navigates on failure).
+  - Persistence: Self-evaluation ratings are persisted as `AssessmentResult` rows via the oRPC procedure `assessment.saveSelfEvaluations` when the user continues from the self-evaluation step.
 
 ```typescript
 // oRPC Call: assessment.start
@@ -33,16 +30,12 @@ const assessment = await client.assessment.start({
 });
 ```
 
-**Business Logic**:
-
 1. **Authentication Check**: Server component verifies user session via `auth.api.getSession()`
 2. **Form Validation**: Zod schema validates input data
-3. **Assessment Creation**: Creates new assessment record in database with:
-   - `userId`: authenticated user's ID
    - `targetRole`: derived from currentRole or careerIntent
    - `status`: "IN_PROGRESS"
    - `startedAt`: current timestamp
-4. **Navigation**: Redirects to `/assessment/goal?assessmentId={id}`
+3. **Navigation**: Redirects to `/assessment/goal?assessmentId={id}`
 
 **Database Changes**:
 
@@ -50,20 +43,13 @@ const assessment = await client.assessment.start({
 
 ---
 
-### Step 2: Career Goal Selection (`/assessment/goal`)
-
 **Purpose**: Define the specific career target or goal the user is working towards.
 
 **UI Components**:
 
 - `CareerGoalForm` (client component)
 - Predefined goals: "Frontend → Senior Frontend", "Developer → Tech Lead", etc.
-- Custom goal input field
-
-**API Calls**:
-
-- **No API calls** - Goal stored in URL parameters for now
-- TODO: Future implementation will save via oRPC
+- **API calls**: The `CareerGoalForm` attempts to persist the selected goal by calling `client.assessment.updateGoal({ assessmentId, targetRole })`. The save is best-effort; navigation proceeds even if the RPC fails.
 
 **Business Logic**:
 
@@ -90,8 +76,7 @@ const assessment = await client.assessment.start({
 
 **API Calls**:
 
-- **No API calls** - Ratings stored in component state
-- TODO: Future implementation will save via oRPC
+- `client.assessment.saveSelfEvaluations({ assessmentId, items })` is called when the user continues. Ratings are persisted to `AssessmentResult` rows so they are available later (for the skill test and results computation).
 
 **Business Logic**:
 
@@ -109,13 +94,14 @@ const assessment = await client.assessment.start({
 
 ### Step 4: Skill Validation Test (`/assessment/test`)
 
-**Purpose**: AI-powered validation of user's skill levels through adaptive questioning.
+**Purpose**: AI-powered validation of user's skill levels through adaptive questioning
 
 **UI Components**:
 
 - `SkillTestForm` (client component)
 - Question types: code, scenario, explain
 - Progress bar and skip functionality
+  - Note: `skill-test-form.tsx` reads persisted `AssessmentResult` rows via `client.assessment.getResults()` and uses them as fallback values if the user skips questions. Test answers are submitted with `client.assessment.submitAnswer()` which persists AI-evaluated results back to `AssessmentResult`.
 - Textarea for answers
 
 **API Calls**:
@@ -187,8 +173,7 @@ const result = await client.assessment.submitAnswer({
 
 **API Calls**:
 
-- **No API calls implemented** - TODO placeholders
-- Future: `orpc.assessment.connectGithub()`, `orpc.assessment.uploadEvidence()`
+- **Partial/placeholder**: The UI contains controls for GitHub connection and CV upload, but server-side ingestion is currently placeholder. Planned oRPC procedures include `assessment.connectGithub()` and `assessment.uploadEvidence()` for full evidence ingestion and processing.
 
 **Business Logic**:
 
@@ -233,8 +218,7 @@ await client.assessment.finalize({
    - Shows 6 processing steps with timed delays
    - Simulates AI analysis (actual gap analysis happens on results page)
 3. **Assessment Finalization**:
-   - Updates assessment status to "COMPLETED"
-   - Sets `completedAt` timestamp
+   - Calls `client.assessment.finalize({ assessmentId })` which updates the `Assessment` record `status` to "COMPLETED" and sets `completedAt` timestamp.
 4. **Error Handling**: Shows error UI if finalization fails
 5. **Navigation**: Redirects to `/assessment/results?assessmentId={id}`
 

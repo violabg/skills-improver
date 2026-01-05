@@ -1,6 +1,6 @@
 "use client";
 
-import { orpcClient } from "@/lib/orpc/client";
+import { client } from "@/lib/orpc/client";
 import { useState, useTransition } from "react";
 
 export function useChat() {
@@ -22,7 +22,7 @@ export function useChat() {
       }>((resolve, reject) => {
         startTransition(async () => {
           try {
-            const result = await orpcClient.chat.sendMessage({ message });
+            const result = await client.chat.sendMessage({ message });
             resolve(result);
           } catch (err) {
             reject(err);

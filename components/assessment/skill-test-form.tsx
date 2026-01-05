@@ -89,7 +89,16 @@ const QUESTIONS_BANK: Omit<Question, "skillId">[] = [
   },
 ];
 
-export function SkillTestForm() {
+type ServerSubmission = (payload: {
+  assessmentId: string;
+  submissions: Array<{ skillId: string; question: string; answer: string }>;
+}) => Promise<void>;
+
+export function SkillTestForm({
+  submitServerAction,
+}: {
+  submitServerAction?: ServerSubmission;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const assessmentId = searchParams.get("assessmentId");
@@ -216,6 +225,31 @@ export function SkillTestForm() {
   const handleSubmit = async (finalAnswers: Record<string, string>) => {
     if (!assessmentId || isPending) return;
 
+    // If a server action is provided, send all submissions in one server-side
+    // call which can perform processing and redirect on success. Wrap in
+    // startTransition so `isPending` becomes true while the action is in-flight
+    // and the UI can be disabled using the same flag.
+    if (submitServerAction) {
+      startTransition(async () => {
+        try {
+          const submissions = questionsList.map((q) => ({
+            skillId: q.skillId,
+            question: q.question,
+            answer: finalAnswers[q.id] || "",
+          }));
+
+          await submitServerAction({ assessmentId, submissions });
+          // server action will redirect on success; if it returns, clear state
+          return;
+        } catch (err) {
+          console.error("Server submission failed:", err);
+          alert("Failed to submit answers. Please try again.");
+          return;
+        }
+      });
+      return;
+    }
+
     startTransition(async () => {
       try {
         console.log(`Submitting answers for assessment ${assessmentId}`);
@@ -318,13 +352,16 @@ export function SkillTestForm() {
             `Failed to submit any answers. Please check the console for details and try again.`
           );
           return;
+          return;
         }
 
         if (failCount > 0) {
           const proceed = confirm(
             `${successCount} answer(s) submitted successfully, but ${failCount} failed. Continue to next step?`
           );
-          if (!proceed) return;
+          if (!proceed) {
+            return;
+          }
         }
 
         // Move to next step - use replace to prevent back navigation issues
