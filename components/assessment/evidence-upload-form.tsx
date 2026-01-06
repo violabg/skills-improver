@@ -3,14 +3,22 @@
 import { FileUploadField, InputField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
 
 const EvidenceUploadSchema = z.object({
-  portfolioUrl: z.string(),
+  portfolioUrl: z.union([
+    z.url({
+      error: "Please enter a valid URL",
+    }),
+    z.literal(""),
+  ]),
+  retentionChoice: z.enum(["discard", "30d", "90d"]).default("discard"),
+  allowRawStorage: z.boolean().default(false),
 });
 
 type EvidenceUploadData = z.infer<typeof EvidenceUploadSchema>;
@@ -26,11 +34,16 @@ export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
   const [githubConnected, setGithubConnected] = useState(false);
   const [cvFile, setCvFile] = useState<File | null>(null);
 
+  const resolver = zodResolver(
+    EvidenceUploadSchema as unknown as never
+  ) as Resolver<EvidenceUploadData>;
+
   const form = useForm<EvidenceUploadData>({
-    // @ts-expect-error - Zod version mismatch with @hookform/resolvers
-    resolver: zodResolver(EvidenceUploadSchema),
+    resolver,
     defaultValues: {
       portfolioUrl: "",
+      retentionChoice: "discard",
+      allowRawStorage: false,
     },
   });
 
@@ -61,24 +74,46 @@ export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
       onSubmit={form.handleSubmit(() => {
         startTransition(async () => {
           try {
-            // TODO: Upload evidence via oRPC with data
-            // const portfolioUrl = form.getValues("portfolioUrl");
-            // await orpc.assessment.uploadEvidence({
-            //   githubConnected,
-            //   portfolioUrl,
-            //   cvFile,
-            // })
-            console.log("Upload data:", {
-              cvFile,
-              portfolioUrl: form.getValues("portfolioUrl"),
-            });
+            const { portfolioUrl, retentionChoice, allowRawStorage } =
+              form.getValues();
 
-            // Simulate upload
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const retentionDays =
+              retentionChoice === "30d"
+                ? 30
+                : retentionChoice === "90d"
+                ? 90
+                : 0;
+
+            // Send evidence items individually to keep inputs small and explicit
+            if (githubConnected) {
+              await client.evidence.create({
+                provider: "github",
+                retentionDays,
+                allowRawStorage,
+              });
+            }
+
+            if (portfolioUrl) {
+              await client.evidence.create({
+                provider: "portfolio",
+                referenceUrl: portfolioUrl,
+                retentionDays,
+                allowRawStorage,
+              });
+            }
+
+            if (cvFile) {
+              console.warn(
+                "CV upload not yet wired to backend; skipping file."
+              );
+            }
 
             router.push(`/assessment/processing?assessmentId=${assessmentId}`);
           } catch (error) {
             console.error("Failed to upload evidence:", error);
+            alert(
+              "We could not save your evidence preferences. Please retry or skip."
+            );
           }
         });
       })}
@@ -138,6 +173,68 @@ export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
         />
       </Card>
 
+      {/* Consent & Retention */}
+      <Card className="space-y-4 bg-card p-6">
+        <div className="space-y-2">
+          <h3 className="font-semibold text-foreground">Consent & retention</h3>
+          <p className="text-muted-foreground text-sm">
+            Choose how long we can keep extracted signals. Raw artifacts are
+            only stored if you explicitly allow it.
+          </p>
+        </div>
+
+        <Controller
+          control={form.control}
+          name="retentionChoice"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <label className="font-medium text-foreground text-sm">
+                Signal retention
+              </label>
+              <div className="gap-2 grid sm:grid-cols-3">
+                {[
+                  { value: "discard", label: "Discard after analysis" },
+                  { value: "30d", label: "Keep for 30 days" },
+                  { value: "90d", label: "Keep for 90 days" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => field.onChange(option.value)}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
+                      field.value === option.value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-foreground hover:border-primary/60"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        />
+
+        <Controller
+          control={form.control}
+          name="allowRawStorage"
+          render={({ field }) => (
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1 border-border rounded w-4 h-4"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+              <span>
+                Allow temporary storage of raw artifacts (e.g., GitHub metadata)
+                according to the selected retention window.
+              </span>
+            </label>
+          )}
+        />
+      </Card>
+
       {/* Privacy Notice */}
       <Card className="bg-muted/50 p-6">
         <div className="flex items-start gap-4">
@@ -159,8 +256,8 @@ export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
           <div className="text-sm">
             <p className="font-medium text-foreground">Your privacy matters</p>
             <p className="text-muted-foreground">
-              We only extract skill signals from your evidence. Your code and
-              personal data are never stored or shared.
+              We extract minimal skill signals. Raw data is only retained if you
+              opt in, and you control the retention window above.
             </p>
           </div>
         </div>

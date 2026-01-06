@@ -4,6 +4,7 @@ import { gapAnalysisModel } from "@/lib/ai/models";
 import { GapAnalysisSchema } from "@/lib/ai/schemas/gapExplanation.schema";
 import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
 import { processEvidence } from "@/lib/services/evidenceProcessor";
+import type { AssessmentResult, Resource } from "@prisma/client";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "./procedures";
@@ -165,7 +166,7 @@ export const router = {
 
         if (!assessment) throw new Error("Assessment not found");
 
-        const results: Array<any> = [];
+        const results: AssessmentResult[] = [];
 
         for (const ev of input.evaluations) {
           // Try update existing result
@@ -397,7 +398,7 @@ export const router = {
           throw new Error("Assessment has no target role");
         }
 
-        // Get all skills and their target levels (simplified for MVP)
+        // Get all skills and their target levels
         const allSkills = await ctx.db.skill.findMany({
           where: { assessable: true },
         });
@@ -411,9 +412,31 @@ export const router = {
         const gaps = allSkills.map((skill) => {
           const result = resultsMap.get(skill.id);
           const currentLevel = result?.level ?? 0;
-          // For MVP, target level is based on skill difficulty and career goal
-          const targetLevel = skill.difficulty ?? 3;
+
+          // Target level derives from difficulty, nudged for leadership/soft skills
+          const baseTarget = skill.difficulty ?? 3;
+          const leadershipRole =
+            assessment.targetRole?.toLowerCase().includes("lead") ||
+            assessment.targetRole?.toLowerCase().includes("manager");
+          const categoryWeight =
+            skill.category === "SOFT" || skill.category === "META" ? 1.2 : 1;
+          const targetLevel = Math.min(
+            5,
+            Math.round(
+              baseTarget + (leadershipRole && categoryWeight > 1 ? 1 : 0) // emphasize soft/meta for lead roles
+            )
+          );
           const gapSize = Math.max(0, targetLevel - currentLevel);
+
+          const gapRatio = targetLevel === 0 ? 0 : gapSize / targetLevel;
+          const impact =
+            gapRatio >= 0.6
+              ? "CRITICAL"
+              : gapRatio >= 0.35
+              ? "HIGH"
+              : gapRatio > 0
+              ? "MEDIUM"
+              : "NONE";
 
           return {
             skillId: skill.id,
@@ -421,16 +444,21 @@ export const router = {
             currentLevel,
             targetLevel,
             gapSize,
-            impact: gapSize > 2 ? "CRITICAL" : gapSize > 1 ? "HIGH" : "MEDIUM",
+            impact,
             explanation: `${skill.name} is ${
-              gapSize > 0 ? "required for" : "not critical for"
+              gapSize > 0 ? "required for" : "at target for"
             } ${assessment.targetRole}`,
             recommendedActions: [
               `Focus on improving ${skill.name}`,
-              `Seek mentorship or structured learning`,
+              categoryWeight > 1
+                ? `Practice with role-play or stakeholder scenarios`
+                : `Complete a practical exercise or code review`,
             ],
-            estimatedTimeWeeks: gapSize * 2,
-            priority: 10 - gapSize * 2, // Higher gaps = higher priority
+            estimatedTimeWeeks: Math.max(
+              1,
+              Math.ceil(gapSize * categoryWeight)
+            ),
+            priority: Math.round(gapSize * categoryWeight * 10),
           };
         });
 
@@ -483,11 +511,20 @@ export const router = {
           }
         }
 
-        const resourcesBySkill = new Map<string, Array<unknown>>();
+        const resourcesBySkill = new Map<string, Array<Resource>>();
         for (const link of resourceLinks) {
           const arr = resourcesBySkill.get(link.skillId) || [];
-          arr.push(link.resource);
-          resourcesBySkill.set(link.skillId, arr);
+          // simple de-duplication by url/title where available
+          const resource = link.resource as Resource;
+          const exists = arr.some((r) => {
+            if (resource.url && r.url === resource.url) return true;
+            if (resource.title && r.title === resource.title) return true;
+            return false;
+          });
+          if (!exists) {
+            arr.push(resource);
+            resourcesBySkill.set(link.skillId, arr);
+          }
         }
 
         for (const g of gaps) {
@@ -517,15 +554,38 @@ export const router = {
           );
         }
 
-        // Sort by priority
+        // Sort by priority (highest gap/impact first)
         gaps.sort((a, b) => b.priority - a.priority);
 
-        // Calculate readiness score
-        const readinessScore = Math.round(
-          ((allSkills.length - gaps.filter((g) => g.gapSize > 0).length) /
-            allSkills.length) *
-            100
+        // Calculate readiness score weighted by target levels
+        const totals = allSkills.reduce(
+          (acc, skill) => {
+            const res = resultsMap.get(skill.id);
+            const baseTarget = skill.difficulty ?? 3;
+            const leadershipRole =
+              assessment.targetRole?.toLowerCase().includes("lead") ||
+              assessment.targetRole?.toLowerCase().includes("manager");
+            const categoryWeight =
+              skill.category === "SOFT" || skill.category === "META" ? 1.2 : 1;
+            const targetLevel = Math.min(
+              5,
+              Math.round(
+                baseTarget + (leadershipRole && categoryWeight > 1 ? 1 : 0)
+              )
+            );
+            const weightedTarget = targetLevel * categoryWeight;
+            const weightedCurrent =
+              Math.min(targetLevel, res?.level ?? 0) * categoryWeight;
+            acc.target += weightedTarget;
+            acc.current += weightedCurrent;
+            return acc;
+          },
+          { target: 0, current: 0 }
         );
+        const readinessScore =
+          totals.target === 0
+            ? 0
+            : Math.round((totals.current / totals.target) * 100);
 
         return {
           assessmentId: input.assessmentId,
@@ -639,15 +699,26 @@ export const router = {
         z.object({
           provider: z.string().optional(),
           referenceUrl: z.string().url().optional(),
+          retentionDays: z.number().int().min(0).max(365).optional(),
+          allowRawStorage: z.boolean().optional(),
         })
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
 
+        const now = new Date();
+        const retentionDays = input.retentionDays ?? 0;
+        const retentionUntil =
+          retentionDays > 0
+            ? new Date(now.getTime() + retentionDays * 24 * 60 * 60 * 1000)
+            : null;
+        const allowRaw = Boolean(input.allowRawStorage);
+
         // Run lightweight evidence processing
         const { signals, rawStored } = await processEvidence({
           provider: input.provider,
           referenceUrl: input.referenceUrl,
+          allowRawStorage: allowRaw,
         });
 
         const ev = await ctx.db.evidence.create({
@@ -657,6 +728,7 @@ export const router = {
             referenceUrl: input.referenceUrl,
             signals: signals as never,
             rawStored,
+            retentionUntil,
           },
         });
 

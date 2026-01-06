@@ -3,9 +3,11 @@ import db from "@/lib/db";
 export async function processEvidence({
   provider,
   referenceUrl,
+  allowRawStorage,
 }: {
   provider?: string;
   referenceUrl?: string;
+  allowRawStorage?: boolean;
 }): Promise<{ signals: Record<string, unknown>; rawStored: boolean }> {
   // Basic evidence processing:
   // - If GitHub URL, call GitHub API to fetch repo metadata (stars, forks, description)
@@ -66,6 +68,7 @@ export async function processEvidence({
     }
   }
 
-  // No raw storage yet; just return signals
-  return { signals, rawStored: false };
+  // Only mark raw storage allowed when the caller requested it; actual raw data
+  // is not persisted yet, but the flag makes the policy explicit.
+  return { signals, rawStored: Boolean(allowRawStorage) };
 }
