@@ -1,4 +1,5 @@
 import { ResultsContent } from "@/components/assessment/results-content";
+import { recommendResources } from "@/lib/ai/recommendResources";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { headers } from "next/headers";
@@ -7,7 +8,7 @@ import { Suspense } from "react";
 
 function ResultsSkeleton() {
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-transparent min-h-screen">
       <div className="mx-auto px-4 py-12 max-w-5xl">
         <div className="space-y-6">
           <div className="bg-muted rounded w-64 h-12 animate-pulse" />
@@ -92,6 +93,35 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     strengths: gaps.filter((g) => g.gapSize === 0).map((g) => g.skillName),
     overallRecommendation: `You are ${readinessScore}% ready for ${assessment.targetRole}. Focus on the top priorities to accelerate your transition.`,
   };
+
+  // Enrich gaps with recommended resources for the top 5 priority gaps.
+  const topGaps = gaps.slice(0, 5);
+  await Promise.all(
+    topGaps.map(async (g) => {
+      try {
+        const recs = await recommendResources({
+          skillId: g.skillId,
+          skillName: g.skillName,
+          skillCategory: "HARD",
+          currentLevel: g.currentLevel,
+          targetLevel: g.targetLevel,
+        });
+
+        // Map recommendation shape to the UI resource shape
+        (g as any).resources = recs.map((r) => ({
+          id: r.url || `${g.skillId}-${r.title}`,
+          provider: r.provider,
+          url: r.url,
+          title: r.title,
+          cost: r.cost,
+          estimatedTime: Math.round((r.estimatedTimeMinutes || 0) / 60),
+        }));
+      } catch (err) {
+        console.error("Failed to recommend resources for", g.skillName, err);
+        (g as any).resources = [];
+      }
+    })
+  );
 
   return <ResultsContent gapsData={gapsData} />;
 }

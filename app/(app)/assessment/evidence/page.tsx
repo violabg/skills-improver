@@ -25,7 +25,7 @@ async function EvidenceContent({ assessmentId }: { assessmentId: string }) {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-transparent min-h-screen">
       <div className="mx-auto px-4 py-12 max-w-3xl">
         <div className="space-y-2 mb-8">
           <div className="text-muted-foreground text-sm">Step 5 of 6</div>

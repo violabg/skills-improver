@@ -17,7 +17,7 @@ export async function submitAssessmentAnswersAction(payload: {
 
   const session = await auth.api.getSession({ headers: await nextHeaders() });
   if (!session) {
-    redirect("/login?redirect=/assessment/test");
+    return redirect("/login?redirect=/assessment/test");
   }
 
   // Verify assessment belongs to user
@@ -97,7 +97,7 @@ export async function submitAssessmentAnswersAction(payload: {
   }
 
   // On success, perform a server-side redirect to the evidence step
-  redirect(`/assessment/evidence?assessmentId=${assessmentId}`);
+  return redirect(`/assessment/evidence?assessmentId=${assessmentId}`);
 }
 
 function TestSkeleton() {
@@ -121,7 +121,7 @@ async function TestContent() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-transparent min-h-screen">
       <div className="mx-auto px-4 py-12 max-w-3xl">
         <div className="space-y-2 mb-8">
           <div className="text-muted-foreground text-sm">Step 4 of 6</div>

@@ -32,7 +32,7 @@ export default async function SkillsPage() {
   const skills = await fetchSkillGraph();
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-transparent min-h-screen">
       {/* Header */}
       <header className="bg-card border-border border-b">
         <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">

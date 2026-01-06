@@ -6,7 +6,7 @@ import { Suspense } from "react";
 
 function ProcessingSkeleton() {
   return (
-    <div className="flex justify-center items-center bg-background min-h-screen">
+    <div className="flex justify-center items-center bg-transparent min-h-screen">
       <div className="bg-muted rounded w-64 h-12 animate-pulse" />
     </div>
   );

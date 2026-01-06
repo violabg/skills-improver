@@ -25,9 +25,9 @@ export async function DashboardContent() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-transparent min-h-screen">
       {/* Header */}
-      <header className="bg-card border-border border-b">
+      <header className="bg-card/50 backdrop-blur-sm border-border border-b">
         <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">
           <div className="flex items-center gap-2">
             <div className="flex justify-center items-center bg-primary rounded-lg w-8 h-8 font-bold text-primary-foreground text-sm">
@@ -56,14 +56,14 @@ export async function DashboardContent() {
               Welcome back!
             </h1>
             <p className="text-muted-foreground text-lg">
-              Let's discover your skill gaps and create your growth plan
+              Let&apos;s discover your skill gaps and create your growth plan
             </p>
           </div>
 
           {/* Assessment Options */}
           <div className="gap-6 grid md:grid-cols-3">
             {/* New Assessment Card */}
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="bg-card/60 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
               <CardHeader>
                 <CardTitle>Start New Assessment</CardTitle>
                 <CardDescription>
@@ -82,7 +82,7 @@ export async function DashboardContent() {
             </Card>
 
             {/* Skills Graph Card */}
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="bg-card/60 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
               <CardHeader>
                 <CardTitle>Skills Knowledge Graph</CardTitle>
                 <CardDescription>Explore skill relationships</CardDescription>
@@ -101,7 +101,7 @@ export async function DashboardContent() {
             </Card>
 
             {/* Previous Assessments Info Card */}
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="bg-card/60 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
               <CardHeader>
                 <CardTitle>Your Assessments</CardTitle>
                 <CardDescription>
@@ -144,7 +144,7 @@ export async function DashboardContent() {
           </div>
 
           {/* Profile Card */}
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm">
             <CardHeader>
               <CardTitle>Account Settings</CardTitle>
             </CardHeader>

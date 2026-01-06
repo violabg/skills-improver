@@ -35,7 +35,7 @@ export function LoginForm() {
   }, [redirectTo]);
 
   return (
-    <Card>
+    <Card className="bg-card/50 shadow-xl backdrop-blur-sm">
       <CardHeader className="space-y-2 text-center">
         <CardTitle className="text-2xl">Sign in</CardTitle>
         <CardDescription>

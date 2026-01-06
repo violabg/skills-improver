@@ -20,7 +20,11 @@ function HeaderSkeleton() {
 
 export default function LandingPage() {
   return (
-    <div className="bg-background min-h-screen">
+    <div className="relative bg-background min-h-screen overflow-hidden">
+      {/* Background Gradients */}
+      <div className="top-0 left-1/2 -z-10 absolute bg-primary/20 opacity-20 blur-3xl rounded-full w-[800px] h-[800px] -translate-x-1/2 pointer-events-none" />
+      <div className="right-0 bottom-0 -z-10 absolute bg-secondary/20 opacity-20 blur-3xl rounded-full w-[600px] h-[600px] pointer-events-none" />
+
       {/* Header */}
       <Suspense fallback={<HeaderSkeleton />}>
         <LandingHeader />
@@ -31,7 +35,7 @@ export default function LandingPage() {
         <div className="space-y-12">
           {/* Main Headline */}
           <div className="space-y-6 text-center">
-            <h1 className="font-bold text-foreground text-4xl sm:text-5xl tracking-tight">
+            <h1 className="bg-clip-text bg-gradient-to-r from-foreground to-foreground/70 font-bold text-transparent text-5xl sm:text-7xl tracking-tight">
               Discover what's holding your career back
             </h1>
             <p className="mx-auto max-w-2xl text-muted-foreground text-lg">
@@ -47,37 +51,43 @@ export default function LandingPage() {
 
           {/* Trust Signals */}
           <div className="gap-4 grid md:grid-cols-3 pt-12">
-            <Card>
+            <Card className="bg-card/50 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
               <CardContent className="pt-6 text-center">
-                <div className="mb-2 font-bold text-primary text-3xl">✓</div>
-                <p className="font-medium text-foreground text-sm">
+                <div className="flex justify-center items-center bg-primary/10 mx-auto mb-4 p-3 rounded-full w-16 h-16 font-bold text-primary text-3xl">
+                  ✓
+                </div>
+                <p className="font-medium text-foreground text-lg">
                   No courses to sell
                 </p>
-                <p className="mt-1 text-muted-foreground text-xs">
+                <p className="mt-2 text-muted-foreground text-sm">
                   We recommend external resources, not ours
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-card/50 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
               <CardContent className="pt-6 text-center">
-                <div className="mb-2 font-bold text-primary text-3xl">⏱️</div>
-                <p className="font-medium text-foreground text-sm">
+                <div className="flex justify-center items-center bg-primary/10 mx-auto mb-4 p-3 rounded-full w-16 h-16 font-bold text-primary text-3xl">
+                  ⏱️
+                </div>
+                <p className="font-medium text-foreground text-lg">
                   Takes ~20 minutes
                 </p>
-                <p className="mt-1 text-muted-foreground text-xs">
+                <p className="mt-2 text-muted-foreground text-sm">
                   Quick assessment, deep insights
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-card/50 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
               <CardContent className="pt-6 text-center">
-                <div className="mb-2 font-bold text-primary text-3xl">🎯</div>
-                <p className="font-medium text-foreground text-sm">
+                <div className="flex justify-center items-center bg-primary/10 mx-auto mb-4 p-3 rounded-full w-16 h-16 font-bold text-primary text-3xl">
+                  🎯
+                </div>
+                <p className="font-medium text-foreground text-lg">
                   Actionable results
                 </p>
-                <p className="mt-1 text-muted-foreground text-xs">
+                <p className="mt-2 text-muted-foreground text-sm">
                   30-day growth plan, not theory
                 </p>
               </CardContent>
@@ -116,15 +126,19 @@ export default function LandingPage() {
                 description: "Get personalized growth recommendations",
               },
             ].map((step) => (
-              <Card key={step.number}>
+              <Card
+                key={step.number}
+                className="relative bg-card/50 hover:shadow-lg backdrop-blur-sm overflow-hidden transition-all hover:-translate-y-1"
+              >
+                <div className="top-0 right-0 absolute bg-primary/5 rounded-bl-full w-24 h-24" />
                 <CardHeader>
-                  <div className="flex justify-center items-center bg-primary/10 mb-3 rounded-full w-8 h-8 font-bold text-primary text-sm">
+                  <div className="flex justify-center items-center bg-primary shadow-lg mb-3 rounded-2xl w-10 h-10 font-bold text-primary-foreground text-sm">
                     {step.number}
                   </div>
-                  <CardTitle className="text-lg">{step.title}</CardTitle>
+                  <CardTitle className="text-xl">{step.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-base leading-relaxed">
                     {step.description}
                   </p>
                 </CardContent>
