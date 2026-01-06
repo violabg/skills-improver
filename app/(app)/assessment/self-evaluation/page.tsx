@@ -4,13 +4,29 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
 function FormSkeleton() {
   return (
-    <div className="mx-auto px-4 py-12 max-w-3xl">
-      <div className="space-y-6">
-        <div className="bg-muted rounded w-32 h-8 animate-pulse" />
-        <div className="bg-muted rounded h-screen animate-pulse" />
-      </div>
+    <div className="space-y-8">
+      {[1, 2].map((group) => (
+        <div key={group} className="space-y-4">
+          <Skeleton className="w-48 h-7" />
+          <div className="space-y-6">
+            {[1, 2, 3].map((card) => (
+              <Card key={card} className="p-6">
+                <Skeleton className="mb-4 w-32 h-4" />
+                <div className="gap-2 grid grid-cols-5">
+                  {[1, 2, 3, 4, 5].map((btn) => (
+                    <Skeleton key={btn} className="w-full h-16" />
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -24,6 +40,10 @@ async function SelfEvaluationContent() {
     redirect("/login?redirect=/assessment/self-evaluation");
   }
 
+  return <SelfEvaluationForm />;
+}
+
+export default function SelfEvaluationPage() {
   return (
     <div className="bg-transparent min-h-screen">
       <div className="mx-auto px-4 py-12 max-w-3xl">
@@ -37,17 +57,10 @@ async function SelfEvaluationContent() {
             no right or wrong answers.
           </p>
         </div>
-
-        <SelfEvaluationForm />
+        <Suspense fallback={<FormSkeleton />}>
+          <SelfEvaluationContent />
+        </Suspense>
       </div>
     </div>
-  );
-}
-
-export default function SelfEvaluationPage() {
-  return (
-    <Suspense fallback={<FormSkeleton />}>
-      <SelfEvaluationContent />
-    </Suspense>
   );
 }

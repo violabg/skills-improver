@@ -4,14 +4,39 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
 function FormSkeleton() {
   return (
-    <div className="mx-auto px-4 py-12 max-w-2xl">
-      <div className="space-y-6">
-        <div className="bg-muted rounded w-32 h-8 animate-pulse" />
-        <div className="bg-muted rounded h-64 animate-pulse" />
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <Skeleton className="mb-2 w-48 h-6" />
+        <Skeleton className="w-64 h-4" />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Three select fields */}
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="w-24 h-4" />
+            <Skeleton className="w-full h-10" />
+          </div>
+        ))}
+
+        {/* Radio group */}
+        <div className="space-y-3">
+          <Skeleton className="w-28 h-4" />
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="w-full h-16" />
+            ))}
+          </div>
+        </div>
+
+        {/* Submit button */}
+        <Skeleton className="w-full h-11" />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -24,6 +49,10 @@ async function AssessmentStartContent() {
     redirect("/login?redirect=/assessment/start");
   }
 
+  return <ProfileSetupForm />;
+}
+
+export default function AssessmentStartPage() {
   return (
     <div className="bg-transparent min-h-screen">
       <div className="mx-auto px-4 py-12 max-w-2xl">
@@ -36,17 +65,10 @@ async function AssessmentStartContent() {
             Help us understand your current position and career goals
           </p>
         </div>
-
-        <ProfileSetupForm />
+        <Suspense fallback={<FormSkeleton />}>
+          <AssessmentStartContent />
+        </Suspense>
       </div>
     </div>
-  );
-}
-
-export default function AssessmentStartPage() {
-  return (
-    <Suspense fallback={<FormSkeleton />}>
-      <AssessmentStartContent />
-    </Suspense>
   );
 }

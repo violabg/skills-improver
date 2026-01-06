@@ -35,8 +35,8 @@ export default function LandingPage() {
         <div className="space-y-12">
           {/* Main Headline */}
           <div className="space-y-6 text-center">
-            <h1 className="bg-clip-text bg-gradient-to-r from-foreground to-foreground/70 font-bold text-transparent text-5xl sm:text-7xl tracking-tight">
-              Discover what's holding your career back
+            <h1 className="bg-clip-text bg-linear-to-r from-foreground to-foreground/70 font-bold text-transparent text-5xl sm:text-7xl tracking-tight">
+              Discover what&apos;s holding your career back
             </h1>
             <p className="mx-auto max-w-2xl text-muted-foreground text-lg">
               AI-powered skill gap analysis for your next role. Hard skills +
