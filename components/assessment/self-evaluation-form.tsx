@@ -5,37 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { client } from "@/lib/orpc/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
-
-interface SkillRating {
-  id: string;
-  name: string;
-  category: "hard" | "soft" | "meta";
-  rating: number | null;
-}
-
-const SKILLS: Array<Omit<SkillRating, "rating">> = [
-  // Hard Skills
-  { id: "react", name: "React/Frontend Frameworks", category: "hard" },
-  { id: "typescript", name: "TypeScript", category: "hard" },
-  { id: "testing", name: "Testing & Quality Assurance", category: "hard" },
-  { id: "api", name: "API Design & Integration", category: "hard" },
-  { id: "database", name: "Database Design", category: "hard" },
-  { id: "architecture", name: "System Architecture", category: "hard" },
-
-  // Soft Skills
-  { id: "communication", name: "Technical Communication", category: "soft" },
-  { id: "collaboration", name: "Team Collaboration", category: "soft" },
-  { id: "problemsolving", name: "Problem Solving", category: "soft" },
-  { id: "mentoring", name: "Mentoring Others", category: "soft" },
-  { id: "feedback", name: "Giving/Receiving Feedback", category: "soft" },
-
-  // Meta Skills
-  { id: "learning", name: "Learning New Technologies", category: "meta" },
-  { id: "prioritization", name: "Work Prioritization", category: "meta" },
-  { id: "adaptability", name: "Adapting to Change", category: "meta" },
-  { id: "ownership", name: "Taking Ownership", category: "meta" },
-];
+import { useEffect, useState, useTransition } from "react";
 
 const CONFIDENCE_LEVELS = [
   {
@@ -70,13 +40,81 @@ export function SelfEvaluationForm() {
   const searchParams = useSearchParams();
   const assessmentId = searchParams.get("assessmentId");
   const [isPending, startTransition] = useTransition();
+  const [isFetchingSkills, setIsFetchingSkills] = useState(true);
+
+  // Dynamic skills state
+  const [skills, setSkills] = useState<
+    Array<{ id: string; name: string; category: string }>
+  >([]);
+  const [reasoning, setReasoning] = useState<string>("");
+
+  // Form state
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [testMe, setTestMe] = useState<Record<string, boolean>>({});
+
+  // Fetch skills on mount
+  useEffect(() => {
+    if (!assessmentId) return;
+
+    let mounted = true;
+    const fetchSkills = async () => {
+      try {
+        // Use the generation endpoint to get relevant skills for this specific profile
+        const result = await client.skills.generateForProfile({ assessmentId });
+
+        if (mounted) {
+          setSkills(result.skills);
+          setReasoning(result.reasoning);
+          setIsFetchingSkills(false);
+
+          // Initialize testMe defaults (e.g. maybe auto-select top skills?)
+          // For now, default to false
+        }
+      } catch (error) {
+        console.error("Failed to generate skills:", error);
+        // Fallback or error state?
+        setIsFetchingSkills(false);
+      }
+    };
+
+    fetchSkills();
+    return () => {
+      mounted = false;
+    };
+  }, [assessmentId]);
 
   const handleRatingChange = (skillId: string, rating: number) => {
     setRatings((prev) => ({ ...prev, [skillId]: rating }));
   };
 
-  const allRated = SKILLS.every((skill) => ratings[skill.id] !== undefined);
+  const toggleTestMe = (skillId: string) => {
+    setTestMe((prev) => ({ ...prev, [skillId]: !prev[skillId] }));
+  };
+
+  const getCategoryTitle = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "hard":
+        return "Technical Skills";
+      case "soft":
+        return "Interpersonal Skills";
+      case "meta":
+        return "Learning & Adaptability";
+      default:
+        return category;
+    }
+  };
+
+  // Group skills by category
+  const groupedSkills = skills.reduce((acc, skill) => {
+    const cat = skill.category || "Other";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(skill);
+    return acc;
+  }, {} as Record<string, typeof skills>);
+
+  const allRated =
+    skills.length > 0 &&
+    skills.every((skill) => ratings[skill.id] !== undefined);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,14 +123,11 @@ export function SelfEvaluationForm() {
 
     startTransition(async () => {
       try {
-        // Map UI skill keys to DB skill IDs by fetching skills
-        const skills = await client.skills.list();
-
-        const evaluations: Array<{ skillId: string; level: number }> = [];
-        for (const [key, level] of Object.entries(ratings)) {
-          const match = skills.find((s) => s.name.toLowerCase().includes(key));
-          if (match) evaluations.push({ skillId: match.id, level });
-        }
+        const evaluations = Object.entries(ratings).map(([skillId, level]) => ({
+          skillId,
+          level,
+          shouldTest: !!testMe[skillId],
+        }));
 
         if (evaluations.length > 0) {
           await client.assessment.saveSelfEvaluations({
@@ -104,42 +139,71 @@ export function SelfEvaluationForm() {
         router.push(`/assessment/test?assessmentId=${assessmentId}`);
       } catch (error) {
         console.error("Failed to save self-evaluation:", error);
-        router.push(`/assessment/test?assessmentId=${assessmentId}`);
       }
     });
   };
 
-  const getCategoryTitle = (category: "hard" | "soft" | "meta") => {
-    switch (category) {
-      case "hard":
-        return "Technical Skills";
-      case "soft":
-        return "Interpersonal Skills";
-      case "meta":
-        return "Learning & Adaptability";
-    }
-  };
-
-  const groupedSkills = SKILLS.reduce((acc, skill) => {
-    if (!acc[skill.category]) acc[skill.category] = [];
-    acc[skill.category].push(skill);
-    return acc;
-  }, {} as Record<string, typeof SKILLS>);
+  if (isFetchingSkills) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <div className="bg-muted rounded w-1/3 h-8 animate-pulse" />
+          <div className="bg-muted rounded w-2/3 h-4 animate-pulse" />
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-muted rounded-lg w-full h-40 animate-pulse"
+            />
+          ))}
+        </div>
+        <div className="text-muted-foreground text-sm text-center animate-pulse">
+          Analyzing your profile and generating relevant skills...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {(["hard", "soft", "meta"] as const).map((category) => (
+      {reasoning && (
+        <div className="bg-muted/50 p-4 border border-border rounded-lg text-sm">
+          <p className="mb-1 font-medium">AI Recommendation:</p>
+          <p className="text-muted-foreground">{reasoning}</p>
+        </div>
+      )}
+
+      {Object.entries(groupedSkills).map(([category, catSkills]) => (
         <div key={category} className="space-y-4">
-          <h2 className="font-semibold text-foreground text-xl">
+          <h2 className="font-semibold text-foreground text-xl capitalize">
             {getCategoryTitle(category)}
           </h2>
 
           <div className="space-y-6">
-            {groupedSkills[category]?.map((skill) => (
+            {catSkills.map((skill) => (
               <Card key={skill.id} className="bg-card p-6">
-                <Label className="block mb-4 font-medium text-foreground text-sm">
-                  {skill.name}
-                </Label>
+                <div className="flex justify-between items-start mb-4">
+                  <Label className="font-medium text-foreground text-base">
+                    {skill.name}
+                  </Label>
+
+                  {/* Test Me Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => toggleTestMe(skill.id)}
+                    className={`
+                      text-xs px-3 py-1.5 rounded-full border transition-all flex items-center gap-2
+                      ${
+                        testMe[skill.id]
+                          ? "bg-primary/10 border-primary text-primary font-medium"
+                          : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                      }
+                    `}
+                  >
+                    {testMe[skill.id] ? "✓ Will Test" : "+ Test Me"}
+                  </button>
+                </div>
 
                 <div className="gap-2 grid grid-cols-5">
                   {CONFIDENCE_LEVELS.map((level) => (
@@ -157,7 +221,7 @@ export function SelfEvaluationForm() {
                       `}
                     >
                       <div className="font-bold text-lg">{level.value}</div>
-                      <div className="mt-1 text-xs">
+                      <div className="hidden sm:block mt-1 text-xs">
                         {level.label.split(" - ")[1]}
                       </div>
                     </button>
@@ -181,10 +245,10 @@ export function SelfEvaluationForm() {
 
         <div className="flex items-center gap-4">
           <p className="text-muted-foreground text-sm">
-            {Object.keys(ratings).length} of {SKILLS.length} rated
+            {Object.keys(ratings).length} of {skills.length} rated
           </p>
           <Button type="submit" disabled={!allRated || isPending}>
-            {isPending ? "Saving..." : "Continue"}
+            {isPending ? "Saving..." : "Continue to Test"}
           </Button>
         </div>
       </div>

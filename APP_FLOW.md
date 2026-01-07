@@ -17,32 +17,32 @@ The Skills Improver application is an AI-powered career growth platform that gui
 **UI Components**:
 
 - `ProfileSetupForm` (client component with react-hook-form + Zod validation)
-- Form fields: currentRole, yearsExperience, industry, careerIntent
+- Form fields: `currentRole`, `yearsExperience`, `industry`, `careerIntent`
+- **Dynamic Fields**: Conditional `customRole` and `customIndustry` inputs appear when "Other" is selected in the respective dropdowns.
   **API Calls**:
-  - Persistence: `assessment.start` creates the Assessment record with all profile data (`currentRole`, `yearsExperience`, `industry`, `careerIntent`)
-  - Persistence: Self-evaluation ratings are persisted as `AssessmentResult` rows via `assessment.saveSelfEvaluations`
+  - Persistence: `assessment.start` creates the Assessment record with profile data. If "Other" was selected, the custom values are passed as the primary `currentRole` or `industry`.
 
 ```typescript
-// oRPC Call: assessment.start (with all profile data)
+// oRPC Call: assessment.start
 const assessment = await client.assessment.start({
-  currentRole: data.currentRole, // Selected from ROLES
-  yearsExperience: data.yearsExperience, // "0-2", "3-5", "6-10", "10+"
-  industry: data.industry, // "Technology", "Finance", etc.
-  careerIntent: data.careerIntent, // "GROW", "SWITCH", "LEADERSHIP"
+  currentRole: data.customRole || data.currentRole,
+  yearsExperience: data.yearsExperience,
+  industry: data.customIndustry || data.industry,
+  careerIntent: data.careerIntent,
 });
 ```
 
 1. **Authentication Check**: Server component verifies user session via `auth.api.getSession()`
-2. **Form Validation**: Zod schema validates input data
+2. **Form Validation**: Zod schema validates input data, including refining requirements for custom fields.
 3. **Navigation**: Redirects to `/assessment/goal?assessmentId={id}`
 
 **Database Changes**:
 
-- Creates `Assessment` record with all profile metadata:
-  - `currentRole`, `yearsExperience`, `industry`, `careerIntent`
-  - `status`: "IN_PROGRESS", `startedAt`: current timestamp
+- Creates `Assessment` record with all profile metadata.
 
 ---
+
+### Step 2: Career Goal (`/assessment/goal`)
 
 **Purpose**: Define the specific career target or goal the user is working towards.
 
@@ -67,59 +67,60 @@ const assessment = await client.assessment.start({
 
 ### Step 3: Self-Evaluation (`/assessment/self-evaluation`)
 
-**Purpose**: User rates their confidence in 15 skills across hard/soft/meta categories.
+**Purpose**: User rates their confidence in AI-generated skills tailored to their profile and goals.
 
 **UI Components**:
 
 - `SelfEvaluationForm` (client component)
-- Skills grouped by category: Hard (6), Soft (5), Meta (4)
-- 5-point confidence scale for each skill
+- **Dynamic Skills**: Skills are fetched dynamically based on user profile (8-12 existing skills + 1-3 novel skills suggested by AI).
+- **"Test Me" Toggle**: Users can mark specific skills they want to be practically tested on.
+- 5-point confidence scale for each skill.
 
 **API Calls**:
 
-- `client.assessment.saveSelfEvaluations({ assessmentId, items })` is called when the user continues. Ratings are persisted to `AssessmentResult` rows so they are available later (for the skill test and results computation).
+- `client.skills.generateForProfile({ assessmentId })`: Fetches/generates the personalized skill list.
+- `client.assessment.saveSelfEvaluations({ assessmentId, evaluations })`: Persists ratings and the `shouldTest` flag to `AssessmentResult`.
 
 **Business Logic**:
 
-1. **Authentication Check**: Server component verifies session
-2. **Skill Rating**: User rates all 15 skills (1-5 scale)
-3. **Validation**: Ensures all skills are rated before proceeding
-4. **State Storage**: Ratings stored in component state (not persisted yet)
-5. **Navigation**: Redirects to `/assessment/test?assessmentId={id}`
+1. **Authentication Check**: Server component verifies session.
+2. **Skill Generation**: AI selects the best skills from the database and suggests new ones (persisted automatically) for the user's target role.
+3. **Validation**: Ensures all skills are rated before proceeding.
+4. **Navigation**: Redirects to `/assessment/test?assessmentId={id}`.
 
 **Database Changes**:
 
-- None (self-evaluations stored temporarily in memory)
+- Upserts `AssessmentResult` rows with `level`, `confidence`, and `shouldTest` flags.
+- May create new `Skill` records if AI suggests novel ones.
 
 ---
 
 ### Step 4: Skill Validation Test (`/assessment/test`)
 
-**Purpose**: AI-powered validation of user's skill levels through adaptive questioning
+**Purpose**: AI generates specific interview questions for skills the user marked with "Test Me".
 
 **UI Components**:
 
 - `SkillTestForm` (client component)
-- Question types: code, scenario, explain
-- Progress bar and skip functionality
-  - Note: `skill-test-form.tsx` reads persisted `AssessmentResult` rows via `client.assessment.getResults()` and uses them as fallback values if the user skips questions. Test answers are submitted with `client.assessment.submitAnswer()` which persists AI-evaluated results back to `AssessmentResult`.
-- Textarea for answers
+- **AI Questions**: Contextual questions (code, scenario, explain) generated on-the-fly for selected skills.
+- Progress bar and skip functionality.
+- Textarea for answers.
 
 **API Calls**:
 
 ```typescript
-// 1. Load skills from database
-const skills = await client.skills.list();
-
-// 2. Load existing assessment results
-const assessment = await client.assessment.getResults({ assessmentId });
-
-// 3. Submit each answer for AI evaluation
-const result = await client.assessment.submitAnswer({
+// 1. Generate questions for marked skills
+const questions = await client.questions.generateForSkills({
   assessmentId,
-  skillId: question.skillId,
-  question: question.question,
-  answer: answer.trim(),
+  skillIds,
+});
+
+// 2. Submit answer for AI assessment
+await client.assessment.submitAnswer({
+  assessmentId,
+  skillId,
+  question,
+  answer,
 });
 ```
 
@@ -127,36 +128,23 @@ const result = await client.assessment.submitAnswer({
 
 1. **Data Loading**:
 
-   - Fetches all skills from database to map question skills to IDs
-   - Loads existing self-evaluation results for fallback
-   - Selects 3-5 random questions from question bank
+   - Fetches assessment results to identify skills with `shouldTest: true`.
+   - Calls AI to generate 1 tailored question for each selected skill.
+   - If no skills were marked for testing, skips to Step 5.
 
-2. **Question Mapping**:
+2. **Answer Processing**:
 
-   - Maps question skill names to database skill IDs
-   - Handles mapping errors gracefully
-   - Falls back to self-evaluation scores for unmapped skills
+   - Each answer is sent to AI for immediate evaluation.
+   - AI assesses level (1-5), confidence, and provides feedback (notes).
+   - If a question is skipped, the system uses the user's self-evaluation score for that skill.
 
-3. **Answer Processing**:
-
-   - For each answer: calls AI evaluation via oRPC
-   - AI assesses skill level (1-5), confidence, strengths, weaknesses
-   - Persists results to `AssessmentResult` table
-   - For skipped questions: uses self-evaluation score
-
-4. **Error Handling**:
-
-   - Validates skill ID format (UUID)
-   - Continues with successful submissions even if some fail
-   - Provides user feedback on submission status
-
-5. **Navigation**: Redirects to `/assessment/evidence?assessmentId={id}`
+3. **Navigation**: Redirects to `/assessment/evidence?assessmentId={id}`
 
 **Database Changes**:
 
-- Creates `AssessmentResult` records for each evaluated skill:
-  - `assessmentId`, `skillId`, `level`, `confidence`
-  - `notes`, `rawAIOutput` (structured AI response)
+- Updates `AssessmentResult` records with:
+  - AI-evaluated `level` and `confidence`
+  - `notes`, `rawAIOutput`
 
 ---
 
@@ -367,4 +355,4 @@ User Input → Form Validation → oRPC Call → Business Logic → Database →
 
 ---
 
-_This documentation reflects the current implementation as of January 5, 2026. The application is in MVP phase with several TODO items for future enhancement._
+_This documentation reflects the current implementation as of January 7, 2026. The application uses dynamic AI generation for skills and validation questions._

@@ -159,7 +159,11 @@ export const router = {
         z.object({
           assessmentId: z.string().uuid(),
           evaluations: z.array(
-            z.object({ skillId: z.string().uuid(), level: z.number().int() })
+            z.object({
+              skillId: z.string().uuid(),
+              level: z.number().int(),
+              shouldTest: z.boolean().optional(),
+            })
           ),
         })
       )
@@ -183,28 +187,6 @@ export const router = {
             },
           });
 
-          if (existing) {
-            // Calculate confidence based on self-evaluation level:
-            // Lower self-eval tends to be more accurate, higher self-eval may be overconfident
-            const confidence =
-              ev.level <= 1
-                ? 0.3
-                : ev.level <= 2
-                ? 0.4
-                : ev.level <= 3
-                ? 0.5
-                : ev.level <= 4
-                ? 0.6
-                : 0.7;
-            const updated = await ctx.db.assessmentResult.update({
-              where: { id: existing.id },
-              data: { level: ev.level, confidence },
-            });
-            results.push(updated);
-            continue;
-          }
-
-          // Create new AssessmentResult row
           // Calculate confidence based on self-evaluation level
           const confidence =
             ev.level <= 1
@@ -216,12 +198,28 @@ export const router = {
               : ev.level <= 4
               ? 0.6
               : 0.7;
+
+          if (existing) {
+            const updated = await ctx.db.assessmentResult.update({
+              where: { id: existing.id },
+              data: {
+                level: ev.level,
+                confidence,
+                shouldTest: ev.shouldTest ?? existing.shouldTest,
+              },
+            });
+            results.push(updated);
+            continue;
+          }
+
+          // Create new AssessmentResult row
           const created = await ctx.db.assessmentResult.create({
             data: {
               assessmentId: input.assessmentId,
               skillId: ev.skillId,
               level: ev.level,
               confidence,
+              shouldTest: ev.shouldTest ?? false,
             },
           });
 
@@ -346,6 +344,83 @@ export const router = {
         });
 
         return skills;
+      }),
+
+    // Generate skills based on profile (protected)
+    generateForProfile: protectedProcedure
+      .input(
+        z.object({
+          assessmentId: z.string().uuid(),
+        })
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        // 1. Fetch assessment to get profile data
+        const assessment = await ctx.db.assessment.findUnique({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+        });
+
+        if (!assessment) throw new Error("Assessment not found");
+        if (!assessment.targetRole)
+          throw new Error("Assessment target role not set");
+
+        // 2. Fetch all existing skills to provide context to AI
+        // We limit to key fields to reduce token usage
+        const allSkills = await ctx.db.skill.findMany({
+          select: { id: true, name: true, category: true, domain: true },
+        });
+
+        // 3. Call AI to select relevant skills
+        const { generateSkills } = await import("@/lib/ai/generateSkills");
+        const suggestion = await generateSkills({
+          currentRole: assessment.currentRole || "Unknown",
+          targetRole: assessment.targetRole,
+          industry: assessment.industry,
+          yearsExperience: assessment.yearsExperience,
+          careerIntent: assessment.careerIntent,
+          existingSkills: allSkills,
+        });
+
+        // 4. Create any new skills AI suggested
+        // We use a map to track all final skill IDs (both existing and newly created)
+        const finalSkillIds = new Set<string>(suggestion.selectedSkillIds);
+
+        for (const newSkill of suggestion.newSkills) {
+          // Check if skill already exists by name (case insensitive) to avoid dupes
+          const existing = await ctx.db.skill.findFirst({
+            where: { name: { equals: newSkill.name, mode: "insensitive" } },
+          });
+
+          if (existing) {
+            finalSkillIds.add(existing.id);
+            continue;
+          }
+
+          // Create new skill
+          const created = await ctx.db.skill.create({
+            data: {
+              name: newSkill.name,
+              category: newSkill.category,
+              domain: newSkill.domain,
+              assessable: true,
+              marketRelevance: 0.8, // Default
+              difficulty: 3, // Default
+            },
+          });
+          finalSkillIds.add(created.id);
+        }
+
+        // 5. Return full skill objects for the UI
+        const skills = await ctx.db.skill.findMany({
+          where: { id: { in: Array.from(finalSkillIds) } },
+          orderBy: { category: "asc" }, // Group by category for UI
+        });
+
+        return {
+          skills,
+          reasoning: suggestion.reasoning,
+        };
       }),
 
     // Get skill by ID (public)
@@ -798,6 +873,65 @@ export const router = {
         const ctx = context as AuthenticatedContext;
         await ctx.db.resource.delete({ where: { id: input.id } });
         return { ok: true };
+      }),
+  },
+
+  questions: {
+    // Generate questions for specific skills (protected)
+    generateForSkills: protectedProcedure
+      .input(
+        z.object({
+          assessmentId: z.string().uuid(),
+          skillIds: z.array(z.string().uuid()),
+        })
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        // 1. Fetch assessment for context
+        const assessment = await ctx.db.assessment.findUnique({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+        });
+
+        if (!assessment) throw new Error("Assessment not found");
+
+        // 2. Fetch the requested skills
+        const skillsToTest = await ctx.db.skill.findMany({
+          where: { id: { in: input.skillIds } },
+          select: { id: true, name: true, category: true },
+        });
+
+        if (skillsToTest.length === 0) {
+          return [];
+        }
+
+        // 3. Call AI to generate questions
+        const { generateQuestions } = await import(
+          "@/lib/ai/generateQuestions"
+        );
+        const result = await generateQuestions({
+          skills: skillsToTest,
+          context: {
+            currentRole: assessment.currentRole || "Unknown",
+            targetRole: assessment.targetRole || "Unknown",
+            industry: assessment.industry,
+          },
+        });
+
+        // 4. Map AI response to Question objects (adding missing UI fields)
+        // Note: We don't save questions to DB yet, they are ephemeral for the test session
+        // unless you want to cache them. For now, we generate on-the-fly.
+
+        return result.questions.map((q) => {
+          const skill = skillsToTest.find((s) => s.id === q.skillId);
+          return {
+            id: crypto.randomUUID(), // Ephemeral ID for the UI
+            ...q,
+            skillName: skill?.name || "Unknown Skill",
+            category:
+              (skill?.category.toLowerCase() as "hard" | "soft") || "hard",
+          };
+        });
       }),
   },
 

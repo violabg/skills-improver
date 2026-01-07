@@ -1,5 +1,9 @@
 "use client";
-import { RadioGroupField, SelectField } from "@/components/rhf-inputs";
+import {
+  InputField,
+  RadioGroupField,
+  SelectField,
+} from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,12 +19,39 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const ProfileSetupSchema = z.object({
-  currentRole: z.string().min(1, "Please select your role"),
-  yearsExperience: z.string().min(1, "Please select years of experience"),
-  industry: z.string().min(1, "Please select your industry"),
-  careerIntent: z.string().min(1, "Please select your career intent"),
-});
+const ProfileSetupSchema = z
+  .object({
+    currentRole: z.string().min(1, "Please select your role"),
+    customRole: z.string().optional(),
+    yearsExperience: z.string().min(1, "Please select years of experience"),
+    industry: z.string().min(1, "Please select your industry"),
+    customIndustry: z.string().optional(),
+    careerIntent: z.string().min(1, "Please select your career intent"),
+  })
+  .refine(
+    (data) => {
+      if (data.currentRole === "Other") {
+        return !!data.customRole && data.customRole.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Please specify your role",
+      path: ["customRole"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.industry === "Other") {
+        return !!data.customIndustry && data.customIndustry.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Please specify your industry",
+      path: ["customIndustry"],
+    }
+  );
 
 type ProfileSetupData = z.infer<typeof ProfileSetupSchema>;
 
@@ -75,22 +106,37 @@ export function ProfileSetupForm() {
     resolver: zodResolver(ProfileSetupSchema),
     defaultValues: {
       currentRole: "",
+      customRole: "",
       yearsExperience: "",
       industry: "",
+      customIndustry: "",
       careerIntent: "",
     },
   });
+
+  const currentRole = form.watch("currentRole");
+  const industry = form.watch("industry");
 
   return (
     <form
       onSubmit={form.handleSubmit((data) => {
         startTransition(async () => {
           try {
+            // Use custom values if "Other" is selected
+            const finalRole =
+              data.currentRole === "Other" && data.customRole
+                ? data.customRole
+                : data.currentRole;
+            const finalIndustry =
+              data.industry === "Other" && data.customIndustry
+                ? data.customIndustry
+                : data.industry;
+
             // Call oRPC assessment.start with all profile data
             const assessment = await client.assessment.start({
-              currentRole: data.currentRole,
+              currentRole: finalRole,
               yearsExperience: data.yearsExperience,
-              industry: data.industry,
+              industry: finalIndustry,
               careerIntent: data.careerIntent,
             });
 
@@ -113,14 +159,27 @@ export function ProfileSetupForm() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Current Role */}
-          <SelectField
-            label="Current role"
-            control={form.control}
-            name="currentRole"
-            placeholder="Select your role"
-            required
-            options={ROLES.map((role) => ({ value: role, label: role }))}
-          />
+          <div className="space-y-4">
+            <SelectField
+              label="Current role"
+              control={form.control}
+              name="currentRole"
+              placeholder="Select your role"
+              required
+              options={ROLES.map((role) => ({ value: role, label: role }))}
+            />
+
+            {currentRole === "Other" && (
+              <InputField
+                label="Your role title"
+                control={form.control}
+                name="customRole"
+                placeholder="e.g. AI Prompt Engineer"
+                required
+                disabled={isPending}
+              />
+            )}
+          </div>
 
           {/* Years Experience */}
           <SelectField
@@ -136,17 +195,30 @@ export function ProfileSetupForm() {
           />
 
           {/* Industry */}
-          <SelectField
-            label="Industry"
-            control={form.control}
-            name="industry"
-            placeholder="Select your industry"
-            required
-            options={INDUSTRIES.map((industry) => ({
-              value: industry,
-              label: industry,
-            }))}
-          />
+          <div className="space-y-4">
+            <SelectField
+              label="Industry"
+              control={form.control}
+              name="industry"
+              placeholder="Select your industry"
+              required
+              options={INDUSTRIES.map((industry) => ({
+                value: industry,
+                label: industry,
+              }))}
+            />
+
+            {industry === "Other" && (
+              <InputField
+                label="Your industry"
+                control={form.control}
+                name="customIndustry"
+                placeholder="e.g. Aerospace"
+                required
+                disabled={isPending}
+              />
+            )}
+          </div>
 
           {/* Career Intent */}
           <RadioGroupField
@@ -156,6 +228,7 @@ export function ProfileSetupForm() {
             options={CAREER_INTENTS.map((i) => ({
               value: i.value,
               label: i.label,
+              description: i.description,
             }))}
             required
           />

@@ -18,77 +18,6 @@ interface Question {
   context?: string;
 }
 
-// Sample questions bank - we'll select a subset (3-5) to ask
-const QUESTIONS_BANK: Omit<Question, "skillId">[] = [
-  {
-    id: "q1",
-    type: "code",
-    skillName: "React",
-    category: "hard",
-    question:
-      "What would happen if you call setState multiple times in the same event handler? Explain how React batches updates.",
-    context: "Understanding React's rendering behavior",
-  },
-  {
-    id: "q2",
-    type: "explain",
-    skillName: "TypeScript",
-    category: "hard",
-    question:
-      "Explain when you would use a 'type' versus an 'interface' in TypeScript. What are the key differences?",
-  },
-  {
-    id: "q3",
-    type: "scenario",
-    skillName: "Communication",
-    category: "soft",
-    question:
-      "You've discovered a critical bug in production that was caused by another team member's code. How would you approach this situation?",
-    context: "Demonstrating empathy and problem-solving",
-  },
-  {
-    id: "q4",
-    type: "code",
-    skillName: "Testing",
-    category: "hard",
-    question:
-      "What's the difference between unit tests, integration tests, and end-to-end tests? When would you use each?",
-  },
-  {
-    id: "q5",
-    type: "scenario",
-    skillName: "Collaboration",
-    category: "soft",
-    question:
-      "Your team is split on a technical decision. You disagree with the majority. How do you handle this?",
-    context: "Working effectively in teams",
-  },
-  {
-    id: "q6",
-    type: "code",
-    skillName: "API Design",
-    category: "hard",
-    question:
-      "How would you design a RESTful API for a user management system? What endpoints and methods would you include?",
-  },
-  {
-    id: "q7",
-    type: "explain",
-    skillName: "System Architecture",
-    category: "hard",
-    question:
-      "Explain the trade-offs between microservices and monolithic architecture. When would you choose one over the other?",
-  },
-  {
-    id: "q8",
-    type: "scenario",
-    skillName: "Problem Solving",
-    category: "soft",
-    question:
-      "Your team is facing a critical deadline, but you've identified a significant technical debt issue. How would you handle this?",
-  },
-];
-
 type ServerSubmission = (payload: {
   assessmentId: string;
   submissions: Array<{ skillId: string; question: string; answer: string }>;
@@ -113,86 +42,74 @@ export function SkillTestForm({
     Map<string, { level: number; skillName: string }>
   >(new Map());
 
-  // Fetch actual skill IDs, self-evaluations, and select 3-5 questions
+  // Fetch dynamic questions for "Test Me" skills
   useEffect(() => {
     const loadData = async () => {
       if (!assessmentId) return;
 
       try {
-        // Fetch skills from database
-        const skills = await client.skills.list();
-        console.log("Loaded skills from DB:", skills);
+        setLoading(true);
 
-        // Fetch existing assessment results (self-evaluations)
+        // 1. Fetch existing assessment results to find "shouldTest" skills
         const assessment = await client.assessment.getResults({ assessmentId });
-        console.log("Assessment with results:", assessment);
 
-        // Build self-evaluation map
+        // Build self-evaluation map for fallback scoring
         const selfEvalMap = new Map<
           string,
           { level: number; skillName: string }
         >();
+        const testSkillIds: string[] = [];
+
         assessment.results.forEach((result) => {
           selfEvalMap.set(result.skillId, {
             level: result.level,
             skillName: result.skill.name,
           });
+
+          if (result.shouldTest) {
+            testSkillIds.push(result.skillId);
+          }
         });
+
         setSelfEvaluations(selfEvalMap);
-        console.log(`Loaded ${selfEvalMap.size} self-evaluation results`);
 
-        // Create a map of skill names to IDs
-        const skillMap = new Map<string, string>();
-        skills.forEach((skill) => {
-          skillMap.set(skill.name, skill.id);
+        // 2. Generate questions for the selected skills
+        if (testSkillIds.length === 0) {
+          // If user didn't select any skills to test, we could redirect or ask generic questions
+          // For now, let's just proceed to evidence if no testing is requested.
+          console.log("No skills marked for testing.");
+          router.replace(`/assessment/evidence?assessmentId=${assessmentId}`);
+          return;
+        }
+
+        const generatedQuestions = await client.questions.generateForSkills({
+          assessmentId,
+          skillIds: testSkillIds,
         });
 
-        // Select 3-5 questions randomly from the bank
-        const questionsToAsk = 3 + Math.floor(Math.random() * 3); // 3-5 questions
-        const shuffled = [...QUESTIONS_BANK].sort(() => Math.random() - 0.5);
-        const selectedQuestions = shuffled.slice(0, questionsToAsk);
-
-        // Map questions to skill IDs
-        const mappingErrors: string[] = [];
-        const updatedQuestions: Question[] = selectedQuestions
-          .map((q) => {
-            const foundId = skillMap.get(q.skillName);
-            if (!foundId) {
-              const errorMsg = `Skill "${q.skillName}" not found in database`;
-              console.error(`❌ ${errorMsg}`);
-              mappingErrors.push(errorMsg);
-              return null;
-            }
-            console.log(`✅ Question "${q.skillName}": found ${foundId}`);
-            return {
-              ...q,
-              skillId: foundId,
-            };
-          })
-          .filter((q): q is Question => q !== null);
-
-        setSkillMappingErrors(mappingErrors);
-        setQuestionsList(updatedQuestions);
-
-        console.log(
-          `Selected ${updatedQuestions.length} questions for testing`
+        // 3. Update state
+        setQuestionsList(
+          generatedQuestions.map((q) => ({
+            ...q,
+            // Ensure category matches the literal type
+            category:
+              q.category === "hard" || q.category === "soft"
+                ? q.category
+                : "hard",
+          }))
         );
-
-        if (mappingErrors.length > 0) {
-          console.warn(
-            `\n⚠️ ${mappingErrors.length} skill(s) could not be mapped.`
-          );
-        }
       } catch (error) {
-        console.error("Failed to load data:", error);
-        setSkillMappingErrors(["Failed to load assessment data"]);
+        console.error("Failed to load/generate questions:", error);
+        setSkillMappingErrors([
+          "Failed to generate assessment questions. Please try refreshing.",
+        ]);
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [assessmentId]);
+  }, [assessmentId, router]);
 
   const currentQuestion = questionsList[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / questionsList.length) * 100;

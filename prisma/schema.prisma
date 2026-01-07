@@ -145,6 +145,7 @@ model AssessmentResult {
   skillId      String
   level        Int
   confidence   Float
+  shouldTest   Boolean  @default(false)
   notes        String?
   rawAIOutput  Json?
   createdAt    DateTime @default(now())
