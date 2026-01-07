@@ -184,21 +184,44 @@ export const router = {
           });
 
           if (existing) {
+            // Calculate confidence based on self-evaluation level:
+            // Lower self-eval tends to be more accurate, higher self-eval may be overconfident
+            const confidence =
+              ev.level <= 1
+                ? 0.3
+                : ev.level <= 2
+                ? 0.4
+                : ev.level <= 3
+                ? 0.5
+                : ev.level <= 4
+                ? 0.6
+                : 0.7;
             const updated = await ctx.db.assessmentResult.update({
               where: { id: existing.id },
-              data: { level: ev.level, confidence: 0.5 },
+              data: { level: ev.level, confidence },
             });
             results.push(updated);
             continue;
           }
 
           // Create new AssessmentResult row
+          // Calculate confidence based on self-evaluation level
+          const confidence =
+            ev.level <= 1
+              ? 0.3
+              : ev.level <= 2
+              ? 0.4
+              : ev.level <= 3
+              ? 0.5
+              : ev.level <= 4
+              ? 0.6
+              : 0.7;
           const created = await ctx.db.assessmentResult.create({
             data: {
               assessmentId: input.assessmentId,
               skillId: ev.skillId,
               level: ev.level,
-              confidence: 0.5,
+              confidence,
             },
           });
 
@@ -415,9 +438,14 @@ export const router = {
         );
 
         // Calculate gaps using profile data for personalization
-        const gaps = allSkills.map((skill) => {
-          const result = resultsMap.get(skill.id);
-          const currentLevel = result?.level ?? 0;
+        // Only include skills that were actually evaluated by the user
+        const evaluatedSkills = allSkills.filter((skill) =>
+          resultsMap.has(skill.id)
+        );
+
+        const gaps = evaluatedSkills.map((skill) => {
+          const result = resultsMap.get(skill.id)!;
+          const currentLevel = result.level;
 
           // Extract profile data for personalization
           const yearsExp = assessment.yearsExperience;
@@ -624,9 +652,9 @@ export const router = {
           assessment.targetRole?.toLowerCase().includes("lead") ||
           assessment.targetRole?.toLowerCase().includes("manager");
 
-        const totals = allSkills.reduce(
+        const totals = evaluatedSkills.reduce(
           (acc, skill) => {
-            const res = resultsMap.get(skill.id);
+            const res = resultsMap.get(skill.id)!;
             const baseTarget = skill.difficulty ?? 3;
 
             let categoryWeight = 1;
@@ -656,7 +684,7 @@ export const router = {
             );
             const weightedTarget = targetLevel * categoryWeight;
             const weightedCurrent =
-              Math.min(targetLevel, res?.level ?? 0) * categoryWeight;
+              Math.min(targetLevel, res.level) * categoryWeight;
             acc.target += weightedTarget;
             acc.current += weightedCurrent;
             return acc;
