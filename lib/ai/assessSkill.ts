@@ -24,6 +24,7 @@ export async function assessSkill(
       model: skillEvaluationModel,
       output: Output.object({ schema: SkillEvaluationSchema }),
       prompt,
+      maxRetries: 5,
     });
 
     // Ensure skillId matches input

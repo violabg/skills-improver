@@ -24,6 +24,7 @@ export async function recommendResources(
       model: gapAnalysisModel,
       output: Output.object({ schema: ResourceListSchema }),
       prompt,
+      maxRetries: 5,
     });
 
     return output.recommendations;

@@ -47,12 +47,13 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     redirect("/assessment/start");
   }
 
-  // Build gaps data (same logic as skills.getGaps procedure)
-  const allSkills = await db.skill.findMany({ where: { assessable: true } });
-
+  // Build gaps data using only the skills that were part of this assessment
   const resultsMap = new Map(assessment.results.map((r) => [r.skillId, r]));
 
-  const gaps = allSkills.map((skill) => {
+  // Get only the skills that have results in this assessment
+  const assessmentSkills = assessment.results.map((r) => r.skill);
+
+  const gaps = assessmentSkills.map((skill) => {
     const result = resultsMap.get(skill.id as string);
     const currentLevel = result?.level ?? 0;
     const targetLevel = skill.difficulty ?? 3;
@@ -80,8 +81,8 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
   gaps.sort((a, b) => b.priority - a.priority);
 
   const readinessScore = Math.round(
-    ((allSkills.length - gaps.filter((g) => g.gapSize > 0).length) /
-      allSkills.length) *
+    ((assessmentSkills.length - gaps.filter((g) => g.gapSize > 0).length) /
+      assessmentSkills.length) *
       100
   );
 
@@ -94,34 +95,35 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     overallRecommendation: `You are ${readinessScore}% ready for ${assessment.targetRole}. Focus on the top priorities to accelerate your transition.`,
   };
 
-  // Enrich gaps with recommended resources for the top 5 priority gaps.
-  const topGaps = gaps.slice(0, 5);
-  await Promise.all(
-    topGaps.map(async (g) => {
-      try {
-        const recs = await recommendResources({
-          skillId: g.skillId,
-          skillName: g.skillName,
-          skillCategory: "HARD",
-          currentLevel: g.currentLevel,
-          targetLevel: g.targetLevel,
-        });
+  // Enrich top priority gaps with recommended resources
+  // We process them sequentially to avoid hitting model rate limits (especially TPM limits)
+  // and limit to the top 5 biggest gaps to ensure a reasonable load time.
+  const priorityGaps = gaps.filter((g) => g.gapSize > 0).slice(0, 5);
 
-        // Map recommendation shape to the UI resource shape
-        (g as any).resources = recs.map((r) => ({
-          id: r.url || `${g.skillId}-${r.title}`,
-          provider: r.provider,
-          url: r.url,
-          title: r.title,
-          cost: r.cost,
-          estimatedTime: Math.round((r.estimatedTimeMinutes || 0) / 60),
-        }));
-      } catch (err) {
-        console.error("Failed to recommend resources for", g.skillName, err);
-        (g as any).resources = [];
-      }
-    })
-  );
+  for (const g of priorityGaps) {
+    try {
+      const recs = await recommendResources({
+        skillId: g.skillId as string,
+        skillName: g.skillName,
+        skillCategory: "HARD",
+        currentLevel: g.currentLevel,
+        targetLevel: g.targetLevel,
+      });
+
+      // Map recommendation shape to the UI resource shape
+      (g as any).resources = recs.map((r) => ({
+        id: r.url || `${g.skillId}-${r.title}`,
+        provider: r.provider,
+        url: r.url,
+        title: r.title,
+        cost: r.cost,
+        estimatedTime: Math.round((r.estimatedTimeMinutes || 0) / 60),
+      }));
+    } catch (err) {
+      console.error("Failed to recommend resources for", g.skillName, err);
+      (g as any).resources = [];
+    }
+  }
 
   return <ResultsContent gapsData={gapsData} />;
 }

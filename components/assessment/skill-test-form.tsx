@@ -341,6 +341,22 @@ export function SkillTestForm({
     );
   }
 
+  // If no questions to test (user didn't select any skills), show empty state
+  if (questionsList.length === 0 && !loading) {
+    return (
+      <Card className="bg-card p-8">
+        <div className="flex flex-col justify-center items-center py-12 text-center">
+          <p className="mb-4 text-muted-foreground">
+            No skills selected for testing. Proceeding to next step...
+          </p>
+          <div className="inline-block">
+            <div className="border-primary border-b-2 rounded-full w-8 h-8 animate-spin" />
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Skill mapping errors warning */}
