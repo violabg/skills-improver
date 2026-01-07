@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 export const SkillSuggestionSchema = z.object({
-  // IDs of existing skills that are relevant
-  selectedSkillIds: z
-    .array(z.string().uuid())
+  // Names of existing skills that are relevant
+  selectedSkillNames: z
+    .array(z.string())
     .describe(
-      "List of UUIDs of existing skills from the provided list that are most relevant to the user's profile and goal"
+      "List of names of existing skills from the provided list that are most relevant to the user's profile and goal"
     ),
 
   // New skills to suggest creating

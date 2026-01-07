@@ -1,3 +1,4 @@
+import db from "@/lib/db";
 import { generateText, Output } from "ai";
 import { skillEvaluationModel } from "./models"; // Using the same model for now
 import {
@@ -31,7 +32,27 @@ export async function generateSkills(
       prompt,
     });
 
-    return output;
+    // Convert selected skill names to IDs by looking them up in the database
+    const selectedSkillIds = await Promise.all(
+      output.selectedSkillNames.map(async (name: string) => {
+        const skill = await db.skill.findUnique({
+          where: { name },
+          select: { id: true },
+        });
+        return skill?.id || null;
+      })
+    );
+
+    // Filter out null values (skills that couldn't be found)
+    const validSkillIds = selectedSkillIds.filter(
+      (id): id is string => id !== null
+    );
+
+    return {
+      selectedSkillIds: validSkillIds,
+      newSkills: output.newSkills,
+      reasoning: output.reasoning,
+    };
   } catch (error) {
     console.error("AI skill generation failed:", error);
 
@@ -46,11 +67,9 @@ export async function generateSkills(
 }
 
 function buildSkillGenerationPrompt(input: GenerateSkillsInput): string {
-  // Format existing skills for the prompt - compact format to save tokens
+  // Format existing skills for the prompt - skill names only
   const skillsList = input.existingSkills
-    .map(
-      (s) => `- [${s.id}] ${s.name} (${s.category}, ${s.domain || "General"})`
-    )
+    .map((s) => `- ${s.name} (${s.category}, ${s.domain || "General"})`)
     .join("\n");
 
   return `You are an expert career coach and technical skills assessor.
@@ -71,6 +90,8 @@ Identify the most critical skills this user needs to assess to achieve their goa
 
 **Existing Skills Database:**
 ${skillsList}
+
+**IMPORTANT:** When selecting existing skills, use the EXACT skill names from the list above.
 
 **Guidelines:**
 - Focus on what is *testable* and *relevant* for the gap between ${

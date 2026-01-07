@@ -1,12 +1,9 @@
 "use client";
-
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { GapCard } from "./gap-card";
 
 interface GapItem {
   skillId: string;
@@ -38,6 +35,7 @@ interface GapItem {
 
 interface GapsData {
   assessmentId: string;
+  assessmentGapsId: string;
   targetRole?: string | null;
   readinessScore: number;
   gaps: GapItem[];
@@ -47,7 +45,6 @@ interface GapsData {
 
 export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
   const router = useRouter();
-  const [expandedGap, setExpandedGap] = useState<string | null>(null);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600 dark:text-green-400";
@@ -59,20 +56,6 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
     if (score >= 80) return "Ready";
     if (score >= 60) return "Nearly Ready";
     return "Building Skills";
-  };
-
-  const getImpactColor = (impact: string) => {
-    const k = (impact || "").toLowerCase();
-    switch (k) {
-      case "critical":
-      case "high":
-        return "bg-red-500/20 text-red-700 dark:text-red-300";
-      case "medium":
-        return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300";
-      case "low":
-        return "bg-blue-500/20 text-blue-700 dark:text-blue-300";
-    }
-    return "";
   };
 
   return (
@@ -144,145 +127,20 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
 
           <div className="space-y-4">
             {gapsData.gaps.map((gap) => (
-              <Card key={gap.skillId} className="bg-card overflow-hidden">
-                <button
-                  onClick={() =>
-                    setExpandedGap(
-                      expandedGap === gap.skillName ? null : gap.skillName
-                    )
-                  }
-                  className="hover:bg-muted/50 p-6 w-full text-left transition-colors"
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-foreground text-lg">
-                          {gap.skillName}
-                        </h3>
-                        <Badge
-                          className={getImpactColor(
-                            (gap.impact || "").toLowerCase()
-                          )}
-                        >
-                          {gap.impact} impact
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="text-muted-foreground">
-                          Current: <strong>{gap.currentLevel}/5</strong>
-                        </span>
-                        <span className="text-muted-foreground">→</span>
-                        <span className="text-muted-foreground">
-                          Target: <strong>{gap.targetLevel}/5</strong>
-                        </span>
-                      </div>
-
-                      <p className="text-muted-foreground text-sm">
-                        {gap.explanation}
-                      </p>
-                    </div>
-
-                    <svg
-                      className={`text-muted-foreground h-5 w-5 shrink-0 transition-transform ${
-                        expandedGap === gap.skillName ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </button>
-
-                {expandedGap === gap.skillName && (
-                  <div className="bg-muted/30 p-6 border-border border-t">
-                    <h4 className="mb-3 font-medium text-foreground">
-                      Recommended Resources
-                    </h4>
-                    <div className="space-y-2">
-                      {gap.resources && gap.resources.length > 0
-                        ? gap.resources.map((r) => (
-                            <a
-                              key={r.id}
-                              href={r.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
-                            >
-                              <div>
-                                <p className="font-medium text-foreground text-sm">
-                                  {r.title || r.provider}
-                                </p>
-                                <p className="text-muted-foreground text-xs">
-                                  {r.provider} • {r.cost || "free/paid"} •{" "}
-                                  {r.estimatedTime || "—"} hrs
-                                </p>
-                              </div>
-                              <div className="text-primary">Open</div>
-                            </a>
-                          ))
-                        : gap.recommendedActions.map((action, idx) => (
-                            <div
-                              key={idx}
-                              className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
-                            >
-                              <div>
-                                <p className="font-medium text-foreground text-sm">
-                                  {action}
-                                </p>
-                                <p className="text-muted-foreground text-xs">
-                                  Estimated: {gap.estimatedTimeWeeks} weeks
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-
-                      {gap.evidence && gap.evidence.length > 0 && (
-                        <div className="mt-4">
-                          <h5 className="mb-2 font-medium text-foreground">
-                            Relevant Evidence
-                          </h5>
-                          <div className="space-y-2">
-                            {gap.evidence.map((ev) => (
-                              <a
-                                key={ev.id}
-                                href={ev.referenceUrl || "#"}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
-                              >
-                                <div>
-                                  <p className="font-medium text-foreground text-sm">
-                                    {ev.provider || "Evidence"}
-                                  </p>
-                                  <p className="text-muted-foreground text-xs">
-                                    {(ev.signals &&
-                                    typeof ev.signals === "object" &&
-                                    "summary" in ev.signals
-                                      ? (ev.signals as { summary: string })
-                                          .summary
-                                      : null) || ev.referenceUrl}
-                                  </p>
-                                </div>
-                                <div className="text-muted-foreground text-xs">
-                                  View
-                                </div>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </Card>
+              <GapCard
+                key={gap.skillId}
+                assessmentGapId={gapsData.assessmentGapsId}
+                skillId={gap.skillId}
+                skillName={gap.skillName}
+                currentLevel={gap.currentLevel}
+                targetLevel={gap.targetLevel}
+                gapSize={gap.gapSize}
+                impact={gap.impact}
+                explanation={gap.explanation}
+                recommendedActions={gap.recommendedActions}
+                estimatedTimeWeeks={gap.estimatedTimeWeeks}
+                evidence={gap.evidence}
+              />
             ))}
           </div>
         </section>

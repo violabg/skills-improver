@@ -134,6 +134,7 @@ model Assessment {
 
   user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   results AssessmentResult[]
+  gaps    AssessmentGaps?
 
   @@index([userId])
   @@index([status])
@@ -155,6 +156,38 @@ model AssessmentResult {
 
   @@unique([assessmentId, skillId])
   @@index([assessmentId])
+  @@index([skillId])
+}
+
+model AssessmentGaps {
+  id                    String   @id @default(uuid())
+  assessmentId          String   @unique
+  readinessScore        Int
+  gaps                  Json     // Array of gap objects with skillId, skillName, currentLevel, targetLevel, gapSize, impact, priority, etc.
+  strengths             String[] // Array of skill names
+  overallRecommendation String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  gapResources GapResources[]
+
+  @@index([assessmentId])
+}
+
+model GapResources {
+  id                    String   @id @default(uuid())
+  assessmentGapId       String
+  skillId               String
+  skillName             String
+  resources             Json     // Array of resource objects
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  assessmentGap AssessmentGaps @relation(fields: [assessmentGapId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentGapId, skillId])
+  @@index([assessmentGapId])
   @@index([skillId])
 }
 
