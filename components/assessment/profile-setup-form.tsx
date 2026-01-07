@@ -72,7 +72,6 @@ export function ProfileSetupForm() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const form = useForm<ProfileSetupData>({
-    // @ts-expect-error - Zod version mismatch with @hookform/resolvers
     resolver: zodResolver(ProfileSetupSchema),
     defaultValues: {
       currentRole: "",
@@ -87,12 +86,15 @@ export function ProfileSetupForm() {
       onSubmit={form.handleSubmit((data) => {
         startTransition(async () => {
           try {
-            // Call oRPC assessment.start with target role
+            // Call oRPC assessment.start with all profile data
             const assessment = await client.assessment.start({
               targetRole:
                 data.currentRole === "Other"
                   ? data.careerIntent
                   : data.currentRole,
+              yearsExperience: data.yearsExperience,
+              industry: data.industry,
+              careerIntent: data.careerIntent,
             });
 
             // Navigate to next step with assessment ID

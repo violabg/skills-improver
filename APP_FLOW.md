@@ -19,14 +19,17 @@ The Skills Improver application is an AI-powered career growth platform that gui
 - `ProfileSetupForm` (client component with react-hook-form + Zod validation)
 - Form fields: currentRole, yearsExperience, industry, careerIntent
   **API Calls**:
-  - Persistence: Selected goal is saved to the `Assessment.targetRole` field via the oRPC procedure `assessment.updateGoal` when the user continues (best-effort; UI still navigates on failure).
-  - Persistence: Self-evaluation ratings are persisted as `AssessmentResult` rows via the oRPC procedure `assessment.saveSelfEvaluations` when the user continues from the self-evaluation step.
+  - Persistence: `assessment.start` creates the Assessment record with all profile data (`targetRole`, `yearsExperience`, `industry`, `careerIntent`)
+  - Persistence: Self-evaluation ratings are persisted as `AssessmentResult` rows via `assessment.saveSelfEvaluations`
 
 ```typescript
-// oRPC Call: assessment.start
+// oRPC Call: assessment.start (with all profile data)
 const assessment = await client.assessment.start({
   targetRole:
     data.currentRole === "Other" ? data.careerIntent : data.currentRole,
+  yearsExperience: data.yearsExperience, // "0-2", "3-5", "6-10", "10+"
+  industry: data.industry, // "Technology", "Finance", etc.
+  careerIntent: data.careerIntent, // "GROW", "SWITCH", "LEADERSHIP"
 });
 ```
 
@@ -39,7 +42,9 @@ const assessment = await client.assessment.start({
 
 **Database Changes**:
 
-- Creates `Assessment` record with initial metadata
+- Creates `Assessment` record with all profile metadata:
+  - `targetRole`, `yearsExperience`, `industry`, `careerIntent`
+  - `status`: "IN_PROGRESS", `startedAt`: current timestamp
 
 ---
 
@@ -254,27 +259,22 @@ await client.assessment.finalize({
    - Fetches assessment with all results and skills
    - Calculates gaps using same logic as `skills.getGaps` procedure
 
-3. **Gap Calculation Algorithm**:
+3. **Profile-Aware Gap Calculation**:
 
-   ```typescript
-   // For each assessable skill:
-   const currentLevel = result?.level ?? 0;
-   const targetLevel = skill.difficulty ?? 3;
-   const gapSize = Math.max(0, targetLevel - currentLevel);
-   const impact = gapSize > 2 ? "CRITICAL" : gapSize > 1 ? "HIGH" : "MEDIUM";
-   ```
+   The gap analysis uses profile data for personalized skill targeting:
 
-4. **Readiness Score**:
+   - **Experience Adjustment**: `0-2` years → lower targets (-1), `10+` years → higher targets (+1)
+   - **Career Intent Weights**:
+     - `LEADERSHIP` → +40% weight on SOFT/META skills
+     - `SWITCH` → +30% weight on HARD skills (need new tech)
+     - `GROW` → balanced weights
+   - **Industry Context**: Included in recommendations for relevance
 
-   ```typescript
-   const readinessScore = Math.round(
-     ((totalSkills - gapsWithSize > 0) / totalSkills) * 100
-   );
-   ```
+4. **Readiness Score**: Weighted by target levels and career intent
 
 5. **Resource Matching**: Links skills to learning resources via `ResourceSkill` relations
 6. **Evidence Integration**: Shows relevant user-uploaded evidence
-7. **Prioritization**: Sorts gaps by priority (higher gaps = higher priority)
+7. **Prioritization**: Sorted by priority (gap size × category weight)
 
 **Database Queries**:
 

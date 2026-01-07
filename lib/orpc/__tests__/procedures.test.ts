@@ -1,7 +1,7 @@
 import db from "@/lib/db";
 import { router } from "@/lib/orpc/router";
-import type { User } from "@prisma/client";
 import { describe, expect, it } from "vitest";
+import type { User } from "../../prisma/client";
 
 // Mock user for testing
 const mockUser: User = {

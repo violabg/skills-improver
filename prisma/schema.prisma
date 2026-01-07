@@ -121,12 +121,15 @@ model SkillRelation {
 }
 
 model Assessment {
-  id          String           @id @default(uuid())
-  userId      String
-  targetRole  String?
-  status      AssessmentStatus @default(IN_PROGRESS)
-  startedAt   DateTime         @default(now())
-  completedAt DateTime?
+  id              String           @id @default(uuid())
+  userId          String
+  targetRole      String?
+  yearsExperience String?
+  industry        String?
+  careerIntent    String?
+  status          AssessmentStatus @default(IN_PROGRESS)
+  startedAt       DateTime         @default(now())
+  completedAt     DateTime?
 
   user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   results AssessmentResult[]

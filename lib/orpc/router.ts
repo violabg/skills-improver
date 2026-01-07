@@ -4,9 +4,9 @@ import { gapAnalysisModel } from "@/lib/ai/models";
 import { GapAnalysisSchema } from "@/lib/ai/schemas/gapExplanation.schema";
 import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
 import { processEvidence } from "@/lib/services/evidenceProcessor";
-import type { AssessmentResult, Resource } from "@prisma/client";
 import { generateText, Output } from "ai";
 import { z } from "zod";
+import { AssessmentResult, Resource } from "../prisma/client";
 import { protectedProcedure, publicProcedure } from "./procedures";
 
 export const router = {
@@ -22,6 +22,9 @@ export const router = {
       .input(
         z.object({
           targetRole: z.string().min(1, "Target role is required"),
+          yearsExperience: z.string().optional(),
+          industry: z.string().optional(),
+          careerIntent: z.string().optional(),
         })
       )
       .handler(async ({ input, context }) => {
@@ -30,6 +33,9 @@ export const router = {
           data: {
             userId: ctx.user.id,
             targetRole: input.targetRole,
+            yearsExperience: input.yearsExperience,
+            industry: input.industry,
+            careerIntent: input.careerIntent,
             status: "IN_PROGRESS",
           },
         });
@@ -408,22 +414,58 @@ export const router = {
           assessment.results.map((r) => [r.skillId, r])
         );
 
-        // Calculate gaps
+        // Calculate gaps using profile data for personalization
         const gaps = allSkills.map((skill) => {
           const result = resultsMap.get(skill.id);
           const currentLevel = result?.level ?? 0;
 
-          // Target level derives from difficulty, nudged for leadership/soft skills
-          const baseTarget = skill.difficulty ?? 3;
+          // Extract profile data for personalization
+          const yearsExp = assessment.yearsExperience;
+          const careerIntent = assessment.careerIntent;
+          const industry = assessment.industry;
+
+          // Experience adjustment: junior gets lower targets, senior gets higher
+          const experienceAdjustment =
+            yearsExp === "0-2" ? -1 : yearsExp === "10+" ? 1 : 0;
+
+          // Career intent weights skill categories differently
+          const isLeadershipIntent = careerIntent === "LEADERSHIP";
+          const isSwitchIntent = careerIntent === "SWITCH";
+
+          // Leadership role check (from targetRole OR careerIntent)
           const leadershipRole =
+            isLeadershipIntent ||
             assessment.targetRole?.toLowerCase().includes("lead") ||
             assessment.targetRole?.toLowerCase().includes("manager");
-          const categoryWeight =
-            skill.category === "SOFT" || skill.category === "META" ? 1.2 : 1;
+
+          // Category weight based on career intent
+          let categoryWeight = 1;
+          if (skill.category === "SOFT" || skill.category === "META") {
+            // Boost soft/meta skills for leadership path
+            categoryWeight = isLeadershipIntent
+              ? 1.4
+              : leadershipRole
+              ? 1.2
+              : 1;
+          } else if (skill.category === "HARD") {
+            // Boost hard skills for role switchers (need to learn new tech)
+            categoryWeight = isSwitchIntent ? 1.3 : 1;
+          }
+
+          // Target level derives from difficulty + experience + leadership adjustments
+          const baseTarget = skill.difficulty ?? 3;
           const targetLevel = Math.min(
             5,
-            Math.round(
-              baseTarget + (leadershipRole && categoryWeight > 1 ? 1 : 0) // emphasize soft/meta for lead roles
+            Math.max(
+              1,
+              Math.round(
+                baseTarget +
+                  experienceAdjustment +
+                  (leadershipRole &&
+                  (skill.category === "SOFT" || skill.category === "META")
+                    ? 1
+                    : 0)
+              )
             )
           );
           const gapSize = Math.max(0, targetLevel - currentLevel);
@@ -438,6 +480,15 @@ export const router = {
               ? "MEDIUM"
               : "NONE";
 
+          // Build contextual explanation using industry and intent
+          const intentContext =
+            careerIntent === "LEADERSHIP"
+              ? "leadership transition"
+              : careerIntent === "SWITCH"
+              ? "role transition"
+              : "career growth";
+          const industryContext = industry ? ` in ${industry}` : "";
+
           return {
             skillId: skill.id,
             skillName: skill.name,
@@ -446,11 +497,13 @@ export const router = {
             gapSize,
             impact,
             explanation: `${skill.name} is ${
-              gapSize > 0 ? "required for" : "at target for"
-            } ${assessment.targetRole}`,
+              gapSize > 0 ? "essential for" : "at target for"
+            } ${assessment.targetRole}${industryContext} (${intentContext})`,
             recommendedActions: [
               `Focus on improving ${skill.name}`,
-              categoryWeight > 1
+              categoryWeight > 1.2
+                ? `High priority for your ${intentContext} path`
+                : categoryWeight > 1
                 ? `Practice with role-play or stakeholder scenarios`
                 : `Complete a practical exercise or code review`,
             ],
@@ -557,20 +610,46 @@ export const router = {
         // Sort by priority (highest gap/impact first)
         gaps.sort((a, b) => b.priority - a.priority);
 
-        // Calculate readiness score weighted by target levels
+        // Calculate readiness score weighted by target levels (using same profile-aware logic)
+        const yearsExp = assessment.yearsExperience;
+        const careerIntent = assessment.careerIntent;
+        const experienceAdjustment =
+          yearsExp === "0-2" ? -1 : yearsExp === "10+" ? 1 : 0;
+        const isLeadershipIntent = careerIntent === "LEADERSHIP";
+        const isSwitchIntent = careerIntent === "SWITCH";
+        const leadershipRole =
+          isLeadershipIntent ||
+          assessment.targetRole?.toLowerCase().includes("lead") ||
+          assessment.targetRole?.toLowerCase().includes("manager");
+
         const totals = allSkills.reduce(
           (acc, skill) => {
             const res = resultsMap.get(skill.id);
             const baseTarget = skill.difficulty ?? 3;
-            const leadershipRole =
-              assessment.targetRole?.toLowerCase().includes("lead") ||
-              assessment.targetRole?.toLowerCase().includes("manager");
-            const categoryWeight =
-              skill.category === "SOFT" || skill.category === "META" ? 1.2 : 1;
+
+            let categoryWeight = 1;
+            if (skill.category === "SOFT" || skill.category === "META") {
+              categoryWeight = isLeadershipIntent
+                ? 1.4
+                : leadershipRole
+                ? 1.2
+                : 1;
+            } else if (skill.category === "HARD") {
+              categoryWeight = isSwitchIntent ? 1.3 : 1;
+            }
+
             const targetLevel = Math.min(
               5,
-              Math.round(
-                baseTarget + (leadershipRole && categoryWeight > 1 ? 1 : 0)
+              Math.max(
+                1,
+                Math.round(
+                  baseTarget +
+                    experienceAdjustment +
+                    (leadershipRole &&
+                    (skill.category === "SOFT" || skill.category === "META")
+                      ? 1
+                      : 0)
+                )
               )
             );
             const weightedTarget = targetLevel * categoryWeight;

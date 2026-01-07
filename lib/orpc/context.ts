@@ -1,4 +1,4 @@
-import type { PrismaClient, User } from "@prisma/client";
+import type { PrismaClient, User } from "../prisma/client";
 
 export interface BaseContext {
   db: PrismaClient;
