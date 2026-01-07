@@ -1,4 +1,6 @@
 import { SkillTestForm } from "@/components/assessment/skill-test-form";
+import { PageShell } from "@/components/ui/page-shell";
+import { Skeleton } from "@/components/ui/skeleton";
 import { assessSkill } from "@/lib/ai/assessSkill";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
@@ -102,12 +104,12 @@ export async function submitAssessmentAnswersAction(payload: {
 
 function TestSkeleton() {
   return (
-    <div className="mx-auto px-4 py-12 max-w-3xl">
+    <PageShell variant="default">
       <div className="space-y-6">
-        <div className="bg-muted rounded w-32 h-8 animate-pulse" />
-        <div className="bg-muted rounded h-screen animate-pulse" />
+        <Skeleton className="w-32 h-8" />
+        <Skeleton className="h-[400px]" />
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -121,22 +123,18 @@ async function TestContent() {
   }
 
   return (
-    <div className="bg-transparent min-h-screen">
-      <div className="mx-auto px-4 py-12 max-w-3xl">
-        <div className="space-y-2 mb-8">
-          <div className="text-muted-foreground text-sm">Step 4 of 6</div>
-          <h1 className="font-bold text-foreground text-3xl">
-            Skill Validation
-          </h1>
-          <p className="text-muted-foreground">
-            Let&apos;s validate your strengths with a few questions. Take your
-            time - this helps us give you better recommendations.
-          </p>
-        </div>
-
-        <SkillTestForm submitServerAction={submitAssessmentAnswersAction} />
+    <PageShell variant="default">
+      <div className="space-y-2 mb-8">
+        <div className="text-muted-foreground text-sm">Step 4 of 6</div>
+        <h1 className="font-bold text-foreground text-3xl">Skill Validation</h1>
+        <p className="text-muted-foreground">
+          Let&apos;s validate your strengths with a few questions. Take your
+          time - this helps us give you better recommendations.
+        </p>
       </div>
-    </div>
+
+      <SkillTestForm submitServerAction={submitAssessmentAnswersAction} />
+    </PageShell>
   );
 }
 

@@ -22,7 +22,9 @@ interface GenerateSkillsInput {
 
 export async function generateSkills(
   input: GenerateSkillsInput
-): Promise<SkillSuggestion> {
+): Promise<
+  Omit<SkillSuggestion, "selectedSkillNames"> & { selectedSkillIds: string[] }
+> {
   const prompt = buildSkillGenerationPrompt(input);
 
   try {

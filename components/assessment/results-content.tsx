@@ -139,6 +139,7 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                 explanation={gap.explanation}
                 recommendedActions={gap.recommendedActions}
                 estimatedTimeWeeks={gap.estimatedTimeWeeks}
+                priority={gap.priority}
                 evidence={gap.evidence}
               />
             ))}

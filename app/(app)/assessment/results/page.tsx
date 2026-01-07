@@ -1,22 +1,11 @@
 import { ResultsContent } from "@/components/assessment/results-content";
+import { ResultsShellSkeleton } from "@/components/skeletons";
+import { PageShell } from "@/components/ui/page-shell";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-
-function ResultsSkeleton() {
-  return (
-    <div className="bg-transparent min-h-screen">
-      <div className="mx-auto px-4 py-12 max-w-5xl">
-        <div className="space-y-6">
-          <div className="bg-muted rounded w-64 h-12 animate-pulse" />
-          <div className="bg-muted rounded h-screen animate-pulse" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
   const session = await auth.api.getSession({
@@ -160,7 +149,11 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     }
   }
 
-  return <ResultsContent gapsData={gapsData} />;
+  return (
+    <PageShell variant="default">
+      <ResultsContent gapsData={gapsData} />
+    </PageShell>
+  );
 }
 
 export default async function ResultsPage({
@@ -176,7 +169,7 @@ export default async function ResultsPage({
   }
 
   return (
-    <Suspense fallback={<ResultsSkeleton />}>
+    <Suspense fallback={<ResultsShellSkeleton />}>
       <ResultsPageContent assessmentId={assessmentId} />
     </Suspense>
   );

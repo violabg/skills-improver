@@ -1,23 +1,14 @@
 import { DashboardContent } from "@/components/dashboard-content";
+import { DashboardShellSkeleton } from "@/components/skeletons";
+import { PageShell } from "@/components/ui/page-shell";
 import { Suspense } from "react";
-
-function DashboardSkeleton() {
-  return (
-    <div className="bg-transparent min-h-screen">
-      <div className="bg-card/50 backdrop-blur-sm border-border border-b">
-        <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">
-          <div className="bg-slate-200 rounded w-32 h-6 animate-pulse" />
-          <div className="bg-slate-200 rounded w-20 h-10 animate-pulse" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <DashboardContent />
-    </Suspense>
+    <PageShell variant="wide">
+      <Suspense fallback={<DashboardShellSkeleton />}>
+        <DashboardContent />
+      </Suspense>
+    </PageShell>
   );
 }
