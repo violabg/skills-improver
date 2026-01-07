@@ -151,8 +151,8 @@ export function ProcessingContent({ assessmentId }: ProcessingContentProps) {
         {/* Bottom message */}
         <div className="bg-muted/50 p-4 rounded-lg text-muted-foreground text-sm">
           <p>
-            We're using AI to compare your skills with industry standards and
-            identify the most impactful areas for growth.
+            We&apos;re using AI to compare your skills with industry standards
+            and identify the most impactful areas for growth.
           </p>
         </div>
       </div>
