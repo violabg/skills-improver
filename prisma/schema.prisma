@@ -123,6 +123,7 @@ model SkillRelation {
 model Assessment {
   id              String           @id @default(uuid())
   userId          String
+  currentRole     String?
   targetRole      String?
   yearsExperience String?
   industry        String?

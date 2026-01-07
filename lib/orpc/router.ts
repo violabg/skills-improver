@@ -21,7 +21,7 @@ export const router = {
     start: protectedProcedure
       .input(
         z.object({
-          targetRole: z.string().min(1, "Target role is required"),
+          currentRole: z.string().min(1, "Current role is required"),
           yearsExperience: z.string().optional(),
           industry: z.string().optional(),
           careerIntent: z.string().optional(),
@@ -32,7 +32,7 @@ export const router = {
         const assessment = await ctx.db.assessment.create({
           data: {
             userId: ctx.user.id,
-            targetRole: input.targetRole,
+            currentRole: input.currentRole,
             yearsExperience: input.yearsExperience,
             industry: input.industry,
             careerIntent: input.careerIntent,
@@ -498,7 +498,9 @@ export const router = {
             impact,
             explanation: `${skill.name} is ${
               gapSize > 0 ? "essential for" : "at target for"
-            } ${assessment.targetRole}${industryContext} (${intentContext})`,
+            } ${assessment.targetRole}${industryContext} (transitioning from ${
+              assessment.currentRole
+            })`,
             recommendedActions: [
               `Focus on improving ${skill.name}`,
               categoryWeight > 1.2

@@ -242,6 +242,17 @@ export function SkillTestForm({
           // server action will redirect on success; if it returns, clear state
           return;
         } catch (err) {
+          // Suppress alert for redirects which are caught as errors in server actions
+          if (
+            err instanceof Error &&
+            (err.message.includes("NEXT_REDIRECT") ||
+              (typeof err === "object" &&
+                "digest" in err &&
+                typeof err.digest === "string" &&
+                err.digest.includes("NEXT_REDIRECT")))
+          ) {
+            return;
+          }
           console.error("Server submission failed:", err);
           alert("Failed to submit answers. Please try again.");
           return;

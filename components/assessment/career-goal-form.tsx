@@ -69,7 +69,6 @@ export function CareerGoalForm() {
   const assessmentId = searchParams.get("assessmentId");
   const [isPending, startTransition] = useTransition();
   const form = useForm<CareerGoalData>({
-    // @ts-expect-error - Zod version mismatch with @hookform/resolvers
     resolver: zodResolver(CareerGoalSchema),
     defaultValues: {
       goalType: "",
@@ -97,7 +96,7 @@ export function CareerGoalForm() {
             try {
               await client.assessment.updateGoal({
                 assessmentId,
-                targetRole: data.goalType,
+                targetRole: goal as string,
               });
             } catch (err) {
               // Log and continue navigation; saving is best-effort

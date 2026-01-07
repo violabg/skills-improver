@@ -19,14 +19,13 @@ The Skills Improver application is an AI-powered career growth platform that gui
 - `ProfileSetupForm` (client component with react-hook-form + Zod validation)
 - Form fields: currentRole, yearsExperience, industry, careerIntent
   **API Calls**:
-  - Persistence: `assessment.start` creates the Assessment record with all profile data (`targetRole`, `yearsExperience`, `industry`, `careerIntent`)
+  - Persistence: `assessment.start` creates the Assessment record with all profile data (`currentRole`, `yearsExperience`, `industry`, `careerIntent`)
   - Persistence: Self-evaluation ratings are persisted as `AssessmentResult` rows via `assessment.saveSelfEvaluations`
 
 ```typescript
 // oRPC Call: assessment.start (with all profile data)
 const assessment = await client.assessment.start({
-  targetRole:
-    data.currentRole === "Other" ? data.careerIntent : data.currentRole,
+  currentRole: data.currentRole, // Selected from ROLES
   yearsExperience: data.yearsExperience, // "0-2", "3-5", "6-10", "10+"
   industry: data.industry, // "Technology", "Finance", etc.
   careerIntent: data.careerIntent, // "GROW", "SWITCH", "LEADERSHIP"
@@ -35,15 +34,12 @@ const assessment = await client.assessment.start({
 
 1. **Authentication Check**: Server component verifies user session via `auth.api.getSession()`
 2. **Form Validation**: Zod schema validates input data
-   - `targetRole`: derived from currentRole or careerIntent
-   - `status`: "IN_PROGRESS"
-   - `startedAt`: current timestamp
 3. **Navigation**: Redirects to `/assessment/goal?assessmentId={id}`
 
 **Database Changes**:
 
 - Creates `Assessment` record with all profile metadata:
-  - `targetRole`, `yearsExperience`, `industry`, `careerIntent`
+  - `currentRole`, `yearsExperience`, `industry`, `careerIntent`
   - `status`: "IN_PROGRESS", `startedAt`: current timestamp
 
 ---
@@ -65,7 +61,7 @@ const assessment = await client.assessment.start({
 
 **Database Changes**:
 
-- None (goal stored temporarily in URL)
+- Updates `Assessment` record with `targetRole`.
 
 ---
 

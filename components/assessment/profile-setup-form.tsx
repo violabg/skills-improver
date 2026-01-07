@@ -88,10 +88,7 @@ export function ProfileSetupForm() {
           try {
             // Call oRPC assessment.start with all profile data
             const assessment = await client.assessment.start({
-              targetRole:
-                data.currentRole === "Other"
-                  ? data.careerIntent
-                  : data.currentRole,
+              currentRole: data.currentRole,
               yearsExperience: data.yearsExperience,
               industry: data.industry,
               careerIntent: data.careerIntent,
