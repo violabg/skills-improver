@@ -26,10 +26,6 @@ export async function loadGapResources({
         },
       },
     });
-    console.log(
-      "🚀 ~ loadGapResources ~ existingResources:",
-      existingResources
-    );
 
     if (existingResources) {
       // Return cached resources
