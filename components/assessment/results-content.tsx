@@ -105,6 +105,7 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                 estimatedTimeWeeks={gap.estimatedTimeWeeks}
                 priority={gap.priority}
                 evidence={gap.evidence}
+                resources={gap.resources}
               />
             ))}
           </div>

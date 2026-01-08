@@ -1,10 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { loadGapResources } from "@/lib/actions/load-gap-resources";
 import { useState, useTransition } from "react";
+import { Button } from "../ui/button";
 
 interface GapResource {
   id: string;
@@ -37,6 +37,7 @@ interface GapCardProps {
     signals?: unknown;
     createdAt?: string;
   }>;
+  resources?: GapResource[];
 }
 
 const getImpactColor = (impact: string) => {
@@ -65,13 +66,13 @@ export function GapCard({
   recommendedActions,
   estimatedTimeWeeks,
   evidence,
+  resources: initialResources = [],
 }: GapCardProps) {
   const [expandedGap, setExpandedGap] = useState<string | null>(null);
-  const [resources, setResources] = useState<GapResource[]>([]);
+  const [resources, setResources] = useState<GapResource[]>(initialResources);
   const [isPending, startTransition] = useTransition();
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleLoadResources = () => {
+  const handleRegenerateResources = () => {
     startTransition(async () => {
       const result = await loadGapResources({
         assessmentGapId,
@@ -83,8 +84,6 @@ export function GapCard({
 
       if (result.success) {
         setResources(result.resources);
-        setIsLoaded(true);
-        setExpandedGap(skillName);
       }
     });
   };
@@ -141,88 +140,40 @@ export function GapCard({
 
       {expandedGap === skillName && (
         <div className="bg-muted/30 p-6 border-border border-t">
-          {!isLoaded ? (
-            <div className="py-6 text-center">
-              <Button
-                onClick={handleLoadResources}
-                disabled={isPending}
-                size="sm"
-                variant="default"
-              >
-                {isPending
-                  ? "Loading Resources..."
-                  : "Load Recommended Resources"}
-              </Button>
-            </div>
-          ) : (
+          {resources && resources.length > 0 ? (
             <>
               <h4 className="mb-3 font-medium text-foreground">
                 Recommended Resources
               </h4>
               <div className="space-y-2">
-                {resources && resources.length > 0 ? (
-                  <>
-                    {resources.map((r) => (
-                      <a
-                        key={r.id}
-                        href={r.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
-                      >
-                        <div>
-                          <p className="font-medium text-foreground text-sm">
-                            {r.title || r.provider}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            {r.provider} • {r.cost || "free/paid"} •{" "}
-                            {r.estimatedTime || "—"} hrs
-                          </p>
-                        </div>
-                        <div className="text-primary">Open</div>
-                      </a>
-                    ))}
-                    <button
-                      onClick={handleLoadResources}
-                      disabled={isPending}
-                      className="mt-4 text-muted-foreground hover:text-foreground text-sm underline"
-                    >
-                      {isPending ? "Regenerating..." : "Regenerate Resources"}
-                    </button>
-                  </>
-                ) : (
-                  <div className="py-4 text-muted-foreground text-sm text-center">
-                    No resources found. Try again later.
-                  </div>
-                )}
-              </div>
-
-              {recommendedActions &&
-                recommendedActions.length > 0 &&
-                !resources.length && (
-                  <>
-                    <h5 className="mt-4 mb-3 font-medium text-foreground">
-                      General Guidance
-                    </h5>
-                    <div className="space-y-2">
-                      {recommendedActions.map((action, idx) => (
-                        <div
-                          key={idx}
-                          className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
-                        >
-                          <div>
-                            <p className="font-medium text-foreground text-sm">
-                              {action}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              Estimated: {estimatedTimeWeeks} weeks
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                {resources.map((r) => (
+                  <a
+                    key={r.id}
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
+                  >
+                    <div>
+                      <p className="font-medium text-foreground text-sm">
+                        {r.title || r.provider}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {r.provider} • {r.cost || "free/paid"} •{" "}
+                        {r.estimatedTime || "—"} hrs
+                      </p>
                     </div>
-                  </>
-                )}
+                    <div className="text-primary">Open</div>
+                  </a>
+                ))}
+                <Button
+                  onClick={handleRegenerateResources}
+                  disabled={isPending}
+                  className="mt-4"
+                >
+                  {isPending ? "Generating..." : "Generate New Resources"}
+                </Button>
+              </div>
 
               {evidence && evidence.length > 0 && (
                 <div className="mt-4">
@@ -259,6 +210,17 @@ export function GapCard({
                 </div>
               )}
             </>
+          ) : (
+            <div className="py-4 text-muted-foreground text-sm text-center">
+              <p>No resources available for this skill gap.</p>
+              <Button
+                onClick={handleRegenerateResources}
+                disabled={isPending}
+                className="mt-4"
+              >
+                {isPending ? "Generating..." : "Generate Resources"}
+              </Button>
+            </div>
           )}
         </div>
       )}
