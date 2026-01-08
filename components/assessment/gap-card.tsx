@@ -2,6 +2,11 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { loadGapResources } from "@/lib/actions/load-gap-resources";
 import { useState, useTransition } from "react";
 import { Button } from "../ui/button";
@@ -60,15 +65,12 @@ export function GapCard({
   skillName,
   currentLevel,
   targetLevel,
-
   impact,
   explanation,
-  recommendedActions,
-  estimatedTimeWeeks,
   evidence,
   resources: initialResources = [],
 }: GapCardProps) {
-  const [expandedGap, setExpandedGap] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [resources, setResources] = useState<GapResource[]>(initialResources);
   const [isPending, startTransition] = useTransition();
 
@@ -89,141 +91,138 @@ export function GapCard({
   };
 
   return (
-    <Card className="bg-card py-0 overflow-hidden">
-      <button
-        onClick={() =>
-          setExpandedGap(expandedGap === skillName ? null : skillName)
-        }
-        className="hover:bg-muted/50 p-6 w-full text-left transition-colors"
-      >
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-3">
-              <h3 className="font-semibold text-foreground text-lg">
-                {skillName}
-              </h3>
-              <Badge className={getImpactColor((impact || "").toLowerCase())}>
-                {impact} impact
-              </Badge>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card className="bg-card py-0 overflow-hidden">
+        <CollapsibleTrigger className="hover:bg-muted/50 p-6 w-full text-left transition-colors">
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-3">
+                <h3 className="font-semibold text-foreground text-lg">
+                  {skillName}
+                </h3>
+                <Badge className={getImpactColor((impact || "").toLowerCase())}>
+                  {impact} impact
+                </Badge>
+              </div>
+
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-muted-foreground">
+                  Current: <strong>{currentLevel}/5</strong>
+                </span>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-muted-foreground">
+                  Target: <strong>{targetLevel}/5</strong>
+                </span>
+              </div>
+
+              <p className="text-muted-foreground text-sm">{explanation}</p>
             </div>
 
-            <div className="flex items-center gap-4 text-sm">
-              <span className="text-muted-foreground">
-                Current: <strong>{currentLevel}/5</strong>
-              </span>
-              <span className="text-muted-foreground">→</span>
-              <span className="text-muted-foreground">
-                Target: <strong>{targetLevel}/5</strong>
-              </span>
-            </div>
-
-            <p className="text-muted-foreground text-sm">{explanation}</p>
+            <svg
+              className={`text-muted-foreground h-5 w-5 shrink-0 transition-transform ${
+                isOpen ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
           </div>
+        </CollapsibleTrigger>
 
-          <svg
-            className={`text-muted-foreground h-5 w-5 shrink-0 transition-transform ${
-              expandedGap === skillName ? "rotate-180" : ""
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </div>
-      </button>
-
-      {expandedGap === skillName && (
-        <div className="bg-muted/30 p-6 border-border border-t">
-          {resources && resources.length > 0 ? (
-            <>
-              <h4 className="mb-3 font-medium text-foreground">
-                Recommended Resources
-              </h4>
-              <div className="space-y-2">
-                {resources.map((r) => (
-                  <a
-                    key={r.id}
-                    href={r.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
+        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+          <div className="bg-muted/30 p-6 border-border border-t">
+            {resources && resources.length > 0 ? (
+              <>
+                <h4 className="mb-3 font-medium text-foreground">
+                  Recommended Resources
+                </h4>
+                <div className="space-y-2">
+                  {resources.map((r) => (
+                    <a
+                      key={r.id}
+                      href={r.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground text-sm">
+                          {r.title || r.provider}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {r.provider} • {r.cost || "free/paid"} •{" "}
+                          {r.estimatedTime || "—"} hrs
+                        </p>
+                      </div>
+                      <div className="text-primary">Open</div>
+                    </a>
+                  ))}
+                  <Button
+                    onClick={handleRegenerateResources}
+                    disabled={isPending}
+                    className="mt-4"
                   >
-                    <div>
-                      <p className="font-medium text-foreground text-sm">
-                        {r.title || r.provider}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {r.provider} • {r.cost || "free/paid"} •{" "}
-                        {r.estimatedTime || "—"} hrs
-                      </p>
+                    {isPending ? "Generating..." : "Generate New Resources"}
+                  </Button>
+                </div>
+
+                {evidence && evidence.length > 0 && (
+                  <div className="mt-4">
+                    <h5 className="mb-2 font-medium text-foreground">
+                      Relevant Evidence
+                    </h5>
+                    <div className="space-y-2">
+                      {evidence.map((ev) => (
+                        <a
+                          key={ev.id}
+                          href={ev.referenceUrl || "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
+                        >
+                          <div>
+                            <p className="font-medium text-foreground text-sm">
+                              {ev.provider || "Evidence"}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {(ev.signals &&
+                              typeof ev.signals === "object" &&
+                              "summary" in ev.signals
+                                ? (ev.signals as { summary: string }).summary
+                                : null) || ev.referenceUrl}
+                            </p>
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            View
+                          </div>
+                        </a>
+                      ))}
                     </div>
-                    <div className="text-primary">Open</div>
-                  </a>
-                ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="py-4 text-muted-foreground text-sm text-center">
+                <p>No resources available for this skill gap.</p>
                 <Button
                   onClick={handleRegenerateResources}
                   disabled={isPending}
                   className="mt-4"
                 >
-                  {isPending ? "Generating..." : "Generate New Resources"}
+                  {isPending ? "Generating..." : "Generate Resources"}
                 </Button>
               </div>
-
-              {evidence && evidence.length > 0 && (
-                <div className="mt-4">
-                  <h5 className="mb-2 font-medium text-foreground">
-                    Relevant Evidence
-                  </h5>
-                  <div className="space-y-2">
-                    {evidence.map((ev) => (
-                      <a
-                        key={ev.id}
-                        href={ev.referenceUrl || "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
-                      >
-                        <div>
-                          <p className="font-medium text-foreground text-sm">
-                            {ev.provider || "Evidence"}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            {(ev.signals &&
-                            typeof ev.signals === "object" &&
-                            "summary" in ev.signals
-                              ? (ev.signals as { summary: string }).summary
-                              : null) || ev.referenceUrl}
-                          </p>
-                        </div>
-                        <div className="text-muted-foreground text-xs">
-                          View
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="py-4 text-muted-foreground text-sm text-center">
-              <p>No resources available for this skill gap.</p>
-              <Button
-                onClick={handleRegenerateResources}
-                disabled={isPending}
-                className="mt-4"
-              >
-                {isPending ? "Generating..." : "Generate Resources"}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }

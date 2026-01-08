@@ -4,6 +4,53 @@ import { recommendResources } from "@/lib/ai/recommendResources";
 import db from "@/lib/db";
 import { type GapItem } from "@/lib/services/assessment-results";
 
+/**
+ * Retrieve existing resources from database only (no generation).
+ * Used for page load to show cached resources.
+ */
+export async function getExistingGapResources({
+  assessmentGapId,
+  skillId,
+}: {
+  assessmentGapId: string;
+  skillId: string;
+}) {
+  try {
+    const existingResources = await db.gapResources.findUnique({
+      where: {
+        assessmentGapId_skillId: {
+          assessmentGapId,
+          skillId,
+        },
+      },
+    });
+
+    if (existingResources) {
+      return {
+        success: true,
+        resources: existingResources.resources as NonNullable<
+          GapItem["resources"]
+        >,
+      };
+    }
+
+    return {
+      success: true,
+      resources: [],
+    };
+  } catch (error) {
+    console.error("Failed to get existing resources:", error);
+    return {
+      success: false,
+      resources: [],
+    };
+  }
+}
+
+/**
+ * Generate new resources using AI and save to database.
+ * Used when user clicks "Generate Resources" button.
+ */
 export async function loadGapResources({
   assessmentGapId,
   skillId,
@@ -18,27 +65,6 @@ export async function loadGapResources({
   targetLevel: number;
 }) {
   try {
-    // Check if resources already exist for this gap
-    const existingResources = await db.gapResources.findUnique({
-      where: {
-        assessmentGapId_skillId: {
-          assessmentGapId,
-          skillId,
-        },
-      },
-    });
-
-    if (existingResources) {
-      // Return cached resources
-      return {
-        success: true,
-        resources: existingResources.resources as NonNullable<
-          GapItem["resources"]
-        >,
-        cached: true,
-      };
-    }
-
     // Generate new resources using AI
     const recs = await recommendResources({
       skillId,
@@ -58,12 +84,21 @@ export async function loadGapResources({
       estimatedTime: Math.round((r.estimatedTimeMinutes || 0) / 60),
     }));
 
-    // Save to database
-    await db.gapResources.create({
-      data: {
+    // Save to database (upsert to handle regeneration)
+    await db.gapResources.upsert({
+      where: {
+        assessmentGapId_skillId: {
+          assessmentGapId,
+          skillId,
+        },
+      },
+      create: {
         assessmentGapId,
         skillId,
         skillName,
+        resources: mappedResources,
+      },
+      update: {
         resources: mappedResources,
       },
     });
@@ -71,14 +106,12 @@ export async function loadGapResources({
     return {
       success: true,
       resources: mappedResources,
-      cached: false,
     };
   } catch (error) {
-    console.error("Failed to load gap resources for", skillName, error);
+    console.error("Failed to generate gap resources for", skillName, error);
     return {
       success: false,
       resources: [],
-      cached: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

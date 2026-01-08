@@ -1,6 +1,6 @@
 import db from "@/lib/db";
 import { type Prisma } from "@/lib/prisma/client";
-import { loadGapResources } from "../actions/load-gap-resources";
+import { getExistingGapResources } from "../actions/load-gap-resources";
 
 export interface GapItem {
   skillId: string;
@@ -156,16 +156,11 @@ export async function getAssessmentResults(
   }
 
   // Load resources for all gaps with gapSize > 0
-  const gapsWithDeficit = gapsData.gaps.filter((g) => g.gapSize > 0);
-
-  for (const g of gapsWithDeficit) {
+  for (const g of gapsData.gaps) {
     try {
-      const result = await loadGapResources({
+      const result = await getExistingGapResources({
         assessmentGapId: assessmentGapsId,
         skillId: g.skillId as string,
-        skillName: g.skillName,
-        currentLevel: g.currentLevel,
-        targetLevel: g.targetLevel,
       });
 
       if (result.success) {
