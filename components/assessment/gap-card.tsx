@@ -67,6 +67,8 @@ export function GapCard({
   targetLevel,
   impact,
   explanation,
+  recommendedActions,
+  estimatedTimeWeeks,
   evidence,
   resources: initialResources = [],
 }: GapCardProps) {
@@ -172,41 +174,6 @@ export function GapCard({
                     {isPending ? "Generating..." : "Generate New Resources"}
                   </Button>
                 </div>
-
-                {evidence && evidence.length > 0 && (
-                  <div className="mt-4">
-                    <h5 className="mb-2 font-medium text-foreground">
-                      Relevant Evidence
-                    </h5>
-                    <div className="space-y-2">
-                      {evidence.map((ev) => (
-                        <a
-                          key={ev.id}
-                          href={ev.referenceUrl || "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
-                        >
-                          <div>
-                            <p className="font-medium text-foreground text-sm">
-                              {ev.provider || "Evidence"}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {(ev.signals &&
-                              typeof ev.signals === "object" &&
-                              "summary" in ev.signals
-                                ? (ev.signals as { summary: string }).summary
-                                : null) || ev.referenceUrl}
-                            </p>
-                          </div>
-                          <div className="text-muted-foreground text-xs">
-                            View
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </>
             ) : (
               <div className="py-4 text-muted-foreground text-sm text-center">
@@ -218,6 +185,67 @@ export function GapCard({
                 >
                   {isPending ? "Generating..." : "Generate Resources"}
                 </Button>
+              </div>
+            )}
+
+            {recommendedActions && recommendedActions.length > 0 && (
+              <div className="mt-6">
+                <h5 className="mb-3 pt-6 border-border border-t font-medium text-foreground">
+                  General Guidance
+                </h5>
+                <div className="space-y-3">
+                  <div className="bg-background p-4 border border-border rounded-lg">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-muted-foreground text-sm">
+                        Estimated Path
+                      </span>
+                      <Badge variant="secondary">
+                        {estimatedTimeWeeks} weeks
+                      </Badge>
+                    </div>
+                    <ul className="space-y-2">
+                      {recommendedActions.map((action, idx) => (
+                        <li key={idx} className="flex gap-2 text-sm">
+                          <span className="text-primary">•</span>
+                          <span className="text-foreground">{action}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {evidence && evidence.length > 0 && (
+              <div className="mt-6">
+                <h5 className="mb-3 pt-6 border-border border-t font-medium text-foreground">
+                  Relevant Evidence
+                </h5>
+                <div className="space-y-2">
+                  {evidence.map((ev) => (
+                    <a
+                      key={ev.id}
+                      href={ev.referenceUrl || "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex justify-between items-center bg-background hover:bg-card p-3 border border-border rounded-lg transition-colors"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground text-sm">
+                          {ev.provider || "Evidence"}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {(ev.signals &&
+                          typeof ev.signals === "object" &&
+                          "summary" in ev.signals
+                            ? (ev.signals as { summary: string }).summary
+                            : null) || ev.referenceUrl}
+                        </p>
+                      </div>
+                      <div className="text-muted-foreground text-xs">View</div>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>
