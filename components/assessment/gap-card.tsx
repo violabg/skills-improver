@@ -93,8 +93,8 @@ export function GapCard({
   };
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card className="bg-card py-0 overflow-hidden">
+    <Card className="bg-card py-0 overflow-hidden">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger className="hover:bg-muted/50 p-6 w-full text-left transition-colors">
           <div className="flex justify-between items-start gap-4">
             <div className="flex-1 space-y-2">
@@ -250,7 +250,7 @@ export function GapCard({
             )}
           </div>
         </CollapsibleContent>
-      </Card>
-    </Collapsible>
+      </Collapsible>
+    </Card>
   );
 }
