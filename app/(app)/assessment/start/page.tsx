@@ -20,16 +20,13 @@ async function AssessmentStartContent() {
 
 export default function AssessmentStartPage() {
   return (
-    <PageShell variant="narrow">
-      <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 1 of 7</div>
-        <h1 className="font-bold text-foreground text-3xl">
-          Quick Profile Setup
-        </h1>
-        <p className="text-muted-foreground">
-          Help us understand your current position and career goals
-        </p>
-      </div>
+    <PageShell
+      currentStep={1}
+      totalSteps={7}
+      title="Quick Profile Setup"
+      description="Help us understand your current position and career goals"
+      variant="narrow"
+    >
       <Suspense fallback={<FormShellSkeleton />}>
         <AssessmentStartContent />
       </Suspense>

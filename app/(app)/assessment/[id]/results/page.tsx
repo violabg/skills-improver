@@ -44,18 +44,13 @@ export default async function ResultsPage({
   const { id } = await params;
 
   return (
-    <PageShell variant="default">
-      <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 7 of 7</div>
-        <h1 className="font-bold text-foreground text-3xl">
-          Your Skill Gap Report
-        </h1>
-        <p className="text-muted-foreground">
-          Here&apos;s your personalized skill analysis and recommended learning
-          path
-        </p>
-      </div>
-
+    <PageShell
+      currentStep={7}
+      totalSteps={7}
+      title="Your Skill Gap Report"
+      description="Here's your personalized skill analysis and recommended learning path"
+      variant="default"
+    >
       <Suspense fallback={<ResultsShellSkeleton />}>
         <AssessmentResultsContainer id={id} />
       </Suspense>

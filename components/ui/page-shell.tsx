@@ -2,6 +2,10 @@ import { cn } from "@/lib/utils";
 
 interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
+  currentStep: number;
+  totalSteps: number;
+  title: string;
+  description: string;
   variant?: "default" | "narrow" | "wide";
 }
 
@@ -9,6 +13,10 @@ export function PageShell({
   children,
   className,
   variant = "default",
+  currentStep,
+  totalSteps,
+  title,
+  description,
   ...props
 }: PageShellProps) {
   return (
@@ -25,6 +33,13 @@ export function PageShell({
       {...props}
     >
       <div className="slide-in-from-bottom-4 animate-in duration-700 fade-in">
+        <div className="space-y-2 mb-8">
+          <div className="text-muted-foreground text-sm">
+            Step {currentStep} of {totalSteps}
+          </div>
+          <h1 className="font-bold text-foreground text-3xl">{title}</h1>
+          <p className="text-muted-foreground">{description}</p>
+        </div>
         {children}
       </div>
     </div>

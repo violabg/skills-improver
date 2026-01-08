@@ -5,16 +5,13 @@ import { Suspense } from "react";
 
 export default function GoalPage() {
   return (
-    <PageShell variant="narrow">
-      <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 2 of 7</div>
-        <h1 className="font-bold text-foreground text-3xl">
-          Choose Your Target Goal
-        </h1>
-        <p className="text-muted-foreground">
-          What role or position are you working towards?
-        </p>
-      </div>
+    <PageShell
+      currentStep={2}
+      totalSteps={7}
+      title="Choose Your Target Goal"
+      description="What role or position are you working towards?"
+      variant="narrow"
+    >
       <Suspense fallback={<FormShellSkeleton />}>
         <CareerGoalForm />
       </Suspense>
