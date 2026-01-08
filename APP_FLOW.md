@@ -5,8 +5,9 @@
 The Skills Improver application is an AI-powered career growth platform that guides users through a 6-step assessment process to analyze skill gaps and generate personalized learning paths for frontend developers transitioning to senior/lead roles.
 
 - **Backend**: oRPC procedures (type-safe API layer)
-- **Database**: PostgreSQL with Prisma ORM
-- **AI**: Groq API with structured outputs
+- **Database**: PostgreSQL with Prisma ORM (Assessment, AssessmentResult, AssessmentGaps, GapResources)
+- **AI**: Vercel AI SDK with Groq (Llama 3) and Moonshot (Kimi) models
+- **UI**: Next.js App Router, Tailwind CSS, shadcn/ui, PageShell consistency
 
 ## Assessment Flow Steps
 
@@ -16,7 +17,9 @@ The Skills Improver application is an AI-powered career growth platform that gui
 
 **UI Components**:
 
+- `PageShell` (variant: "narrow")
 - `ProfileSetupForm` (client component with react-hook-form + Zod validation)
+- `FormShellSkeleton` (loading state)
 - Form fields: `currentRole`, `yearsExperience`, `industry`, `careerIntent`
 - **Dynamic Fields**: Conditional `customRole` and `customIndustry` inputs appear when "Other" is selected in the respective dropdowns.
   **API Calls**:
@@ -48,16 +51,20 @@ const assessment = await client.assessment.start({
 
 **UI Components**:
 
+- `PageShell` (variant: "narrow")
 - `CareerGoalForm` (client component)
 - Predefined goals: "Frontend → Senior Frontend", "Developer → Tech Lead", etc.
-- **API calls**: The `CareerGoalForm` attempts to persist the selected goal by calling `client.assessment.updateGoal({ assessmentId, targetRole })`. The save is best-effort; navigation proceeds even if the RPC fails.
+
+**API Calls**:
+
+- `client.assessment.updateGoal({ assessmentId, targetRole })`: Persists the selected goal to the `Assessment` record.
 
 **Business Logic**:
 
-1. **Authentication Check**: Server component verifies session
-2. **Goal Selection**: User chooses from predefined options or enters custom goal
-3. **URL Parameter Storage**: Goal encoded in query params (`?assessmentId={id}&goal={encodedGoal}`)
-4. **Navigation**: Redirects to `/assessment/self-evaluation?assessmentId={id}&goal={encodedGoal}`
+1. **Authentication Check**: Server component verifies session.
+2. **Goal Selection**: User chooses from predefined options or enters custom goal.
+3. **URL Parameter Storage**: Goal encoded in query params (`?assessmentId={id}&goal={encodedGoal}`).
+4. **Navigation**: Redirects to `/assessment/self-evaluation?assessmentId={id}&goal={encodedGoal}`.
 
 **Database Changes**:
 
@@ -71,14 +78,13 @@ const assessment = await client.assessment.start({
 
 **UI Components**:
 
+- `PageShell` (variant: "narrow")
 - `SelfEvaluationForm` (client component)
-- **Dynamic Skills**: Skills are fetched dynamically based on user profile (8-12 existing skills + 1-3 novel skills suggested by AI).
-- **"Test Me" Toggle**: Users can mark specific skills they want to be practically tested on.
-- 5-point confidence scale for each skill.
+- `FormShellSkeleton` (loading state)
 
 **API Calls**:
 
-- `client.skills.generateForProfile({ assessmentId })`: Fetches/generates the personalized skill list.
+- `client.skills.generateForProfile({ assessmentId })`: Fetches/generates the personalized skill list from AI and database.
 - `client.assessment.saveSelfEvaluations({ assessmentId, evaluations })`: Persists ratings and the `shouldTest` flag to `AssessmentResult`.
 
 **Business Logic**:
@@ -101,10 +107,9 @@ const assessment = await client.assessment.start({
 
 **UI Components**:
 
+- `PageShell` (variant: "default")
 - `SkillTestForm` (client component)
-- **AI Questions**: Contextual questions (code, scenario, explain) generated on-the-fly for selected skills.
-- Progress bar and skip functionality.
-- Textarea for answers.
+- `FormShellSkeleton` (loading state)
 
 **API Calls**:
 
@@ -144,7 +149,7 @@ await client.assessment.submitAnswer({
 
 - Updates `AssessmentResult` records with:
   - AI-evaluated `level` and `confidence`
-  - `notes`, `rawAIOutput`
+  - `notes`, `rawAIOutput` (strengths/weaknesses)
 
 ---
 
@@ -154,29 +159,28 @@ await client.assessment.submitAnswer({
 
 **UI Components**:
 
+- `PageShell` (variant: "default")
 - `EvidenceUploadForm` (client component)
-- GitHub connection button
-- Portfolio URL input
-- CV file upload
-- Privacy notice
+- GitHub connection button (simulated)
+- Portfolio URL input (optional)
+- CV file upload (optional)
 
 **API Calls**:
 
-- **Partial/placeholder**: The UI contains controls for GitHub connection and CV upload, but server-side ingestion is currently placeholder. Planned oRPC procedures include `assessment.connectGithub()` and `assessment.uploadEvidence()` for full evidence ingestion and processing.
+- Currently uses placeholders for GitHub/CV upload. Portfolio URL is saved as part of the evidence record.
 
 **Business Logic**:
 
-1. **Authentication Check**: Server component verifies session
+1. **Authentication Check**: Server component verifies session.
 2. **Evidence Collection**:
    - GitHub connection (simulated)
-   - Portfolio URL input
-   - CV file selection
-3. **Optional Processing**: User can skip this step entirely
-4. **Navigation**: Redirects to `/assessment/processing?assessmentId={id}`
+   - Portfolio URL input (validated as optional)
+3. **Optional Processing**: User can skip this step entirely.
+4. **Navigation**: Redirects to `/assessment/processing?assessmentId={id}`.
 
 **Database Changes**:
 
-- None (evidence processing not yet implemented)
+- Creates `Evidence` record on successful submission.
 
 ---
 
@@ -186,10 +190,10 @@ await client.assessment.submitAnswer({
 
 **UI Components**:
 
+- `PageShell` (variant: "wide")
 - `ProcessingContent` (client component)
-- Animated progress indicator
-- Sequential processing steps
-- Error handling UI
+- Animated progress indicator with sequential steps
+- `ProcessingSkeleton`
 
 **API Calls**:
 
@@ -202,14 +206,13 @@ await client.assessment.finalize({
 
 **Business Logic**:
 
-1. **Authentication Check**: Server component verifies session
+1. **Authentication Check**: Server component verifies session.
 2. **Sequential Processing**:
-   - Shows 6 processing steps with timed delays
-   - Simulates AI analysis (actual gap analysis happens on results page)
+   - Shows 6 processing steps with timed delays (approx. 15s total).
+   - Step texts: "Analyzing self-assessment...", "Evaluating responses...", etc.
 3. **Assessment Finalization**:
-   - Calls `client.assessment.finalize({ assessmentId })` which updates the `Assessment` record `status` to "COMPLETED" and sets `completedAt` timestamp.
-4. **Error Handling**: Shows error UI if finalization fails
-5. **Navigation**: Redirects to `/assessment/results?assessmentId={id}`
+   - Calls `client.assessment.finalize({ assessmentId })` which updates the `Assessment` record `status` to "COMPLETED".
+4. **Navigation**: Redirects to `/assessment/results?assessmentId={id}`.
 
 **Database Changes**:
 
@@ -225,52 +228,39 @@ await client.assessment.finalize({
 
 **UI Components**:
 
+- `PageShell` (variant: "default")
 - `ResultsContent` (client component)
-- Readiness score visualization
-- Strengths and gaps display
-- Expandable gap details with resources
-- Action buttons (Dashboard, Chat)
+- `GapCard` (expandable detailed analysis)
+- `ResultsShellSkeleton`
 
-**API Calls**:
+**Server-Side Logic (`ResultsPageContent`):**
 
-- **No additional API calls** - Data fetched server-side
+1. **Data Retrieval**: Fetches `Assessment` with `AssessmentResult` and `AssessmentGaps`.
+2. **Gap Generation**: If `AssessmentGaps` don't exist, they are calculated and saved to the database immediately.
+3. **Readiness Score**: Calculated based on current vs target levels, weighted by career intent.
+4. **Resource Enrichment**: Top 5 priority gaps are enriched with existing resources from `GapResources`.
 
-**Business Logic**:
+**Client-Side Logic (`GapCard`):**
 
-1. **Authentication Check**: Server component verifies session
-2. **Data Fetching**: Server-side database queries:
+1. **On-Demand Loading**: Resources are loaded/generated when a user expands a skill gap.
+2. **Server Action**: `loadGapResources` action calls AI to find curated resources if not already in DB.
 
-   - Fetches assessment with all results and skills
-   - Calculates gaps using same logic as `skills.getGaps` procedure
+**Database Changes**:
 
-3. **Profile-Aware Gap Calculation**:
-
-   The gap analysis uses profile data for personalized skill targeting:
-
-   - **Experience Adjustment**: `0-2` years → lower targets (-1), `10+` years → higher targets (+1)
-   - **Career Intent Weights**:
-     - `LEADERSHIP` → +40% weight on SOFT/META skills
-     - `SWITCH` → +30% weight on HARD skills (need new tech)
-     - `GROW` → balanced weights
-   - **Industry Context**: Included in recommendations for relevance
-
-4. **Readiness Score**: Weighted by target levels and career intent
-
-5. **Resource Matching**: Links skills to learning resources via `ResourceSkill` relations
-6. **Evidence Integration**: Shows relevant user-uploaded evidence
-7. **Prioritization**: Sorted by priority (gap size × category weight)
-
-**Database Queries**:
-
-- Assessment with results and skills
-- All assessable skills
-- Resource links and evidence items
+- Creates `AssessmentGaps` record (if first time viewing).
+- Creates `GapResources` records as user expands skill gaps.
 
 ## Key Business Logic Patterns
 
+### UI/UX Standards
+
+- **Consistency**: All pages wrap content in `PageShell` for uniform padding, centering, and background effects.
+- **Loading States**: `Suspense` with specific skeletons (`FormShellSkeleton`, `ResultsShellSkeleton`) ensures a smooth transition between steps.
+- **Aesthetics**: Modern design with subtle gradients, glassmorphism, and smooth animations (ping/pulse indicators).
+
 ### Authentication Flow
 
-- **Server Components**: Check session via `auth.api.getSession({ headers: await headers() })`
+- **Server Components**: Check session via `auth.api.getSession()`
 - **Client Components**: Use oRPC client (inherits server context)
 - **Redirect Pattern**: Unauthenticated users → `/login?redirect={currentPath}`
 
@@ -309,17 +299,15 @@ User Input → Form Validation → oRPC Call → Business Logic → Database →
 
 ### TODO Items in Codebase
 
-- **oRPC Procedures**: Many forms have `// TODO: Save via oRPC` comments
-- **Evidence Processing**: GitHub/portfolio analysis not implemented
-- **Gap Analysis**: Currently calculated client-side, should be server-side
-- **Resource Recommendations**: Basic matching, needs AI enhancement
+- **Evidence Ingestion**: Complete GitHub repo analysis and automated CV scraping.
+- **Background Processing**: Move heavy AI calculations to background jobs for faster UI response.
+- **Interactive Roadmap**: Convert the results list into an interactive, time-bound learning roadmap.
 
 ### Planned Enhancements
 
-- **AI-Powered Gap Analysis**: Server-side gap calculation with AI insights
-- **Evidence Integration**: GitHub repo analysis, portfolio scraping
-- **Learning Path Generation**: AI-generated personalized roadmaps
-- **Progress Tracking**: Assessment history and improvement tracking
+- **AI-Powered Gap Analysis**: Further refine the gap calculation with direct AI analysis of self-eval vs test answers.
+- **Learning Path Generation**: AI-generated weekly study plans.
+- **Progress Tracking**: Real-time update of readiness score as user completes resources.
 
 ## Performance Considerations
 
@@ -355,4 +343,4 @@ User Input → Form Validation → oRPC Call → Business Logic → Database →
 
 ---
 
-_This documentation reflects the current implementation as of January 7, 2026. The application uses dynamic AI generation for skills and validation questions._
+_This documentation reflects the current implementation as of January 8, 2026. The application uses dynamic AI generation for skills and validation questions, with server-side persistence for analysis and resources._
