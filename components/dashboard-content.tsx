@@ -1,6 +1,4 @@
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AssessmentsList } from "@/components/dashboard/assessments-list";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,28 +24,6 @@ export async function DashboardContent() {
 
   return (
     <div className="bg-transparent min-h-screen">
-      {/* Header */}
-      <header className="bg-card/50 backdrop-blur-sm border-border border-b">
-        <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">
-          <div className="flex items-center gap-2">
-            <div className="flex justify-center items-center bg-primary rounded-lg w-8 h-8 font-bold text-primary-foreground text-sm">
-              SI
-            </div>
-            <span className="font-semibold text-foreground text-lg">
-              Skills Improver
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground text-sm">
-              {session.user.name || session.user.email}
-            </span>
-            <SignOutButton />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-7xl">
         <div className="space-y-8">

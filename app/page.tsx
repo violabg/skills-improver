@@ -1,35 +1,11 @@
 import { LandingBottomCTA } from "@/components/landing-bottom-cta";
 import { LandingCTA } from "@/components/landing-cta";
-import { LandingHeader } from "@/components/landing-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 
-function HeaderSkeleton() {
-  return (
-    <header className="bg-card border-border border-b">
-      <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">
-        <div className="flex items-center gap-2">
-          <div className="bg-muted rounded-lg w-8 h-8 animate-pulse" />
-          <div className="bg-muted rounded w-32 h-6 animate-pulse" />
-        </div>
-        <div className="bg-muted rounded w-20 h-10 animate-pulse" />
-      </div>
-    </header>
-  );
-}
-
 export default function LandingPage() {
   return (
-    <div className="relative bg-background min-h-screen overflow-hidden">
-      {/* Background Gradients */}
-      <div className="top-0 left-1/2 -z-10 absolute bg-primary/20 opacity-20 blur-3xl rounded-full w-[800px] h-[800px] -translate-x-1/2 pointer-events-none" />
-      <div className="right-0 bottom-0 -z-10 absolute bg-secondary/20 opacity-20 blur-3xl rounded-full w-[600px] h-[600px] pointer-events-none" />
-
-      {/* Header */}
-      <Suspense fallback={<HeaderSkeleton />}>
-        <LandingHeader />
-      </Suspense>
-
+    <>
       {/* Hero Section */}
       <section className="mx-auto px-4 sm:px-6 lg:px-8 py-20 max-w-7xl">
         <div className="space-y-12">
@@ -159,6 +135,6 @@ export default function LandingPage() {
           <p>© 2026 Skills Improver. All rights reserved.</p>
         </div>
       </footer>
-    </div>
+    </>
   );
 }

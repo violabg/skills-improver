@@ -2,6 +2,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import Link from "next/link";
+import { SignOutButton } from "./auth/sign-out-button";
 import { ThemeToggle } from "./theme-toggle";
 
 export async function LandingHeader() {
@@ -36,6 +37,8 @@ export async function LandingHeader() {
               >
                 Dashboard
               </Link>
+
+              <SignOutButton />
             </>
           ) : (
             <Link
