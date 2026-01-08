@@ -1,19 +1,18 @@
-# AI Agent Development Guide
+# AI Agent Development Guide: Skills Improver
 
-## Project Overview
+**Skills Improver** is an AI-powered career growth platform that analyzes skill gaps and generates personalized learning paths for frontend developers transitioning to senior/lead roles.
 
-**Skills Improver** - AI-powered career growth platform that analyzes skill gaps and generates personalized learning paths. Target: frontend developers moving to senior/lead roles.
-
-**Tech Stack**: Next.js 16.1.1 (App Router), Prisma 7.2.0, oRPC 1.13.2, better-auth 1.4.10, AI SDK 6.0.5 (Groq), shadcn/ui with base-ui, PostgreSQL (Neon)
+**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), shadcn/ui (base-ui), PostgreSQL (Neon)
 
 ## Critical Architecture Patterns
 
-### Next.js 16 Cache Components Mode
+### Next.js 16 Cache Components
 
-- **Cache components enabled** (`next.config.ts`): ALL pages MUST be server components by default
-- **Never use `revalidate` exports** - incompatible with cache components mode
-- **Async data pattern**: Wrap async operations in Suspense boundaries
-- **Typed routes enabled**: Route paths are type-checked via `types/routes.d.ts`
+- **`next.config.ts`**: `cacheComponents: true` and `typedRoutes: true` enabled
+- **ALL pages are server components by default** — only add `"use client"` for forms, state, browser APIs
+- **Never export `revalidate`** — incompatible with cache components
+- **Typed routes**: Via `types/routes.d.ts` (route paths type-checked at import)
+- **Async pattern**: Wrap async data in `Suspense` with `Skeleton` fallback
 
 ```tsx
 // ✅ CORRECT: Server component with Suspense
@@ -34,345 +33,179 @@ export default function Page() {
 
 ### Authentication (better-auth)
 
-- **GitHub OAuth only** - email/password disabled
+- **GitHub OAuth only** — email/password disabled
 - **Session retrieval**: `await auth.api.getSession({ headers: await headers() })`
-- **Auth handler**: Use `auth.toNextJsHandler()` in route handlers (NOT `auth.handler`)
-- **Protected routes**: Check session in server components, redirect to `/login?redirect={path}` if null
-- **Schema requirements**: User model needs `emailVerified: Boolean` and `image: String?`
+- **Auth handler**: Use `auth.toNextJsHandler()` (NOT `auth.handler`)
+- **Protected routes**: Check session in server component; redirect to `/login?redirect={path}` if null
+- **Schema requirements**: User needs `emailVerified: Boolean` and `image: String?` fields
 
 ### Component Library (base-ui)
 
-**CRITICAL**: base-ui does NOT support the `asChild` prop pattern used in Radix UI
+**CRITICAL**: base-ui does NOT support `asChild` prop (unlike Radix UI)
 
 ```tsx
-// ❌ WRONG - asChild doesn't exist in base-ui
+// ❌ WRONG
 <Button asChild><Link href="/path">Text</Link></Button>
 
-// ✅ CORRECT - Use render prop pattern
+// ✅ CORRECT: Use render prop
 <Button render={(props) => <Link {...props} href="/path">Text</Link>} />
 
-// ✅ CORRECT - Use composition
-<Link href="/path"
-    className={`${buttonVariants({
-    variant: "outline",
-    size: "sm",
-  })}`}>Text</Link>
+// ✅ CORRECT: Composition with className
+<Link href="/path" className={buttonVariants({ variant: "outline", size: "sm" })}>
+  Text
+</Link>
 ```
 
 ### Dark Theme System
 
-- **OkLCH color system** defined in `app/globals.css`
-- **Theme provider** with `suppressHydrationWarning` in root layout
-- **ALWAYS use semantic tokens**, never hardcoded colors:
-  - `bg-card` (not `bg-white`)
-  - `text-foreground` (not `text-slate-900`)
-  - `bg-primary` (not `bg-blue-600`)
-  - `border-border` (not `border-slate-200`)
+- **OkLCH color system** in `app/globals.css` (semantic tokens, not hardcoded colors)
+- **Always use semantic tokens**: `bg-card`, `text-foreground`, `border-border`, `bg-primary`
+- **Theme provider**: `suppressHydrationWarning` required in root layout to prevent hydration errors
 
 ### Client vs Server Components
 
-- **Server components by default** - no `"use client"` needed
+- **Server components by default** — NO `"use client"` needed
 - **Add `"use client"` ONLY for**:
-  - Form state management (`useState`, `useForm`)
-  - Browser APIs (`useRouter`, `useSearchParams`)
-  - Event handlers (`onClick`, `onChange`)
-  - React hooks (`useEffect`, `useCallback`)
-- **Pattern**: Server page → wraps Client form component
+  - Form state: `useState`, `useForm`
+  - Browser APIs: `useRouter`, `useSearchParams`
+  - Event handlers: `onClick`, `onChange`
+  - React hooks: `useEffect`, `useCallback`, `useTransition`
+- **Pattern**: Server page → wraps client form component
 
 ### Server Actions vs API Routes
 
-- **Prefer Server Actions** over API routes when possible
-- Server Actions provide better type safety and are co-located with forms
-- Use API routes only for:
-  - External webhooks (auth callbacks, payment providers)
+- **Prefer Server Actions** — better type safety, co-located with forms
+- **Use API routes only for**:
+  - External webhooks (OAuth callbacks, payment providers)
   - oRPC endpoints
   - Public APIs consumed by external clients
 
-```tsx
-// ✅ CORRECT: Server Action
-"use server"
+### Form Handling
 
-async function submitAssessment(formData: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) throw new Error("Unauthorized")
+- **ALWAYS use react-hook-form + Zod** for validation
+- **ALWAYS use specific rhf-inputs components**: `InputField`, `SelectField`, `TextareaField`, `SliderField`, `CheckboxField`, `RadioGroupField`, `PasswordField`, `FileUploadField`, `MultiSelectField`, `SwitchField`
+- **NEVER use raw `<input>` or generic `Field` component**
+- **ALWAYS show loading states**: `useTransition()`, disable submit/inputs, show spinner text
 
-  const data = AssessmentSchema.parse(Object.fromEntries(formData))
-  await db.assessment.create({ data })
-  revalidatePath("/dashboard")
-}
-
-// ❌ AVOID: Unnecessary API route
-// app/api/assessment/route.ts
-export async function POST(request: Request) { ... }
-```
-
-### Form Handling Pattern
-
-- **ALWAYS use react-hook-form with Zod** for form validation
-- **ALWAYS use custom rhf-inputs components** - InputField, SelectField, TextareaField, FileUploadField, etc.
-- **NEVER use generic Field component** - use specific rhf-inputs components instead
-- **ALWAYS show loading states** - use `useTransition` or `useFormState`, disable submit, show spinner
-- Never use raw `<input>` elements in forms
-
-**Available rhf-inputs components**:
-
-- `InputField` - Text input with character counter
-- `SelectField` - Dropdown with options array
-- `TextareaField` - Multi-line input with character counter
-- `FileUploadField` - Drag-drop upload with validation
-- `RadioGroupField` - Radio button groups
-- `CheckboxField` - Single checkbox
-- `PasswordField` - Password with visibility toggle
-- `SliderField` - Range slider
-- `SwitchField` - Toggle switch
-- `MultiSelectField` - Multiple selection
-- `InputWithTagField` - Input with tag badges
-
-```tsx
-"use client";
-
-import { useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  InputField,
-  SelectField,
-  TextareaField,
-} from "@/components/rhf-inputs";
-import { z } from "zod";
-
-const FormSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(2),
-  role: z.string().min(1),
-  bio: z.string().max(500),
-});
-
-export function MyForm() {
-  const [isPending, startTransition] = useTransition();
-  const form = useForm({
-    resolver: zodResolver(FormSchema),
-    defaultValues: { email: "", name: "", role: "", bio: "" },
-  });
-
-  return (
-    <form
-      onSubmit={form.handleSubmit((data) => {
-        startTransition(async () => {
-          // Call server action or oRPC procedure
-          await submitAction(data);
-        });
-      })}
-    >
-      <InputField
-        label="Name"
-        control={form.control}
-        name="name"
-        required
-        disabled={isPending}
-      />
-
-      <InputField
-        label="Email"
-        type="email"
-        control={form.control}
-        name="email"
-        required
-        disabled={isPending}
-      />
-
-      <SelectField
-        label="Role"
-        control={form.control}
-        name="role"
-        placeholder="Select your role"
-        required
-        disabled={isPending}
-        options={[
-          { value: "developer", label: "Developer" },
-          { value: "designer", label: "Designer" },
-        ]}
-      />
-
-      <TextareaField
-        label="Bio"
-        description="Tell us about yourself"
-        control={form.control}
-        name="bio"
-        maxLength={500}
-        disabled={isPending}
-      />
-
-      <Button type="submit" disabled={isPending}>
-        {isPending ? "Submitting..." : "Submit"}
-      </Button>
-    </form>
-  );
-}
-```
-
-### Loading States Pattern
-
-- **Forms**: Use `useTransition` or `useFormState` for pending state, disable inputs and submit button, show text/spinner feedback
-- **Data queries**: ALWAYS wrap async server components in Suspense with skeleton fallback from shadcn
-
-```tsx
-// ✅ CORRECT: Server component with skeleton fallback
-import { Skeleton } from "@/components/ui/skeleton";
-
-function DataSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-32 w-full" />
-    </div>
-  );
-}
-
-async function DataContent() {
-  const data = await db.user.findMany();
-  return <DataList items={data} />;
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<DataSkeleton />}>
-      <DataContent />
-    </Suspense>
-  );
-}
-```
-
-## Data Layer (Prisma + oRPC)
+## Data Layer: Prisma + oRPC
 
 ### Database Access
 
 - **Prisma client**: `import db from "@/lib/db"`
-- **Custom output path**: `lib/prisma` (not default `node_modules/.prisma`)
+- **Output path**: `lib/prisma` (custom, not `node_modules/.prisma`)
 - **Migration workflow**:
   1. Edit `prisma/schema.prisma`
   2. Run `pnpm db:push` (dev) or `prisma migrate dev` (production)
   3. Run `pnpm db:generate` to regenerate client
 
-### oRPC Procedures (TODO - Not Yet Implemented)
+### oRPC Procedures (ACTIVE)
 
-- **Type-safe RPC**: All backend calls through oRPC procedures
-- **TODO markers**: Assessment flow forms have `// TODO: Save via oRPC` comments
-- **Validation**: All inputs/outputs validated with Zod schemas
-- **AI outputs**: NEVER return raw LLM output - always validate with Zod first
-
-```typescript
-// Future pattern (not yet implemented)
-const result = await orpc.assessment.submitAnswer({
-  assessmentId: "...",
-  answer: "...",
-});
-```
-
-## AI Integration (Planned)
-
-- **AI SDK v6** with Groq (Kimi 2 model)
-- **Structured outputs**: Use `generateText()` with Zod schemas
-- **AI layer**: Server-side only, never expose raw outputs
-- **Pattern**: AI returns JSON → validate with Zod → store in Prisma → return typed response
+- **Location**: `lib/orpc/router.ts` (1227 lines)
+- **Exposed procedures**: `health.ping` (public); `assessment.*`, `skills.*`, `questions.*` (protected)
+- **Type-safe contracts**: Zod schemas on all inputs/outputs
+- **Context pattern**: `protectedProcedure` provides `{ input, context }` with authenticated DB access
+- **AI outputs**: ALWAYS validate with Zod before storing
 
 ```typescript
-const { output } = await generateText({
-  model: groq("moonshotai/kimi-k2-instruct-0905"),
-  output: Output.object({ schema: SkillEvaluationSchema }),
-  prompt: buildPrompt(input),
-  temperature: 0.3,
-});
-
-return output;
+submitAnswer: protectedProcedure
+  .input(
+    z.object({
+      assessmentId: z.string().uuid(),
+      skillId: z.string().uuid(),
+      answer: z.string(),
+    })
+  )
+  .handler(async ({ input, context }) => {
+    const assessment = await context.db.assessment.findFirst({
+      where: { id: input.assessmentId },
+    });
+    // Verify ownership + evaluate
+  });
 ```
 
-## Assessment Flow (Current Implementation)
+**Key procedures**: `assessment.start`, `assessment.submitAnswer`, `assessment.finalize`, `assessment.updateGoal`, `skills.list`, `questions.generateForSkills`
 
-**6-step process** (`/app/(app)/assessment/*`):
+### AI Integration (ACTIVE)
 
-1. `/start` - Profile setup (role, experience, industry, career intent)
-2. `/goal` - Career goal selection (common paths + custom)
-3. `/self-evaluation` - 15 skills rated 1-5 across hard/soft/meta categories
-4. `/test` - AI skill testing (5 adaptive questions with skip option)
-5. `/evidence` - Optional GitHub/portfolio/CV upload
-6. `/processing` - Animated processing screen
-7. `/results` - Gap report with readiness score, strengths, prioritized gaps
+- **Location**: `lib/ai/` — `assessSkill()`, `generateAdvisorResponse()`, schema definitions
+- **Model**: Groq Kimi 2 (`moonshotai/kimi-k2-instruct-0905`), `temperature: 0.3`
+- **Pattern**: AI SDK v6 `generateText()` with `Output.object({ schema })` for structured outputs
+- **Validation**: `GapAnalysisSchema`, `SkillEvaluationSchema` validate all LLM responses before persistence
+- **Data flow**: Assessment evaluation in `router.ts` handlers → AI evaluates → Zod validates → stores in `AssessmentResult`
 
-**Pattern**: Each step has server page + client form component with state management and navigation.
+## Assessment Flow Architecture
 
-## Development Workflow
+**7-step flow** (`/app/(app)/assessment/*`):
 
-### Commands
+| Step | Route              | Purpose                       | Client Form          | DB Ops                                             |
+| ---- | ------------------ | ----------------------------- | -------------------- | -------------------------------------------------- |
+| 1    | `/start`           | Profile (role, exp, industry) | `ProfileSetupForm`   | Create `Assessment`                                |
+| 2    | `/goal`            | Career target selection       | `CareerGoalForm`     | Update `targetRole`                                |
+| 3    | `/self-evaluation` | Rate 15 skills (1-5)          | `SelfEvaluationForm` | Create `AssessmentResult` (×15)                    |
+| 4    | `/test`            | AI evaluates answers          | `SkillTestForm`      | Update `AssessmentResult` (×5) via `assessSkill()` |
+| 5    | `/evidence`        | Optional GitHub/portfolio     | `EvidenceUploadForm` | Create `Evidence` record                           |
+| 6    | `/processing`      | Animated processing screen    | `ProcessingContent`  | Calls `assessment.finalize`                        |
+| 7    | `/results`         | Gap report + readiness        | `ResultsContent`     | Create/update `AssessmentGaps`, `GapResources`     |
+
+**Key patterns**:
+
+- Assessment state preserved in URL search params (`?assessmentId={id}`)
+- `assessmentId` passed to all oRPC procedures
+- Each step has server page + client form component
+
+## Key Directories
+
+| Path                     | Purpose                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
+| `app/(app)/`             | Protected routes (auth required)                                                          |
+| `components/assessment/` | Client forms: `ProfileSetupForm`, `SelfEvaluationForm`, `SkillTestForm`, `ResultsContent` |
+| `components/ui/`         | shadcn/ui wrappers (base-ui components)                                                   |
+| `components/rhf-inputs/` | react-hook-form field components                                                          |
+| `lib/ai/`                | AI orchestration: `assessSkill()`, `generateAdvisorResponse()`                            |
+| `lib/orpc/`              | Router (procedures), client, context                                                      |
+| `prisma/`                | Schema, migrations, seed data                                                             |
+| `plan/`                  | Project specs: `1.main-spec.md`, `implementation-plan.md`                                 |
+
+## Development Commands
 
 ```bash
-pnpm dev                 # Start dev server (http://localhost:3000)
-pnpm build               # Production build (runs db:generate automatically)
-pnpm db:generate         # Regenerate Prisma client
-pnpm db:push             # Push schema changes to dev DB
-pnpm db:seed             # Seed database with initial data
+pnpm dev              # Start dev server (localhost:3000)
+pnpm db:push          # Push Prisma schema to database
+pnpm db:generate      # Regenerate Prisma client (runs auto in build)
+pnpm db:seed          # Seed 15 core skills from prisma/seed.ts
+pnpm prisma studio   # Visual database browser
+pnpm build            # Production build
 ```
 
-### Environment Variables Required
+**Required environment** (`.env.local`): `DATABASE_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `NEXT_PUBLIC_APP_URL`
 
-```env
-DATABASE_URL=                 # Neon PostgreSQL connection string
-GITHUB_CLIENT_ID=            # GitHub OAuth app ID
-GITHUB_CLIENT_SECRET=        # GitHub OAuth app secret
-NEXT_PUBLIC_APP_URL=         # App URL (http://localhost:3000 for dev)
-```
+## Data Model (Prisma)
 
-## File Organization
+**Core tables**:
 
-```
-app/(app)/              # Protected routes (requires auth)
-app/(auth)/             # Auth routes (login, etc.)
-components/assessment/  # Assessment flow forms (client components)
-components/ui/          # shadcn/ui components (base-ui wrappers)
-lib/                    # Shared utilities
-  ├─ auth.ts           # better-auth config
-  ├─ db.ts             # Prisma client singleton
-  └─ utils.ts          # Tailwind merge utility
-plan/                   # Project specs and documentation
-prisma/                 # Database schema and migrations
-types/                  # TypeScript type definitions
-```
+- `User` — GitHub OAuth identity via better-auth
+- `Skill` — 15 core skills (HARD/SOFT/META categories)
+- `SkillRelation` — Graph edges (prerequisites, dependencies)
+- `Assessment` — Run with status IN_PROGRESS/COMPLETED
+- `AssessmentResult` — Self-eval + AI test result (level 1-5, confidence, notes, rawAIOutput)
+- `AssessmentGaps` — Calculated gaps prioritized by impact
+- `GapResources` — Learning materials per gap
+- `Evidence` — User evidence uploads (GitHub, portfolio, CV)
 
-## Common Mistakes to Avoid
+**Pattern**: All tables properly indexed; `onDelete: Cascade` ensures clean removal.
 
-1. **❌ Using `asChild` prop** - base-ui doesn't support it
-2. **❌ Hardcoded colors** - breaks dark mode, use semantic tokens
-3. **❌ Client components by default** - causes cache component errors
-4. **❌ Missing Suspense** - async data needs Suspense boundaries with Skeleton fallback
-5. **❌ Old auth API** - use `toNextJsHandler()` not `handler`
-6. **❌ Forgetting `suppressHydrationWarning`** - causes hydration errors with theme provider
-7. **❌ Creating API routes instead of Server Actions** - prefer Server Actions for form submissions
-8. **❌ Using generic Field component** - always use specific rhf-inputs components (InputField, SelectField, etc.)
-9. **❌ Missing loading states** - forms must show pending state and disable submit; data queries need Skeleton fallback
+## Critical Patterns (Do This)
 
-## Type Safety
-
-- **Strict TypeScript** enabled
-- **Typed routes** via Next.js config
-- **Zod validation** for forms and API inputs
-- **Prisma types** for database models
-- **better-auth types**: `Session` and `User` exported from `lib/auth.ts`
-
-## Testing Strategy (Planned)
-
-- Unit tests: Jest/Vitest
-- Integration tests: Playwright (assessment flow end-to-end)
-- Contract tests: oRPC procedure validation
-- AI validation: Zod schema checks for all LLM outputs
-
-## Key Files to Reference
-
-- [Prisma schema](prisma/schema.prisma) - Data model with User, Assessment, Skill, etc.
-- [Auth config](lib/auth.ts) - better-auth GitHub OAuth setup
-- [Color system](app/globals.css) - OkLCH theme definitions
-- [Button component](components/ui/button.tsx) - Example of base-ui wrapper pattern
-- [Assessment flow](<app/(app)/assessment/>) - Multi-step form implementation
-- [Implementation plan](plan/implementation-plan.md) - Full project roadmap
+| Pattern             | ✅ DO                                                    | ❌ DON'T                               |
+| ------------------- | -------------------------------------------------------- | -------------------------------------- |
+| **base-ui buttons** | `<Button render={(props) => <Link {...props} />}>`       | `<Button asChild>`                     |
+| **Colors**          | Semantic tokens: `bg-card`, `text-foreground`            | Hardcode: `bg-white`, `text-slate-900` |
+| **Components**      | Server by default; `"use client"` only for interactivity | `"use client"` on every component      |
+| **Async rendering** | Wrap in `Suspense` with `Skeleton`                       | Raw loading states                     |
+| **Forms**           | `useTransition()` for pending, disable submit            | Missing loading states                 |
+| **rhf-inputs**      | Specific components: `InputField`, `SelectField`         | Generic `Field` component              |
+| **Auth routes**     | Check session in server component, redirect              | Trust client-side checks               |
+| **API calls**       | Call oRPC from forms                                     | Create REST endpoints                  |
 
 ## Status: MVP Phase (Jan 2026)
 
@@ -380,7 +213,15 @@ types/                  # TypeScript type definitions
 - ✅ Authentication (GitHub OAuth)
 - ✅ Dark theme implementation
 - ✅ Database schema (Prisma + Neon)
-- ✅ Assessment flow UI (6 steps)
-- ⏳ oRPC procedures (pending)
-- ⏳ AI evaluation layer (pending)
-- ⏳ Gap report generation (pending)
+- ✅ Assessment flow UI (7 steps)
+- ✅ oRPC procedures implemented
+- ✅ AI evaluation layer active
+- ⏳ Gap report generation (in progress)
+
+## Reference Files
+
+- [oRPC Router](lib/orpc/router.ts) — Procedure definitions (start here for backend logic)
+- [Prisma Schema](prisma/schema.prisma) — Data model + constraints
+- [Assessment Forms](components/assessment/) — All flow forms
+- [AI Functions](lib/ai/) — `assessSkill()`, `generateAdvisorResponse()`
+- [Auth Config](lib/auth.ts) — better-auth setup
