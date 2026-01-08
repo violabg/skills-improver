@@ -1,65 +1,47 @@
-"use client";
-
-import {
-  ResultsContent,
-  type GapsData,
-} from "@/components/assessment/results-content";
+import { ResultsContent } from "@/components/assessment/results-content";
+import { ResultsShellSkeleton } from "@/components/skeletons";
 import { PageShell } from "@/components/ui/page-shell";
-import { useAssessment } from "@/lib/hooks/use-assessment";
-import { useEffect, useState } from "react";
+import { auth } from "@/lib/auth";
+import { getAssessmentResults } from "@/lib/services/assessment-results";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
-export default function ResultsPage() {
-  const assessment = useAssessment();
-  const [gapsData, setGapsData] = useState<GapsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+async function AssessmentResultsContainer({ id }: { id: string }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  useEffect(() => {
-    async function loadResults() {
-      try {
-        // Call server action to fetch/compute results
-        const response = await fetch(
-          `/api/assessment/${assessment.id}/results`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to load results");
-        }
-        const data = await response.json();
-        setGapsData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load results");
-      } finally {
-        setLoading(false);
-      }
-    }
+  if (!session) {
+    redirect(`/login?redirect=/assessment/${id}/results`);
+  }
 
-    loadResults();
-  }, [assessment.id]);
-
-  if (loading) {
+  let gapsData;
+  try {
+    gapsData = await getAssessmentResults(id, session.user.id);
+  } catch (error) {
+    console.error("Failed to load results:", error);
     return (
-      <PageShell variant="default">
-        <div className="space-y-4">
-          <div className="bg-muted rounded w-32 h-8 animate-pulse" />
-          <div className="bg-muted rounded w-64 h-12 animate-pulse" />
-          <div className="bg-muted rounded h-96 animate-pulse" />
-        </div>
-      </PageShell>
+      <div className="space-y-4 text-center">
+        <p className="text-red-600">
+          Failed to load results. Please try again.
+        </p>
+        <a href="/assessment/start" className="text-primary hover:underline">
+          Start New Assessment
+        </a>
+      </div>
     );
   }
 
-  if (error || !gapsData) {
-    return (
-      <PageShell variant="default">
-        <div className="space-y-4 text-center">
-          <p className="text-red-600">{error || "Failed to load results"}</p>
-          <a href="/assessment/start" className="text-primary hover:underline">
-            Start New Assessment
-          </a>
-        </div>
-      </PageShell>
-    );
-  }
+  return <ResultsContent gapsData={gapsData} />;
+}
+
+export default async function ResultsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
   return (
     <PageShell variant="default">
@@ -73,7 +55,10 @@ export default function ResultsPage() {
           path
         </p>
       </div>
-      <ResultsContent gapsData={gapsData} />
+
+      <Suspense fallback={<ResultsShellSkeleton />}>
+        <AssessmentResultsContainer id={id} />
+      </Suspense>
     </PageShell>
   );
 }

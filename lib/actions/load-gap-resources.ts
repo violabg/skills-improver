@@ -1,8 +1,8 @@
 "use server";
 
-import { type GapItem } from "@/components/assessment/results-content";
 import { recommendResources } from "@/lib/ai/recommendResources";
 import db from "@/lib/db";
+import { type GapItem } from "@/lib/services/assessment-results";
 
 export async function loadGapResources({
   assessmentGapId,

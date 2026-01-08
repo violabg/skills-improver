@@ -1,5 +1,3 @@
-"use client";
-
 import { EvidenceUploadForm } from "@/components/assessment/evidence-upload-form";
 import { PageShell } from "@/components/ui/page-shell";
 

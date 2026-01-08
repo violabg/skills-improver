@@ -1,8 +1,5 @@
-import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { type Prisma } from "@/lib/prisma/client";
-import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
 
 export interface GapItem {
   skillId: string;
@@ -10,47 +7,47 @@ export interface GapItem {
   currentLevel: number;
   targetLevel: number;
   gapSize: number;
-  impact: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  impact: string;
   explanation: string;
   recommendedActions: string[];
   estimatedTimeWeeks: number;
   priority: number;
-  resources?: {
-    courses: Array<{ title: string; url: string; provider: string }>;
-    articles: Array<{ title: string; url: string }>;
-    books: Array<{ title: string; author: string }>;
-  };
+  resources?: Array<{
+    id: string;
+    provider: string;
+    url: string;
+    title?: string | null;
+    cost?: string | null;
+    estimatedTime?: number | null;
+  }>;
+  evidence?: Array<{
+    id: string;
+    provider?: string | null;
+    referenceUrl?: string | null;
+    signals?: unknown;
+    createdAt?: string;
+  }>;
 }
 
 export interface GapsData {
   assessmentId: string;
   assessmentGapsId: string;
-  targetRole: string;
+  targetRole?: string | null;
   readinessScore: number;
   gaps: GapItem[];
   strengths: string[];
-  overallRecommendation: string;
+  overallRecommendation: string | null;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id: assessmentId } = await params;
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export async function getAssessmentResults(
+  assessmentId: string,
+  userId: string
+): Promise<GapsData> {
   // Fetch assessment results via database
   const assessment = await db.assessment.findFirst({
     where: {
       id: assessmentId,
-      userId: session.user.id,
+      userId: userId,
     },
     include: {
       results: {
@@ -63,10 +60,7 @@ export async function GET(
   });
 
   if (!assessment) {
-    return NextResponse.json(
-      { error: "Assessment not found" },
-      { status: 404 }
-    );
+    throw new Error("Assessment not found");
   }
 
   let gapsData: GapsData;
@@ -88,10 +82,7 @@ export async function GET(
     };
   } else {
     // Generate gaps if they don't exist
-    // Build gaps data using only the skills that were part of this assessment
     const resultsMap = new Map(assessment.results.map((r) => [r.skillId, r]));
-
-    // Get only the skills that have results in this assessment
     const assessmentSkills = assessment.results.map((r) => r.skill);
 
     const gaps: GapItem[] = assessmentSkills.map((skill) => {
@@ -132,7 +123,7 @@ export async function GET(
       .map((g) => g.skillName);
     const overallRecommendation = `You are ${readinessScore}% ready for ${assessment.targetRole}. Focus on the top priorities to accelerate your transition.`;
 
-    // Save gaps to database (upsert to avoid unique constraint race on assessmentId)
+    // Save gaps to database
     const savedGaps = await db.assessmentGaps.upsert({
       where: { assessmentId: assessment.id },
       create: {
@@ -168,7 +159,6 @@ export async function GET(
 
   for (const g of priorityGaps) {
     try {
-      // Try to load existing resources from database
       const existingResources = await db.gapResources.findUnique({
         where: {
           assessmentGapId_skillId: {
@@ -186,5 +176,5 @@ export async function GET(
     }
   }
 
-  return NextResponse.json(gapsData);
+  return gapsData;
 }

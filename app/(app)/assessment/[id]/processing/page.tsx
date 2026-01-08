@@ -1,5 +1,3 @@
-"use client";
-
 import { ProcessingContent } from "@/components/assessment/processing-content";
 import { PageShell } from "@/components/ui/page-shell";
 
