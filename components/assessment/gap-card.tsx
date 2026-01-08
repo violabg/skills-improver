@@ -21,7 +21,7 @@ interface GapCardProps {
   skillName: string;
   currentLevel: number;
   targetLevel: number;
-  gapSize: number;
+
   impact: string;
   explanation: string;
   recommendedActions: string[];
@@ -56,7 +56,7 @@ export function GapCard({
   skillName,
   currentLevel,
   targetLevel,
-  gapSize,
+
   impact,
   explanation,
   recommendedActions,

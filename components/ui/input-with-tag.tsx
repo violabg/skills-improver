@@ -10,7 +10,7 @@ type Props = RefAttributes<HTMLInputElement> & {
 };
 
 export default function InputWithTag(props: Props) {
-  const { id: propsId, onChange, value, ...rest } = props;
+  const { id: propsId, onChange, value } = props;
   const generatedId = useId();
   const id = propsId || generatedId;
 
