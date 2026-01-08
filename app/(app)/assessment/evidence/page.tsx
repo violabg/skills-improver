@@ -28,7 +28,7 @@ async function EvidenceContent({ assessmentId }: { assessmentId: string }) {
   return (
     <PageShell variant="default">
       <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 5 of 6</div>
+        <div className="text-muted-foreground text-sm">Step 5 of 7</div>
         <h1 className="font-bold text-foreground text-3xl">
           Add Evidence (Optional)
         </h1>

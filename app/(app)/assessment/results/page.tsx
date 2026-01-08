@@ -154,6 +154,15 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
 
   return (
     <PageShell variant="default">
+      <div className="space-y-2 mb-8">
+        <div className="text-muted-foreground text-sm">Step 7 of 7</div>
+        <h1 className="font-bold text-foreground text-3xl">
+          Your Skill Gap Report
+        </h1>
+        <p className="text-muted-foreground">
+          Here's your personalized skill analysis and recommended learning path
+        </p>
+      </div>
       <ResultsContent gapsData={gapsData} />
     </PageShell>
   );

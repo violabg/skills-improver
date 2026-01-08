@@ -22,7 +22,7 @@ export default function CareerGoalPage() {
   return (
     <PageShell variant="narrow">
       <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 2 of 6</div>
+        <div className="text-muted-foreground text-sm">Step 2 of 7</div>
         <h1 className="font-bold text-foreground text-3xl">
           Choose Your Target Goal
         </h1>

@@ -125,7 +125,7 @@ async function TestContent() {
   return (
     <PageShell variant="default">
       <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 4 of 6</div>
+        <div className="text-muted-foreground text-sm">Step 4 of 7</div>
         <h1 className="font-bold text-foreground text-3xl">Skill Validation</h1>
         <p className="text-muted-foreground">
           Let&apos;s validate your strengths with a few questions. Take your
