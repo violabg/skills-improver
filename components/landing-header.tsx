@@ -13,14 +13,16 @@ export async function LandingHeader() {
   return (
     <header className="bg-card border-border border-b">
       <div className="flex justify-between items-center mx-auto px-4 sm:px-6 lg:px-8 py-4 max-w-7xl">
-        <div className="flex items-center gap-2">
-          <div className="flex justify-center items-center bg-primary rounded-lg w-8 h-8 font-bold text-primary-foreground text-sm">
-            SI
+        <Link href="/">
+          <div className="flex items-center gap-2">
+            <div className="flex justify-center items-center bg-primary rounded-lg w-8 h-8 font-bold text-primary-foreground text-sm">
+              SI
+            </div>
+            <span className="font-semibold text-foreground text-lg">
+              Skills Improver
+            </span>
           </div>
-          <span className="font-semibold text-foreground text-lg">
-            Skills Improver
-          </span>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-4">
           {session ? (
