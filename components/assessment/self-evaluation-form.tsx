@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 const CONFIDENCE_LEVELS = [
@@ -37,8 +38,7 @@ const CONFIDENCE_LEVELS = [
 
 export function SelfEvaluationForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const assessmentId = searchParams.get("assessmentId");
+  const assessment = useAssessment();
   const [isPending, startTransition] = useTransition();
   const [isFetchingSkills, setIsFetchingSkills] = useState(true);
 
@@ -54,13 +54,13 @@ export function SelfEvaluationForm() {
 
   // Fetch skills on mount
   useEffect(() => {
-    if (!assessmentId) return;
-
     let mounted = true;
     const fetchSkills = async () => {
       try {
         // Use the generation endpoint to get relevant skills for this specific profile
-        const result = await client.skills.generateForProfile({ assessmentId });
+        const result = await client.skills.generateForProfile({
+          assessmentId: assessment.id,
+        });
 
         if (mounted) {
           setSkills(result.skills);
@@ -81,7 +81,7 @@ export function SelfEvaluationForm() {
     return () => {
       mounted = false;
     };
-  }, [assessmentId]);
+  }, [assessment.id]);
 
   const handleRatingChange = (skillId: string, rating: number) => {
     setRatings((prev) => ({ ...prev, [skillId]: rating }));
@@ -119,7 +119,7 @@ export function SelfEvaluationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!allRated || isPending || !assessmentId) return;
+    if (!allRated || isPending) return;
 
     startTransition(async () => {
       try {
@@ -131,12 +131,12 @@ export function SelfEvaluationForm() {
 
         if (evaluations.length > 0) {
           await client.assessment.saveSelfEvaluations({
-            assessmentId,
+            assessmentId: assessment.id,
             evaluations,
           });
         }
 
-        router.push(`/assessment/test?assessmentId=${assessmentId}`);
+        router.push(`/assessment/${assessment.id}/test`);
       } catch (error) {
         console.error("Failed to save self-evaluation:", error);
       }

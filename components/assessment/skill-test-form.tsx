@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { submitServerAction } from "@/lib/actions/skill-test";
+import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 interface Question {
@@ -18,19 +20,10 @@ interface Question {
   context?: string;
 }
 
-type ServerSubmission = (payload: {
-  assessmentId: string;
-  submissions: Array<{ skillId: string; question: string; answer: string }>;
-}) => Promise<void>;
-
-export function SkillTestForm({
-  submitServerAction,
-}: {
-  submitServerAction?: ServerSubmission;
-}) {
+export function SkillTestForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const assessmentId = searchParams.get("assessmentId");
+  const assessment = useAssessment();
+  const assessmentId = assessment.id;
   const [isPending, startTransition] = useTransition();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -45,7 +38,10 @@ export function SkillTestForm({
   // Fetch dynamic questions for "Test Me" skills
   useEffect(() => {
     const loadData = async () => {
-      if (!assessmentId) return;
+      if (!assessmentId) {
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
@@ -78,7 +74,7 @@ export function SkillTestForm({
           // If user didn't select any skills to test, we could redirect or ask generic questions
           // For now, let's just proceed to evidence if no testing is requested.
           console.log("No skills marked for testing.");
-          router.replace(`/assessment/evidence?assessmentId=${assessmentId}`);
+          router.replace(`/assessment/${assessmentId}/evidence`);
           return;
         }
 
@@ -294,7 +290,7 @@ export function SkillTestForm({
 
         // Move to next step - use replace to prevent back navigation issues
         console.log("Moving to evidence page");
-        router.replace(`/assessment/evidence?assessmentId=${assessmentId}`);
+        router.replace(`/assessment/${assessmentId}/evidence`);
       } catch (error) {
         console.error("Failed to submit answers:", error);
         alert("An unexpected error occurred. Please try again.");

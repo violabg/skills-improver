@@ -1,22 +1,7 @@
 import { SelfEvaluationForm } from "@/components/assessment/self-evaluation-form";
 import { FormShellSkeleton } from "@/components/skeletons";
 import { PageShell } from "@/components/ui/page-shell";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-
-async function SelfEvaluationContent() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login?redirect=/assessment/self-evaluation");
-  }
-
-  return <SelfEvaluationForm />;
-}
 
 export default function SelfEvaluationPage() {
   return (
@@ -32,7 +17,7 @@ export default function SelfEvaluationPage() {
         </p>
       </div>
       <Suspense fallback={<FormShellSkeleton />}>
-        <SelfEvaluationContent />
+        <SelfEvaluationForm />
       </Suspense>
     </PageShell>
   );

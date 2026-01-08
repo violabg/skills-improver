@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -208,22 +208,22 @@ export function AssessmentsList() {
             <div className="flex gap-2">
               {assessment.status === "COMPLETED" ? (
                 <Link
-                  href={`/assessment/results?assessmentId=${assessment.id}`}
-                  className="flex-1"
+                  href={`/assessment/${assessment.id}/results`}
+                  className={`${buttonVariants({
+                    variant: "default",
+                  })} flex-1 w-full`}
                 >
-                  <Button variant="default" className="w-full">
-                    View Results
-                  </Button>
+                  View Results
                 </Link>
               ) : (
                 <>
                   <Link
-                    href={`/assessment/test?assessmentId=${assessment.id}`}
-                    className="flex-1"
+                    href={`/assessment/${assessment.id}/test`}
+                    className={`${buttonVariants({
+                      variant: "default",
+                    })} flex-1 w-full`}
                   >
-                    <Button variant="default" className="w-full">
-                      Continue Assessment
-                    </Button>
+                    Continue Assessment
                   </Link>
                   <Button variant="outline" className="flex-1" disabled>
                     Delete

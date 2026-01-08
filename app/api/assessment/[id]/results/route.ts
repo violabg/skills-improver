@@ -1,24 +1,49 @@
-import {
-  ResultsContent,
-  type GapItem,
-  type GapsData,
-} from "@/components/assessment/results-content";
-import { ResultsShellSkeleton } from "@/components/skeletons";
-import { PageShell } from "@/components/ui/page-shell";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { type Prisma } from "@/lib/prisma/client";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import { NextRequest, NextResponse } from "next/server";
 
-async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
+export interface GapItem {
+  skillId: string;
+  skillName: string;
+  currentLevel: number;
+  targetLevel: number;
+  gapSize: number;
+  impact: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  explanation: string;
+  recommendedActions: string[];
+  estimatedTimeWeeks: number;
+  priority: number;
+  resources?: {
+    courses: Array<{ title: string; url: string; provider: string }>;
+    articles: Array<{ title: string; url: string }>;
+    books: Array<{ title: string; author: string }>;
+  };
+}
+
+export interface GapsData {
+  assessmentId: string;
+  assessmentGapsId: string;
+  targetRole: string;
+  readinessScore: number;
+  gaps: GapItem[];
+  strengths: string[];
+  overallRecommendation: string;
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: assessmentId } = await params;
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
-    redirect("/login?redirect=/assessment/results");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Fetch assessment results via database
@@ -38,7 +63,10 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
   });
 
   if (!assessment) {
-    redirect("/assessment/start");
+    return NextResponse.json(
+      { error: "Assessment not found" },
+      { status: 404 }
+    );
   }
 
   let gapsData: GapsData;
@@ -51,11 +79,12 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     gapsData = {
       assessmentId: assessment.id,
       assessmentGapsId: assessment.gaps.id,
-      targetRole: assessment.targetRole,
+      targetRole: assessment.targetRole || "Unknown Role",
       readinessScore: assessment.gaps.readinessScore,
       gaps: assessment.gaps.gaps as unknown as GapItem[],
       strengths: assessment.gaps.strengths,
-      overallRecommendation: assessment.gaps.overallRecommendation,
+      overallRecommendation:
+        assessment.gaps.overallRecommendation || "No recommendation available.",
     };
   } else {
     // Generate gaps if they don't exist
@@ -103,12 +132,19 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
       .map((g) => g.skillName);
     const overallRecommendation = `You are ${readinessScore}% ready for ${assessment.targetRole}. Focus on the top priorities to accelerate your transition.`;
 
-    // Save gaps to database
-    const savedGaps = await db.assessmentGaps.create({
-      data: {
+    // Save gaps to database (upsert to avoid unique constraint race on assessmentId)
+    const savedGaps = await db.assessmentGaps.upsert({
+      where: { assessmentId: assessment.id },
+      create: {
         assessmentId: assessment.id,
         readinessScore,
-        gaps: gaps as unknown as Prisma.InputJsonValue, // Prisma Json needs serialization-compatible type
+        gaps: gaps as unknown as Prisma.InputJsonValue,
+        strengths,
+        overallRecommendation,
+      },
+      update: {
+        readinessScore,
+        gaps: gaps as unknown as Prisma.InputJsonValue,
         strengths,
         overallRecommendation,
       },
@@ -119,7 +155,7 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     gapsData = {
       assessmentId: assessment.id,
       assessmentGapsId: savedGaps.id,
-      targetRole: assessment.targetRole,
+      targetRole: assessment.targetRole || "Unknown Role",
       readinessScore,
       gaps,
       strengths,
@@ -128,8 +164,6 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
   }
 
   // Enrich top priority gaps with recommended resources
-  // We process them sequentially to avoid hitting model rate limits (especially TPM limits)
-  // and limit to the top 5 biggest gaps to ensure a reasonable load time.
   const priorityGaps = gapsData.gaps.filter((g) => g.gapSize > 0).slice(0, 5);
 
   for (const g of priorityGaps) {
@@ -152,37 +186,5 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     }
   }
 
-  return (
-    <PageShell variant="default">
-      <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 7 of 7</div>
-        <h1 className="font-bold text-foreground text-3xl">
-          Your Skill Gap Report
-        </h1>
-        <p className="text-muted-foreground">
-          Here's your personalized skill analysis and recommended learning path
-        </p>
-      </div>
-      <ResultsContent gapsData={gapsData} />
-    </PageShell>
-  );
-}
-
-export default async function ResultsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ assessmentId?: string }>;
-}) {
-  const params = await searchParams;
-  const assessmentId = params.assessmentId;
-
-  if (!assessmentId) {
-    return redirect("/assessment/start");
-  }
-
-  return (
-    <Suspense fallback={<ResultsShellSkeleton />}>
-      <ResultsPageContent assessmentId={assessmentId} />
-    </Suspense>
-  );
+  return NextResponse.json(gapsData);
 }

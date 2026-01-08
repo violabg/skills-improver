@@ -142,7 +142,7 @@ export function ProfileSetupForm() {
 
             // Navigate to next step with assessment ID
             if (assessment.id) {
-              router.push(`/assessment/goal?assessmentId=${assessment.id}`);
+              router.push(`/assessment/${assessment.id}/goal`);
             }
           } catch (error) {
             console.error("Failed to start assessment:", error);

@@ -1,24 +1,9 @@
 import { CareerGoalForm } from "@/components/assessment/career-goal-form";
 import { FormShellSkeleton } from "@/components/skeletons";
 import { PageShell } from "@/components/ui/page-shell";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-async function CareerGoalContent() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login?redirect=/assessment/goal");
-  }
-
-  return <CareerGoalForm />;
-}
-
-export default function CareerGoalPage() {
+export default function GoalPage() {
   return (
     <PageShell variant="narrow">
       <div className="space-y-2 mb-8">
@@ -31,7 +16,7 @@ export default function CareerGoalPage() {
         </p>
       </div>
       <Suspense fallback={<FormShellSkeleton />}>
-        <CareerGoalContent />
+        <CareerGoalForm />
       </Suspense>
     </PageShell>
   );

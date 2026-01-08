@@ -3,6 +3,7 @@
 import { FileUploadField, InputField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -23,11 +24,8 @@ const EvidenceUploadSchema = z.object({
 
 type EvidenceUploadData = z.infer<typeof EvidenceUploadSchema>;
 
-interface EvidenceUploadFormProps {
-  assessmentId: string;
-}
-
-export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
+export function EvidenceUploadForm() {
+  const assessment = useAssessment();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [connectingGithub, setConnectingGithub] = useState(false);
@@ -65,7 +63,7 @@ export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
 
   const handleSkip = () => {
     startTransition(async () => {
-      router.push(`/assessment/processing?assessmentId=${assessmentId}`);
+      router.push(`/assessment/${assessment.id}/processing`);
     });
   };
 
@@ -108,7 +106,7 @@ export function EvidenceUploadForm({ assessmentId }: EvidenceUploadFormProps) {
               );
             }
 
-            router.push(`/assessment/processing?assessmentId=${assessmentId}`);
+            router.push(`/assessment/${assessment.id}/processing`);
           } catch (error) {
             console.error("Failed to upload evidence:", error);
             alert(

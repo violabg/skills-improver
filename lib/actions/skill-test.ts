@@ -1,20 +1,16 @@
-import { SkillTestForm } from "@/components/assessment/skill-test-form";
-import { PageShell } from "@/components/ui/page-shell";
-import { Skeleton } from "@/components/ui/skeleton";
-import { assessSkill } from "@/lib/ai/assessSkill";
-import { auth } from "@/lib/auth";
-import db from "@/lib/db";
-import { headers, headers as nextHeaders } from "next/headers";
+"use server";
+
+import { headers as nextHeaders } from "next/headers";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import { assessSkill } from "../ai/assessSkill";
+import { auth } from "../auth";
+import db from "../db";
 
 // Server action to process submitted answers and redirect server-side on success
-export async function submitAssessmentAnswersAction(payload: {
+export async function submitServerAction(payload: {
   assessmentId: string;
   submissions: Array<{ skillId: string; question: string; answer: string }>;
 }) {
-  "use server";
-
   const { assessmentId, submissions } = payload;
 
   const session = await auth.api.getSession({ headers: await nextHeaders() });
@@ -99,49 +95,5 @@ export async function submitAssessmentAnswersAction(payload: {
   }
 
   // On success, perform a server-side redirect to the evidence step
-  return redirect(`/assessment/evidence?assessmentId=${assessmentId}`);
-}
-
-function TestSkeleton() {
-  return (
-    <PageShell variant="default">
-      <div className="space-y-6">
-        <Skeleton className="w-32 h-8" />
-        <Skeleton className="h-[400px]" />
-      </div>
-    </PageShell>
-  );
-}
-
-async function TestContent() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login?redirect=/assessment/test");
-  }
-
-  return (
-    <PageShell variant="default">
-      <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 4 of 7</div>
-        <h1 className="font-bold text-foreground text-3xl">Skill Validation</h1>
-        <p className="text-muted-foreground">
-          Let&apos;s validate your strengths with a few questions. Take your
-          time - this helps us give you better recommendations.
-        </p>
-      </div>
-
-      <SkillTestForm submitServerAction={submitAssessmentAnswersAction} />
-    </PageShell>
-  );
-}
-
-export default function TestPage() {
-  return (
-    <Suspense fallback={<TestSkeleton />}>
-      <TestContent />
-    </Suspense>
-  );
+  return redirect(`/assessment/${assessmentId}/evidence`);
 }

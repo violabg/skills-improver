@@ -22,6 +22,9 @@ interface GapCardProps {
   currentLevel: number;
   targetLevel: number;
 
+  // Optional: size of the gap (target - current). Not always used visually.
+  gapSize?: number;
+
   impact: string;
   explanation: string;
   recommendedActions: string[];

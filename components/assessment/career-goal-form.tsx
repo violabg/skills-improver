@@ -9,9 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -65,8 +66,7 @@ const COMMON_GOALS = [
 
 export function CareerGoalForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const assessmentId = searchParams.get("assessmentId");
+  const assessment = useAssessment();
   const [isPending, startTransition] = useTransition();
   const form = useForm<CareerGoalData>({
     resolver: zodResolver(CareerGoalSchema),
@@ -83,19 +83,14 @@ export function CareerGoalForm() {
       onSubmit={form.handleSubmit((data) => {
         startTransition(async () => {
           try {
-            if (!assessmentId) {
-              throw new Error("Assessment ID is missing");
-            }
-
             // Store the goal in session state and navigate to next step
             // Persist selected goal to the assessment (best-effort)
             const goal =
               data.goalType === "custom" ? data.customGoal : data.goalType;
-            const goalParam = goal ? encodeURIComponent(goal) : "";
 
             try {
               await client.assessment.updateGoal({
-                assessmentId,
+                assessmentId: assessment.id,
                 targetRole: goal as string,
               });
             } catch (err) {
@@ -104,9 +99,7 @@ export function CareerGoalForm() {
               console.error("Failed to save goal:", err);
             }
 
-            router.push(
-              `/assessment/self-evaluation?assessmentId=${assessmentId}&goal=${goalParam}`
-            );
+            router.push(`/assessment/${assessment.id}/self-evaluation`);
           } catch (error) {
             console.error("Failed to save goal:", error);
           }

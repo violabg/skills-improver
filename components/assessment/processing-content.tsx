@@ -1,5 +1,6 @@
 "use client";
 
+import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,11 +14,8 @@ const PROCESSING_STEPS = [
   { id: 6, text: "Generating personalized recommendations...", duration: 2500 },
 ];
 
-interface ProcessingContentProps {
-  assessmentId: string;
-}
-
-export function ProcessingContent({ assessmentId }: ProcessingContentProps) {
+export function ProcessingContent() {
+  const assessment = useAssessment();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +34,11 @@ export function ProcessingContent({ assessmentId }: ProcessingContentProps) {
 
         // Finalize assessment to mark as completed
         await client.assessment.finalize({
-          assessmentId,
+          assessmentId: assessment.id,
         });
 
         // Navigate to results with assessment ID
-        router.push(`/assessment/results?assessmentId=${assessmentId}`);
+        router.push(`/assessment/${assessment.id}/results`);
       } catch (err) {
         console.error("Assessment finalization failed:", err);
         setError(
@@ -54,7 +52,7 @@ export function ProcessingContent({ assessmentId }: ProcessingContentProps) {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [router, assessmentId]);
+  }, [router, assessment.id]);
 
   const progress = ((currentStep + 1) / PROCESSING_STEPS.length) * 100;
 
