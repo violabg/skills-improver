@@ -5,17 +5,13 @@ import { Suspense } from "react";
 
 export default function SelfEvaluationPage() {
   return (
-    <PageShell variant="narrow">
-      <div className="space-y-2 mb-8">
-        <div className="text-muted-foreground text-sm">Step 3 of 7</div>
-        <h1 className="font-bold text-foreground text-3xl">
-          Rate Your Confidence
-        </h1>
-        <p className="text-muted-foreground">
-          How confident are you in each of these skills? Be honest - there are
-          no right or wrong answers.
-        </p>
-      </div>
+    <PageShell
+      currentStep={3}
+      totalSteps={7}
+      title="Rate Your Confidence"
+      description="How confident are you in each of these skills? Be honest - there are no right or wrong answers."
+      variant="narrow"
+    >
       <Suspense fallback={<FormShellSkeleton />}>
         <SelfEvaluationForm />
       </Suspense>
