@@ -90,7 +90,7 @@ export function GapCard({
   };
 
   return (
-    <Card className="bg-card overflow-hidden">
+    <Card className="bg-card py-0 overflow-hidden">
       <button
         onClick={() =>
           setExpandedGap(expandedGap === skillName ? null : skillName)
