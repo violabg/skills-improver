@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GapCard } from "./gap-card";
 
-interface GapItem {
+export interface GapItem {
   skillId: string;
   skillName: string;
   currentLevel: number;
@@ -33,14 +33,14 @@ interface GapItem {
   }>;
 }
 
-interface GapsData {
+export interface GapsData {
   assessmentId: string;
   assessmentGapsId: string;
   targetRole?: string | null;
   readinessScore: number;
   gaps: GapItem[];
   strengths: string[];
-  overallRecommendation: string;
+  overallRecommendation: string | null;
 }
 
 export function ResultsContent({ gapsData }: { gapsData: GapsData }) {

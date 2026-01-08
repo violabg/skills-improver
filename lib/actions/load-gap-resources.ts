@@ -1,5 +1,6 @@
 "use server";
 
+import { type GapItem } from "@/components/assessment/results-content";
 import { recommendResources } from "@/lib/ai/recommendResources";
 import db from "@/lib/db";
 
@@ -31,7 +32,9 @@ export async function loadGapResources({
       // Return cached resources
       return {
         success: true,
-        resources: existingResources.resources as any[],
+        resources: existingResources.resources as NonNullable<
+          GapItem["resources"]
+        >,
         cached: true,
       };
     }
@@ -61,7 +64,7 @@ export async function loadGapResources({
         assessmentGapId,
         skillId,
         skillName,
-        resources: mappedResources as any,
+        resources: mappedResources,
       },
     });
 

@@ -1,8 +1,13 @@
-import { ResultsContent } from "@/components/assessment/results-content";
+import {
+  ResultsContent,
+  type GapItem,
+  type GapsData,
+} from "@/components/assessment/results-content";
 import { ResultsShellSkeleton } from "@/components/skeletons";
 import { PageShell } from "@/components/ui/page-shell";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
+import { type Prisma } from "@/lib/prisma/client";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -36,7 +41,7 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     redirect("/assessment/start");
   }
 
-  let gapsData: any;
+  let gapsData: GapsData;
   let assessmentGapsId: string;
 
   // Check if gaps already exist in database
@@ -48,7 +53,7 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
       assessmentGapsId: assessment.gaps.id,
       targetRole: assessment.targetRole,
       readinessScore: assessment.gaps.readinessScore,
-      gaps: assessment.gaps.gaps as any[],
+      gaps: assessment.gaps.gaps as unknown as GapItem[],
       strengths: assessment.gaps.strengths,
       overallRecommendation: assessment.gaps.overallRecommendation,
     };
@@ -60,7 +65,7 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
     // Get only the skills that have results in this assessment
     const assessmentSkills = assessment.results.map((r) => r.skill);
 
-    const gaps = assessmentSkills.map((skill) => {
+    const gaps: GapItem[] = assessmentSkills.map((skill) => {
       const result = resultsMap.get(skill.id as string);
       const currentLevel = result?.level ?? 0;
       const targetLevel = skill.difficulty ?? 3;
@@ -103,7 +108,7 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
       data: {
         assessmentId: assessment.id,
         readinessScore,
-        gaps: gaps as any,
+        gaps: gaps as unknown as Prisma.InputJsonValue, // Prisma Json needs serialization-compatible type
         strengths,
         overallRecommendation,
       },
@@ -125,9 +130,7 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
   // Enrich top priority gaps with recommended resources
   // We process them sequentially to avoid hitting model rate limits (especially TPM limits)
   // and limit to the top 5 biggest gaps to ensure a reasonable load time.
-  const priorityGaps = gapsData.gaps
-    .filter((g: any) => g.gapSize > 0)
-    .slice(0, 5);
+  const priorityGaps = gapsData.gaps.filter((g) => g.gapSize > 0).slice(0, 5);
 
   for (const g of priorityGaps) {
     try {
@@ -142,7 +145,7 @@ async function ResultsPageContent({ assessmentId }: { assessmentId: string }) {
       });
 
       if (existingResources) {
-        g.resources = existingResources.resources as any[];
+        g.resources = existingResources.resources as GapItem["resources"];
       }
     } catch (err) {
       console.error("Failed to load resources for", g.skillName, err);
