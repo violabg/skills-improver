@@ -7,6 +7,7 @@ import { processEvidence } from "@/lib/services/evidenceProcessor";
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { generateText, Output, wrapLanguageModel } from "ai";
 import { z } from "zod";
+import { generateQuestions, generateSkills } from "../ai";
 import { isDevelopment } from "../ai/utils";
 import { AssessmentResult, Resource } from "../prisma/client";
 import { protectedProcedure, publicProcedure } from "./procedures";
@@ -373,8 +374,6 @@ export const router = {
           select: { id: true, name: true, category: true, domain: true },
         });
 
-        // 3. Call AI to select relevant skills
-        const { generateSkills } = await import("@/lib/ai/generateSkills");
         const suggestion = await generateSkills({
           currentRole: assessment.currentRole || "Unknown",
           targetRole: assessment.targetRole,
@@ -907,10 +906,6 @@ export const router = {
           return [];
         }
 
-        // 3. Call AI to generate questions
-        const { generateQuestions } = await import(
-          "@/lib/ai/generateQuestions"
-        );
         const result = await generateQuestions({
           skills: skillsToTest,
           context: {
