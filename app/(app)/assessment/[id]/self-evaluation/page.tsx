@@ -17,7 +17,6 @@ async function SelfEvaluationFormLoader({
   const result = await serverClient.skills.generateForProfile({
     assessmentId: assessmentId,
   });
-  console.log("result");
   return (
     <SelfEvaluationForm skills={result.skills} reasoning={result.reasoning} />
   );

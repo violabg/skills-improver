@@ -379,7 +379,6 @@ export const router = {
           careerIntent: assessment.careerIntent,
           existingSkills: allSkills,
         });
-        console.log("suggestion", suggestion);
         // 4. Create any new skills AI suggested
         // We use a map to track all final skill IDs (both existing and newly created)
         const finalSkillIds = new Set<string>(suggestion.selectedSkillIds);
