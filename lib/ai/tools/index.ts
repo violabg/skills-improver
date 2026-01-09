@@ -19,3 +19,9 @@ export type { GenerateQuestionsTool } from "./generate-questions.tool";
 
 export { generateSkillsTool } from "./generate-skills.tool";
 export type { GenerateSkillsTool } from "./generate-skills.tool";
+
+export { fetchSkillsTool } from "./fetch-skills.tool";
+export type { FetchSkillsTool } from "./fetch-skills.tool";
+
+export { fetchAssessmentTool } from "./fetch-assessment.tool";
+export type { FetchAssessmentTool } from "./fetch-assessment.tool";

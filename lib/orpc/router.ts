@@ -1,13 +1,10 @@
 import { assessSkill } from "@/lib/ai/assessSkill";
 import { generateAdvisorResponse } from "@/lib/ai/chat-advisor";
-import { gapAnalysisModel } from "@/lib/ai/models";
-import { GapAnalysisSchema } from "@/lib/ai/schemas/gapExplanation.schema";
 import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
 import { processEvidence } from "@/lib/services/evidenceProcessor";
-import { devToolsMiddleware } from "@ai-sdk/devtools";
-import { generateText, Output, wrapLanguageModel } from "ai";
 import { z } from "zod";
-import { isDevelopment } from "../ai/utils";
+import { assessmentAgent } from "../ai/agents";
+import { generateSkills } from "../ai/generateSkills";
 import { AssessmentResult, Resource } from "../prisma/client";
 import { protectedProcedure, publicProcedure } from "./procedures";
 
@@ -374,7 +371,6 @@ export const router = {
         });
 
         // 3. Call AI to select relevant skills
-        const { generateSkills } = await import("@/lib/ai/generateSkills");
         const suggestion = await generateSkills({
           currentRole: assessment.currentRole || "Unknown",
           targetRole: assessment.targetRole,
@@ -383,7 +379,7 @@ export const router = {
           careerIntent: assessment.careerIntent,
           existingSkills: allSkills,
         });
-
+        console.log("suggestion", suggestion);
         // 4. Create any new skills AI suggested
         // We use a map to track all final skill IDs (both existing and newly created)
         const finalSkillIds = new Set<string>(suggestion.selectedSkillIds);
@@ -1127,7 +1123,7 @@ export const router = {
   },
 
   report: {
-    // Generate a skill gap report for an assessment
+    // Generate a skill gap report for an assessment using the agent
     generate: protectedProcedure
       .input(
         z.object({
@@ -1136,18 +1132,14 @@ export const router = {
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
+
+        // Verify user owns the assessment
         const assessment = await ctx.db.assessment.findFirst({
           where: {
             id: input.assessmentId,
             userId: ctx.user.id,
           },
-          include: {
-            results: {
-              include: {
-                skill: true,
-              },
-            },
-          },
+          select: { id: true, targetRole: true },
         });
 
         if (!assessment) {
@@ -1158,78 +1150,36 @@ export const router = {
           throw new Error("Assessment has no target role");
         }
 
-        // Get all skills
-        const allSkills = await ctx.db.skill.findMany();
+        const result = await assessmentAgent.generate({
+          prompt: `Analyze the skill gaps for assessment ID "${input.assessmentId}".
+          
+The target role is "${assessment.targetRole}".
 
-        // Build assessment summary for AI
-        const assessmentSummary = assessment.results
-          .map(
-            (r) =>
-              `${r.skill.name}: Level ${r.level} (Confidence: ${r.confidence})`
-          )
-          .join("\n");
+Use the fetchAssessment tool to get the assessment results, then use the analyzeGaps tool to prepare the analysis context.
 
-        const aiModel = gapAnalysisModel;
+Based on the tool results, provide a comprehensive gap analysis including:
+1. Overall readiness score (0-100%)
+2. Top 5 skill gaps ranked by impact
+3. Current strengths
+4. Strategic recommendations for career transition
 
-        const devToolsEnabledModel = wrapLanguageModel({
-          model: aiModel,
-          middleware: devToolsMiddleware(),
+Format your response as a structured analysis.`,
         });
 
-        // Call AI to analyze gaps
-        const aiAnalysis = await generateText({
-          model: isDevelopment ? devToolsEnabledModel : aiModel,
-          output: Output.object({ schema: GapAnalysisSchema }),
-          prompt: buildGapAnalysisPrompt(
-            assessment.targetRole,
-            assessmentSummary,
-            allSkills
-          ),
-        });
+        // Extract tool names that were called
+        const toolsUsed = result.steps
+          .flatMap((step) => step.toolCalls || [])
+          .map((tc) => tc.toolName);
 
         return {
           assessmentId: input.assessmentId,
           targetRole: assessment.targetRole,
           generatedAt: new Date().toISOString(),
-          analysis: aiAnalysis.output,
+          agentResponse: result.text,
+          toolsUsed,
         };
       }),
   },
 };
 
 export type Router = typeof router;
-
-// Helper function to build gap analysis prompt
-function buildGapAnalysisPrompt(
-  targetRole: string,
-  assessmentSummary: string,
-  allSkills: Array<{ id: string; name: string; category: string }>
-): string {
-  const skillList = allSkills
-    .map((s) => `- ${s.name} (${s.category} skill)`)
-    .join("\n");
-
-  return `You are a senior career advisor analyzing a professional's readiness for a new role.
-
-**Target Role:** ${targetRole}
-
-**Skills Assessed:**
-${assessmentSummary}
-
-**Available Skills in the System:**
-${skillList}
-
-**Your Task:**
-1. Analyze which skills are critical for success in the target role
-2. Identify the top 5 skill gaps that would most impact progression
-3. For each gap, explain why it matters and how to close it
-4. Calculate overall readiness as a percentage
-5. Provide strategic guidance for career transition
-
-Focus on:
-- Hard skills essential for technical competence
-- Soft skills critical for leadership/seniority
-- Meta-skills for continuous learning and growth
-
-Be realistic and constructive. Rank gaps by impact, not just by size.`;
-}
