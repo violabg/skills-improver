@@ -1,10 +1,12 @@
 import db from "@/lib/db";
-import { generateText, Output } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { generateText, Output, wrapLanguageModel } from "ai";
 import { skillEvaluationModel } from "./models"; // Using the same model for now
 import {
   SkillSuggestionSchema,
   type SkillSuggestion,
 } from "./schemas/skillSuggestion.schema";
+import { isDevelopment } from "./utils";
 
 interface GenerateSkillsInput {
   currentRole: string;
@@ -27,9 +29,16 @@ export async function generateSkills(
 > {
   const prompt = buildSkillGenerationPrompt(input);
 
+  const aiModel = skillEvaluationModel;
+
+  const devToolsEnabledModel = wrapLanguageModel({
+    model: aiModel,
+    middleware: devToolsMiddleware(),
+  });
+
   try {
     const { output } = await generateText({
-      model: skillEvaluationModel, // Reusing the Kimi model
+      model: isDevelopment ? devToolsEnabledModel : aiModel,
       output: Output.object({ schema: SkillSuggestionSchema }),
       prompt,
     });

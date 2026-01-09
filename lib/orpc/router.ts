@@ -4,8 +4,10 @@ import { gapAnalysisModel } from "@/lib/ai/models";
 import { GapAnalysisSchema } from "@/lib/ai/schemas/gapExplanation.schema";
 import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
 import { processEvidence } from "@/lib/services/evidenceProcessor";
-import { generateText, Output } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { generateText, Output, wrapLanguageModel } from "ai";
 import { z } from "zod";
+import { isDevelopment } from "../ai/utils";
 import { AssessmentResult, Resource } from "../prisma/client";
 import { protectedProcedure, publicProcedure } from "./procedures";
 
@@ -1167,9 +1169,16 @@ export const router = {
           )
           .join("\n");
 
+        const aiModel = gapAnalysisModel;
+
+        const devToolsEnabledModel = wrapLanguageModel({
+          model: aiModel,
+          middleware: devToolsMiddleware(),
+        });
+
         // Call AI to analyze gaps
         const aiAnalysis = await generateText({
-          model: gapAnalysisModel,
+          model: isDevelopment ? devToolsEnabledModel : aiModel,
           output: Output.object({ schema: GapAnalysisSchema }),
           prompt: buildGapAnalysisPrompt(
             assessment.targetRole,

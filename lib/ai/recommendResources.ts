@@ -1,9 +1,11 @@
-import { generateText, Output } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { generateText, Output, wrapLanguageModel } from "ai";
 import { gapAnalysisModel } from "./models";
 import {
   ResourceListSchema,
   type ResourceRecommendation,
 } from "./schemas/resourceRecommendation.schema";
+import { isDevelopment } from "./utils";
 
 interface RecommendResourcesInput {
   skillId: string;
@@ -19,9 +21,16 @@ export async function recommendResources(
 ): Promise<ResourceRecommendation[]> {
   const prompt = buildResourcePrompt(input);
 
+  const aiModel = gapAnalysisModel;
+
+  const devToolsEnabledModel = wrapLanguageModel({
+    model: aiModel,
+    middleware: devToolsMiddleware(),
+  });
+
   try {
     const { output } = await generateText({
-      model: gapAnalysisModel,
+      model: isDevelopment ? devToolsEnabledModel : aiModel,
       output: Output.object({ schema: ResourceListSchema }),
       prompt,
       maxRetries: 5,
