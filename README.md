@@ -77,7 +77,7 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
 
 ## Assessment Flow
 
-The core user experience guides learners through a structured 7-step process:
+The core user experience guides learners through a structured 6-step process:
 
 ### Step 1: Profile Setup
 
@@ -99,14 +99,11 @@ AI generates personalized interview questions for skills you want validated. Eac
 
 Connect external evidence: GitHub profile, portfolio URL, or CV for enhanced analysis.
 
-### Step 6: Processing
+### Step 6: Results
 
-Animated screen showing AI analyzing your assessment in real-time.
+Comprehensive skill gap report with real-time per-skill AI analysis:
 
-### Step 7: Results
-
-Comprehensive skill gap report with:
-
+- **Progress UI** - Watch each skill analyzed in real-time
 - **Readiness Score** - Overall readiness for target role (0-100%)
 - **Strengths** - Core competencies you already have
 - **Prioritized Gaps** - Skills ranked by impact on your goal
@@ -118,7 +115,7 @@ Comprehensive skill gap report with:
 skills-improver/
 ├── app/
 │   ├── (app)/              # Protected routes (requires auth)
-│   │   ├── assessment/     # 7-step assessment flow
+│   │   ├── assessment/     # 6-step assessment flow
 │   │   │   ├── [id]/       # Dynamic route for assessment sessions
 │   │   │   └── start/      # Entry point for new assessments
 │   │   ├── dashboard/      # User dashboard
@@ -345,7 +342,7 @@ pnpm start
 
 - Next.js 16 setup with cache components
 - GitHub OAuth authentication
-- 7-step assessment flow
+- 6-step assessment flow
 - Skill gap analysis and report
 - Dark theme implementation
 

@@ -176,7 +176,7 @@ await client.assessment.submitAnswer({
    - GitHub connection (simulated)
    - Portfolio URL input (validated as optional)
 3. **Optional Processing**: User can skip this step entirely.
-4. **Navigation**: Redirects to `/assessment/${id}/processing`.
+4. **Navigation**: Redirects to `/assessment/${id}/results`.
 
 **Database Changes**:
 
@@ -184,70 +184,40 @@ await client.assessment.submitAnswer({
 
 ---
 
-### Step 6: Processing (`/assessment/[id]/processing`)
-
-**Purpose**: Animated processing screen while AI analyzes results and generates gap analysis.
-
-**UI Components**:
-
-- `PageShell` (variant: "wide")
-- `ProcessingContent` (client component)
-- Animated progress indicator with sequential steps
-- `ProcessingSkeleton`
-
-**API Calls**:
-
-```typescript
-// Finalize assessment
-await client.assessment.finalize({
-  assessmentId: assessment.id,
-});
-```
-
-**Business Logic**:
-
-1. **Authentication Check**: Server component verifies session.
-2. **Sequential Processing**:
-   - Shows 6 processing steps with timed delays (approx. 15s total).
-   - Step texts: "Analyzing self-assessment...", "Evaluating responses...", etc.
-3. **Assessment Finalization**:
-   - Calls `client.assessment.finalize({ assessmentId })` which updates the `Assessment` record `status` to "COMPLETED".
-4. **Navigation**: Redirects to `/assessment/${id}/results`.
-
-**Database Changes**:
-
-- Updates `Assessment` record:
-  - `status`: "COMPLETED"
-  - `completedAt`: current timestamp
-
----
-
-### Step 7: Results Display (`/assessment/[id]/results`)
+### Step 6: Results Display (`/assessment/[id]/results`)
 
 **Purpose**: Present comprehensive skill gap analysis with personalized recommendations.
 
 **UI Components**:
 
 - `PageShell` (variant: "default")
+- `GapAnalysisProgress` (real-time progress during analysis)
 - `ResultsContent` (client component)
 - `GapCard` (expandable detailed analysis)
 - `ResultsShellSkeleton`
 
-**Server-Side Logic (`ResultsPageContent`):**
+**Server-Side Logic (`AssessmentResultsContainer`):**
 
-1. **Data Retrieval**: Fetches `Assessment` with `AssessmentResult` and `AssessmentGaps`.
-2. **Gap Generation**: If `AssessmentGaps` don't exist, they are calculated and saved to the database immediately.
-3. **Readiness Score**: Calculated based on current vs target levels, weighted by career intent.
-4. **Resource Enrichment**: Top 5 priority gaps are enriched with existing resources from `GapResources`.
+1. **Check Existing Gaps**: If `AssessmentGaps` exist, render results directly.
+2. **Per-Skill Progress UI**: If no gaps exist, render `GapAnalysisProgress` component.
 
-**Client-Side Logic (`GapCard`):**
+**Client-Side Gap Analysis (`GapAnalysisProgress`):**
 
-1. **On-Demand Loading**: Resources are loaded/generated when a user expands a skill gap.
-2. **Server Action**: `loadGapResources` action calls AI to find curated resources if not already in DB.
+1. **Real-time Progress**: Each skill is analyzed individually via `gaps.analyzeSkill` endpoint.
+2. **Visual Feedback**: Shows animated status per skill (pending → analyzing → complete).
+3. **Save Results**: After all skills analyzed, calls `gaps.save` endpoint.
+4. **Mark Complete**: Assessment status updated to "COMPLETED" when all skills saved.
+5. **Auto Refresh**: Page refreshes to display final results.
+
+**oRPC Endpoints:**
+
+- `gaps.analyzeSkill` - Analyze single skill via AI
+- `gaps.save` - Save gaps/strengths and mark assessment complete
 
 **Database Changes**:
 
-- Creates `AssessmentGaps` record (if first time viewing).
+- Creates `AssessmentGaps` record after all skills analyzed.
+- Updates `Assessment.status` to "COMPLETED" with `completedAt` timestamp.
 - Creates `GapResources` records as user expands skill gaps.
 
 ## Key Business Logic Patterns

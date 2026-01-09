@@ -31,7 +31,7 @@ export default async function SelfEvaluationPage({
   return (
     <PageShell
       currentStep={3}
-      totalSteps={7}
+      totalSteps={6}
       title="Rate Your Confidence"
       description="How confident are you in each of these skills? Be honest - there are no right or wrong answers."
       variant="narrow"

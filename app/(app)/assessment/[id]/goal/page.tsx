@@ -7,7 +7,7 @@ export default function GoalPage() {
   return (
     <PageShell
       currentStep={2}
-      totalSteps={7}
+      totalSteps={6}
       title="Choose Your Target Goal"
       description="What role or position are you working towards?"
       variant="narrow"

@@ -63,7 +63,7 @@ export function EvidenceUploadForm() {
 
   const handleSkip = () => {
     startTransition(async () => {
-      router.push(`/assessment/${assessment.id}/processing`);
+      router.push(`/assessment/${assessment.id}/results`);
     });
   };
 
@@ -106,7 +106,7 @@ export function EvidenceUploadForm() {
               );
             }
 
-            router.push(`/assessment/${assessment.id}/processing`);
+            router.push(`/assessment/${assessment.id}/results`);
           } catch (error) {
             console.error("Failed to upload evidence:", error);
             alert(

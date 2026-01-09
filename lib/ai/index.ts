@@ -17,6 +17,7 @@
 
 // Direct functions
 export { analyzeGaps } from "./analyzeGaps";
+export { analyzeSkillGap, type SkillGapResult } from "./analyzeSkillGap";
 export { assessSkill } from "./assessSkill";
 export { generateAdvisorResponse } from "./chat-advisor";
 export { generateQuestions } from "./generateQuestions";

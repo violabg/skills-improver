@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 export const GapExplanationSchema = z.object({
-  skillId: z.string().uuid(),
+  skillId: z
+    .string()
+    .optional()
+    .describe("Optional skill ID - may not be a valid UUID"),
   skillName: z.string(),
   currentLevel: z
     .number()

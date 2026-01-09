@@ -1,14 +1,10 @@
+import { analyzeGaps } from "@/lib/ai/analyzeGaps";
 import { assessSkill } from "@/lib/ai/assessSkill";
 import { generateAdvisorResponse } from "@/lib/ai/chat-advisor";
-import { gapAnalysisModel } from "@/lib/ai/models";
-import { GapAnalysisSchema } from "@/lib/ai/schemas/gapExplanation.schema";
 import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
 import { processEvidence } from "@/lib/services/evidenceProcessor";
-import { devToolsMiddleware } from "@ai-sdk/devtools";
-import { generateText, Output, wrapLanguageModel } from "ai";
 import { z } from "zod";
 import { generateQuestions, generateSkills } from "../ai";
-import { isDevelopment } from "../ai/utils";
 import { AssessmentResult, Resource } from "../prisma/client";
 import { protectedProcedure, publicProcedure } from "./procedures";
 
@@ -1121,6 +1117,144 @@ export const router = {
       }),
   },
 
+  gaps: {
+    // Check if gaps analysis already exists for an assessment
+    checkStatus: protectedProcedure
+      .input(z.object({ assessmentId: z.string().uuid() }))
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+        const assessment = await ctx.db.assessment.findFirst({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+          include: {
+            results: { include: { skill: true } },
+            gaps: true,
+          },
+        });
+
+        if (!assessment) throw new Error("Assessment not found");
+
+        if (assessment.gaps) {
+          return {
+            hasGaps: true,
+            gapsData: {
+              assessmentId: assessment.id,
+              assessmentGapsId: assessment.gaps.id,
+              targetRole: assessment.targetRole,
+              readinessScore: assessment.gaps.readinessScore,
+              gaps: assessment.gaps.gaps,
+              strengths: assessment.gaps.strengths,
+              overallRecommendation: assessment.gaps.overallRecommendation,
+            },
+          };
+        }
+
+        // Return skills to analyze
+        return {
+          hasGaps: false,
+          skillsToAnalyze: assessment.results.map((r) => ({
+            skillId: r.skillId,
+            skillName: r.skill.name,
+            currentLevel: r.level,
+            category: r.skill.category,
+          })),
+          targetRole: assessment.targetRole,
+        };
+      }),
+
+    // Analyze a single skill gap
+    analyzeSkill: protectedProcedure
+      .input(
+        z.object({
+          assessmentId: z.string().uuid(),
+          skillId: z.string().uuid(),
+          skillName: z.string(),
+          currentLevel: z.number().min(0).max(5),
+          category: z.enum(["HARD", "SOFT", "META"]),
+          targetRole: z.string(),
+          otherSkillsSummary: z.string().optional(),
+        })
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        // Verify ownership
+        const assessment = await ctx.db.assessment.findFirst({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+        });
+        if (!assessment) throw new Error("Assessment not found");
+
+        // Import and call the single-skill analyzer
+        const { analyzeSkillGap } = await import("@/lib/ai/analyzeSkillGap");
+
+        const result = await analyzeSkillGap({
+          skillId: input.skillId,
+          skillName: input.skillName,
+          currentLevel: input.currentLevel,
+          targetRole: input.targetRole,
+          skillCategory: input.category,
+          otherSkillsSummary: input.otherSkillsSummary,
+        });
+
+        return result;
+      }),
+
+    // Save final gaps analysis
+    save: protectedProcedure
+      .input(
+        z.object({
+          assessmentId: z.string().uuid(),
+          gaps: z.array(z.any()),
+          strengths: z.array(z.string()),
+          readinessScore: z.number().min(0).max(100),
+          overallRecommendation: z.string(),
+        })
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        const assessment = await ctx.db.assessment.findFirst({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+          include: {
+            results: true,
+          },
+        });
+        if (!assessment) throw new Error("Assessment not found");
+
+        const savedGaps = await ctx.db.assessmentGaps.upsert({
+          where: { assessmentId: input.assessmentId },
+          create: {
+            assessmentId: input.assessmentId,
+            readinessScore: input.readinessScore,
+            gaps: input.gaps,
+            strengths: input.strengths,
+            overallRecommendation: input.overallRecommendation,
+          },
+          update: {
+            readinessScore: input.readinessScore,
+            gaps: input.gaps,
+            strengths: input.strengths,
+            overallRecommendation: input.overallRecommendation,
+          },
+        });
+
+        // Only mark as completed if all skills have been analyzed
+        const totalSkills = assessment.results.length;
+        const analyzedSkills = input.gaps.length + input.strengths.length;
+
+        if (analyzedSkills >= totalSkills) {
+          await ctx.db.assessment.update({
+            where: { id: input.assessmentId },
+            data: {
+              status: "COMPLETED",
+              completedAt: new Date(),
+            },
+          });
+        }
+
+        return { success: true, gapsId: savedGaps.id };
+      }),
+  },
+
   report: {
     // Generate a skill gap report for an assessment
     generate: protectedProcedure
@@ -1153,8 +1287,10 @@ export const router = {
           throw new Error("Assessment has no target role");
         }
 
-        // Get all skills
-        const allSkills = await ctx.db.skill.findMany();
+        // Get all skills for gap analysis
+        const allSkills = await ctx.db.skill.findMany({
+          select: { id: true, name: true, category: true, difficulty: true },
+        });
 
         // Build assessment summary for AI
         const assessmentSummary = assessment.results
@@ -1164,67 +1300,26 @@ export const router = {
           )
           .join("\n");
 
-        const aiModel = gapAnalysisModel;
-
-        const devToolsEnabledModel = wrapLanguageModel({
-          model: aiModel,
-          middleware: devToolsMiddleware(),
-        });
-
-        // Call AI to analyze gaps
-        const aiAnalysis = await generateText({
-          model: isDevelopment ? devToolsEnabledModel : aiModel,
-          output: Output.object({ schema: GapAnalysisSchema }),
-          prompt: buildGapAnalysisPrompt(
-            assessment.targetRole,
-            assessmentSummary,
-            allSkills
-          ),
+        // Call AI to analyze gaps using the analyzeGaps function
+        const analysis = await analyzeGaps({
+          targetRole: assessment.targetRole,
+          assessmentSummary,
+          allSkills: allSkills.map((s) => ({
+            id: s.id,
+            name: s.name,
+            category: s.category as "HARD" | "SOFT" | "META",
+            difficulty: s.difficulty ?? undefined,
+          })),
         });
 
         return {
           assessmentId: input.assessmentId,
           targetRole: assessment.targetRole,
           generatedAt: new Date().toISOString(),
-          analysis: aiAnalysis.output,
+          analysis,
         };
       }),
   },
 };
 
 export type Router = typeof router;
-
-// Helper function to build gap analysis prompt
-function buildGapAnalysisPrompt(
-  targetRole: string,
-  assessmentSummary: string,
-  allSkills: Array<{ id: string; name: string; category: string }>
-): string {
-  const skillList = allSkills
-    .map((s) => `- ${s.name} (${s.category} skill)`)
-    .join("\n");
-
-  return `You are a senior career advisor analyzing a professional's readiness for a new role.
-
-**Target Role:** ${targetRole}
-
-**Skills Assessed:**
-${assessmentSummary}
-
-**Available Skills in the System:**
-${skillList}
-
-**Your Task:**
-1. Analyze which skills are critical for success in the target role
-2. Identify the top 5 skill gaps that would most impact progression
-3. For each gap, explain why it matters and how to close it
-4. Calculate overall readiness as a percentage
-5. Provide strategic guidance for career transition
-
-Focus on:
-- Hard skills essential for technical competence
-- Soft skills critical for leadership/seniority
-- Meta-skills for continuous learning and growth
-
-Be realistic and constructive. Rank gaps by impact, not just by size.`;
-}

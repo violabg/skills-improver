@@ -123,7 +123,7 @@ submitAnswer: protectedProcedure
   });
 ```
 
-**Key procedures**: `assessment.start`, `assessment.submitAnswer`, `assessment.finalize`, `assessment.updateGoal`, `skills.list`, `questions.generateForSkills`
+**Key procedures**: `assessment.start`, `assessment.submitAnswer`, `assessment.finalize`, `assessment.updateGoal`, `skills.list`, `questions.generateForSkills`, `gaps.analyzeSkill`, `gaps.save`
 
 ### AI Integration (ACTIVE)
 
@@ -135,7 +135,7 @@ submitAnswer: protectedProcedure
 
 ## Assessment Flow Architecture
 
-**7-step flow** (`/app/(app)/assessment/*`):
+**6-step flow** (`/app/(app)/assessment/*`):
 
 | Step | Route                   | Purpose                       | Client Form          | DB Ops                                             |
 | ---- | ----------------------- | ----------------------------- | -------------------- | -------------------------------------------------- |
@@ -144,8 +144,7 @@ submitAnswer: protectedProcedure
 | 3    | `/[id]/self-evaluation` | Rate 15 skills (1-5)          | `SelfEvaluationForm` | Create `AssessmentResult` (×15)                    |
 | 4    | `/[id]/test`            | AI evaluates answers          | `SkillTestForm`      | Update `AssessmentResult` (×5) via `assessSkill()` |
 | 5    | `/[id]/evidence`        | Optional GitHub/portfolio     | `EvidenceUploadForm` | Create `Evidence` record                           |
-| 6    | `/[id]/processing`      | Animated processing screen    | `ProcessingContent`  | Calls `assessment.finalize`                        |
-| 7    | `/[id]/results`         | Gap report + readiness        | `ResultsContent`     | Create/update `AssessmentGaps`, `GapResources`     |
+| 6    | `/[id]/results`         | Gap report + readiness        | `ResultsContent`     | Create/update `AssessmentGaps`, `GapResources`     |
 
 **Key patterns**:
 
@@ -213,7 +212,7 @@ pnpm build            # Production build
 - ✅ Authentication (GitHub OAuth)
 - ✅ Dark theme implementation
 - ✅ Database schema (Prisma + Neon)
-- ✅ Assessment flow UI (7 steps)
+- ✅ Assessment flow UI (6 steps)
 - ✅ oRPC procedures implemented
 - ✅ AI evaluation layer active
 - ⏳ Gap report generation (completed)

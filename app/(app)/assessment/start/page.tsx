@@ -22,7 +22,7 @@ export default function AssessmentStartPage() {
   return (
     <PageShell
       currentStep={1}
-      totalSteps={7}
+      totalSteps={6}
       title="Quick Profile Setup"
       description="Help us understand your current position and career goals"
       variant="narrow"

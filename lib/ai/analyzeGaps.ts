@@ -77,18 +77,21 @@ ${input.assessmentSummary}
 ${skillList}
 
 **Your Task:**
-1. Analyze which skills are critical for success in the target role
-2. Identify skill gaps ranked by impact on career progression
-3. For each gap, explain why it matters and how to close it
-4. Calculate overall readiness as a percentage (0-100)
-5. List skills where the candidate is already at target level
+1. Analyze EVERY skill from "Skills Assessed" above - do not skip any
+2. For skills below target level (gaps): explain why it matters and how to close it
+3. For skills at or above target level: include in strengths list
+4. Rank gaps by impact on career progression for the target role
+5. Calculate overall readiness as a percentage (0-100)
 6. Provide strategic guidance for career transition
+
+**IMPORTANT:** Every skill in "Skills Assessed" **MUST** appear either in gaps OR strengths. Do not omit any.
+
+Before submitting your response, double-check that the count of skills in the response is the same as the count of skills in "Skills Assessed", if not, you have made a mistake, and you should re-run the analysis, to include the missing skills.
 
 **Evaluation Criteria:**
 - Hard skills: Technical competence and tooling knowledge
 - Soft skills: Communication, leadership, collaboration
 - Meta skills: Learning ability, adaptability, self-awareness
 
-Be realistic, constructive, and data-driven. Rank gaps by impact, not just by size.
-Focus on the 5 most critical gaps for success in this role.`;
+Be realistic, constructive, and data-driven. Rank gaps by impact, not just by size.`;
 }

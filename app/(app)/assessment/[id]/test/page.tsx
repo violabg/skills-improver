@@ -74,7 +74,7 @@ export default async function TestPage({ params }: TestPageProps) {
   return (
     <PageShell
       currentStep={4}
-      totalSteps={7}
+      totalSteps={6}
       title="Skill Validation"
       description="Let's validate your strengths with a few questions. Take your time - this helps us give you better recommendations."
       variant="default"

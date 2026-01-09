@@ -1,3 +1,4 @@
+import { analyzeSkillGap } from "@/lib/ai/analyzeSkillGap";
 import db from "@/lib/db";
 import { type Prisma } from "@/lib/prisma/client";
 import { getExistingGapResources } from "../actions/load-gap-resources";
@@ -40,11 +41,15 @@ export interface GapsData {
   overallRecommendation: string | null;
 }
 
+/**
+ * Get assessment results with per-skill gap analysis.
+ * Each skill is analyzed individually by AI for complete coverage.
+ */
 export async function getAssessmentResults(
   assessmentId: string,
   userId: string
 ): Promise<GapsData> {
-  // Fetch assessment results via database
+  // Fetch assessment with results and existing gaps
   const assessment = await db.assessment.findFirst({
     where: {
       id: assessmentId,
@@ -69,7 +74,7 @@ export async function getAssessmentResults(
 
   // Check if gaps already exist in database
   if (assessment.gaps) {
-    // Retrieve existing gaps from database
+    // Use existing gaps from database
     assessmentGapsId = assessment.gaps.id;
     gapsData = {
       assessmentId: assessment.id,
@@ -82,49 +87,56 @@ export async function getAssessmentResults(
         assessment.gaps.overallRecommendation || "No recommendation available.",
     };
   } else {
-    // Generate gaps if they don't exist
-    const resultsMap = new Map(assessment.results.map((r) => [r.skillId, r]));
-    const assessmentSkills = assessment.results.map((r) => r.skill);
+    // Generate gaps using per-skill AI analysis
+    const targetRole = assessment.targetRole || "Unknown Role";
+    const gaps: GapItem[] = [];
+    const strengths: string[] = [];
 
-    const gaps: GapItem[] = assessmentSkills.map((skill) => {
-      const result = resultsMap.get(skill.id as string);
-      const currentLevel = result?.level ?? 0;
-      const targetLevel = skill.difficulty ?? 3;
-      const gapSize = Math.max(0, targetLevel - currentLevel);
+    // Build context summary of other skills
+    const allSkillsSummary = assessment.results
+      .map((r) => `${r.skill.name}: Level ${r.level}/5`)
+      .join("\n");
 
-      return {
-        skillId: skill.id,
-        skillName: skill.name,
-        currentLevel,
-        targetLevel,
-        gapSize,
-        impact: gapSize > 2 ? "CRITICAL" : gapSize > 1 ? "HIGH" : "MEDIUM",
-        explanation: `${skill.name} is ${
-          gapSize > 0 ? "required for" : "not critical for"
-        } ${assessment.targetRole}`,
-        recommendedActions: [
-          `Focus on improving ${skill.name}`,
-          `Seek mentorship or structured learning`,
-        ],
-        estimatedTimeWeeks: gapSize * 2,
-        priority: 10 - gapSize * 2,
-      };
-    });
+    // Analyze each skill individually
+    for (const result of assessment.results) {
+      const skillGap = await analyzeSkillGap({
+        skillId: result.skillId,
+        skillName: result.skill.name,
+        currentLevel: result.level,
+        targetRole,
+        skillCategory: result.skill.category as "HARD" | "SOFT" | "META",
+        otherSkillsSummary: allSkillsSummary,
+      });
 
-    gaps.sort((a, b) => b.priority - a.priority);
+      if (skillGap.gapSize > 0) {
+        gaps.push(skillGap);
+      } else {
+        strengths.push(skillGap.skillName);
+      }
+    }
 
-    const readinessScore = Math.round(
-      ((assessmentSkills.length - gaps.filter((g) => g.gapSize > 0).length) /
-        assessmentSkills.length) *
-        100
-    );
+    // Sort gaps by priority (1 = highest priority)
+    gaps.sort((a, b) => a.priority - b.priority);
 
-    const strengths = gaps
-      .filter((g) => g.gapSize === 0)
-      .map((g) => g.skillName);
-    const overallRecommendation = `You are ${readinessScore}% ready for ${assessment.targetRole}. Focus on the top priorities to accelerate your transition.`;
+    // Calculate readiness score
+    const totalSkills = assessment.results.length;
+    const skillsAtTarget = strengths.length;
+    const readinessScore = Math.round((skillsAtTarget / totalSkills) * 100);
 
-    // Save gaps to database
+    // Generate overall recommendation
+    const topGaps = gaps.slice(0, 3).map((g) => g.skillName);
+    const overallRecommendation =
+      gaps.length === 0
+        ? `You are well-prepared for ${targetRole}! Consider advanced challenges to further develop your expertise.`
+        : `Focus on ${topGaps.join(
+            ", "
+          )} to accelerate your transition to ${targetRole}. These ${
+            topGaps.length
+          } skill${
+            topGaps.length > 1 ? "s" : ""
+          } have the highest impact on your career progression.`;
+
+    // Save gaps to database for future requests
     const savedGaps = await db.assessmentGaps.upsert({
       where: { assessmentId: assessment.id },
       create: {
@@ -147,7 +159,7 @@ export async function getAssessmentResults(
     gapsData = {
       assessmentId: assessment.id,
       assessmentGapsId: savedGaps.id,
-      targetRole: assessment.targetRole || "Unknown Role",
+      targetRole,
       readinessScore,
       gaps,
       strengths,
