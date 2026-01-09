@@ -1,9 +1,11 @@
-import { generateText, Output } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { generateText, Output, wrapLanguageModel } from "ai";
 import { gapAnalysisModel } from "./models";
 import {
   GapAnalysisSchema,
   type GapAnalysis,
 } from "./schemas/gapExplanation.schema";
+import { isDevelopment } from "./utils";
 
 interface AnalyzeGapsInput {
   targetRole: string;
@@ -22,9 +24,16 @@ export async function analyzeGaps(
 ): Promise<GapAnalysis> {
   const prompt = buildGapAnalysisPrompt(input);
 
+  const aiModel = gapAnalysisModel;
+
+  const devToolsEnabledModel = wrapLanguageModel({
+    model: aiModel,
+    middleware: devToolsMiddleware(),
+  });
+
   try {
     const { output } = await generateText({
-      model: gapAnalysisModel,
+      model: isDevelopment ? devToolsEnabledModel : aiModel,
       output: Output.object({ schema: GapAnalysisSchema }),
       prompt,
     });

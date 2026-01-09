@@ -1,9 +1,11 @@
-import { generateText, Output } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { generateText, Output, wrapLanguageModel } from "ai";
 import { skillEvaluationModel } from "./models";
 import {
   QuestionSuggestionSchema,
   type QuestionSuggestion,
 } from "./schemas/questionSuggestion.schema";
+import { isDevelopment } from "./utils";
 
 interface GenerateQuestionsInput {
   skills: Array<{ id: string; name: string; category: string }>;
@@ -24,9 +26,16 @@ export async function generateQuestions(
 
   const prompt = buildQuestionGenerationPrompt(input);
 
+  const aiModel = skillEvaluationModel;
+
+  const devToolsEnabledModel = wrapLanguageModel({
+    model: aiModel,
+    middleware: devToolsMiddleware(),
+  });
+
   try {
     const { output } = await generateText({
-      model: skillEvaluationModel,
+      model: isDevelopment ? devToolsEnabledModel : aiModel,
       output: Output.object({ schema: QuestionSuggestionSchema }),
       prompt,
     });

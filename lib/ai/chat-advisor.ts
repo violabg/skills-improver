@@ -1,6 +1,8 @@
-import { generateText, Output } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { generateText, Output, wrapLanguageModel } from "ai";
 import { z } from "zod";
 import { gapAnalysisModel } from "./models";
+import { isDevelopment } from "./utils";
 
 export const ChatResponseSchema = z.object({
   message: z.string().describe("The advisor's response message"),
@@ -29,8 +31,15 @@ export async function generateAdvisorResponse(
 ): Promise<ChatResponse> {
   const contextPrompt = buildContextPrompt(context);
 
+  const aiModel = gapAnalysisModel;
+
+  const devToolsEnabledModel = wrapLanguageModel({
+    model: aiModel,
+    middleware: devToolsMiddleware(),
+  });
+
   const { output } = await generateText({
-    model: gapAnalysisModel,
+    model: isDevelopment ? devToolsEnabledModel : aiModel,
     output: Output.object({ schema: ChatResponseSchema }),
     prompt: `You are an expert career advisor helping a professional with their skill development and career transition.
 

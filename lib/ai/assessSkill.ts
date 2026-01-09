@@ -1,9 +1,11 @@
-import { generateText, Output } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { generateText, Output, wrapLanguageModel } from "ai";
 import { skillEvaluationModel } from "./models";
 import {
   SkillEvaluationSchema,
   type SkillEvaluation,
 } from "./schemas/skillEvaluation.schema";
+import { isDevelopment } from "./utils";
 
 interface AssessSkillInput {
   skillId: string;
@@ -19,9 +21,16 @@ export async function assessSkill(
 ): Promise<SkillEvaluation> {
   const prompt = buildAssessmentPrompt(input);
 
+  const aiModel = skillEvaluationModel;
+
+  const devToolsEnabledModel = wrapLanguageModel({
+    model: aiModel,
+    middleware: devToolsMiddleware(),
+  });
+
   try {
     const { output } = await generateText({
-      model: skillEvaluationModel,
+      model: isDevelopment ? devToolsEnabledModel : aiModel,
       output: Output.object({ schema: SkillEvaluationSchema }),
       prompt,
       maxRetries: 5,
