@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 const CONFIDENCE_LEVELS = [
   {
@@ -36,52 +36,22 @@ const CONFIDENCE_LEVELS = [
   },
 ];
 
-export function SelfEvaluationForm() {
+interface SelfEvaluationFormProps {
+  skills: Array<{ id: string; name: string; category: string }>;
+  reasoning: string;
+}
+
+export function SelfEvaluationForm({
+  skills,
+  reasoning,
+}: SelfEvaluationFormProps) {
   const router = useRouter();
   const assessment = useAssessment();
   const [isPending, startTransition] = useTransition();
-  const [isFetchingSkills, setIsFetchingSkills] = useState(true);
-
-  // Dynamic skills state
-  const [skills, setSkills] = useState<
-    Array<{ id: string; name: string; category: string }>
-  >([]);
-  const [reasoning, setReasoning] = useState<string>("");
 
   // Form state
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [testMe, setTestMe] = useState<Record<string, boolean>>({});
-
-  // Fetch skills on mount
-  useEffect(() => {
-    let mounted = true;
-    const fetchSkills = async () => {
-      try {
-        // Use the generation endpoint to get relevant skills for this specific profile
-        const result = await client.skills.generateForProfile({
-          assessmentId: assessment.id,
-        });
-
-        if (mounted) {
-          setSkills(result.skills);
-          setReasoning(result.reasoning);
-          setIsFetchingSkills(false);
-
-          // Initialize testMe defaults (e.g. maybe auto-select top skills?)
-          // For now, default to false
-        }
-      } catch (error) {
-        console.error("Failed to generate skills:", error);
-        // Fallback or error state?
-        setIsFetchingSkills(false);
-      }
-    };
-
-    fetchSkills();
-    return () => {
-      mounted = false;
-    };
-  }, [assessment.id]);
 
   const handleRatingChange = (skillId: string, rating: number) => {
     setRatings((prev) => ({ ...prev, [skillId]: rating }));
@@ -142,28 +112,6 @@ export function SelfEvaluationForm() {
       }
     });
   };
-
-  if (isFetchingSkills) {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="bg-muted rounded w-1/3 h-8 animate-pulse" />
-          <div className="bg-muted rounded w-2/3 h-4 animate-pulse" />
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-muted rounded-lg w-full h-40 animate-pulse"
-            />
-          ))}
-        </div>
-        <div className="text-muted-foreground text-sm text-center animate-pulse">
-          Analyzing your profile and generating relevant skills...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">

@@ -1,9 +1,33 @@
 import { SelfEvaluationForm } from "@/components/assessment/self-evaluation-form";
 import { FormShellSkeleton } from "@/components/skeletons";
 import { PageShell } from "@/components/ui/page-shell";
+import { serverClient } from "@/lib/orpc/orpc.server";
 import { Suspense } from "react";
 
-export default function SelfEvaluationPage() {
+interface SelfEvaluationPageProps {
+  params: Promise<{ id: string }>;
+}
+
+// Server component that fetches skills
+async function SelfEvaluationFormLoader({
+  assessmentId,
+}: {
+  assessmentId: string;
+}) {
+  const result = await serverClient.skills.generateForProfile({
+    assessmentId: assessmentId,
+  });
+  console.log("result");
+  return (
+    <SelfEvaluationForm skills={result.skills} reasoning={result.reasoning} />
+  );
+}
+
+export default async function SelfEvaluationPage({
+  params,
+}: SelfEvaluationPageProps) {
+  const { id } = await params;
+
   return (
     <PageShell
       currentStep={3}
@@ -13,7 +37,7 @@ export default function SelfEvaluationPage() {
       variant="narrow"
     >
       <Suspense fallback={<FormShellSkeleton />}>
-        <SelfEvaluationForm />
+        <SelfEvaluationFormLoader assessmentId={id} />
       </Suspense>
     </PageShell>
   );
