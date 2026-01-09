@@ -119,6 +119,8 @@ skills-improver/
 ├── app/
 │   ├── (app)/              # Protected routes (requires auth)
 │   │   ├── assessment/     # 7-step assessment flow
+│   │   │   ├── [id]/       # Dynamic route for assessment sessions
+│   │   │   └── start/      # Entry point for new assessments
 │   │   ├── dashboard/      # User dashboard
 │   │   └── skills/         # Skills explorer
 │   ├── (auth)/             # Auth routes
@@ -399,7 +401,7 @@ See [LICENSE](LICENSE) file.
 
 ---
 
-**Last updated:** January 8, 2026  
+**Last updated:** January 9, 2026  
 **Status:** MVP Phase - Core assessment flow complete, AI orchestration in progress
 
 For detailed technical documentation, see [plan/](plan/) directory.

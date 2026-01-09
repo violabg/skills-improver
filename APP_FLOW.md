@@ -7,7 +7,7 @@ The Skills Improver application is an AI-powered career growth platform that gui
 - **Backend**: oRPC procedures (type-safe API layer)
 - **Database**: PostgreSQL with Prisma ORM (Assessment, AssessmentResult, AssessmentGaps, GapResources)
 - **AI**: Vercel AI SDK with Groq (Llama 3) and Moonshot (Kimi) models
-- **UI**: Next.js App Router, Tailwind CSS, shadcn/ui, PageShell consistency
+- **UI**: Next.js App Router (Dynamic Routes), Tailwind CSS, React Context (`AssessmentProvider`)
 
 ## Assessment Flow Steps
 
@@ -37,7 +37,7 @@ const assessment = await client.assessment.start({
 
 1. **Authentication Check**: Server component verifies user session via `auth.api.getSession()`
 2. **Form Validation**: Zod schema validates input data, including refining requirements for custom fields.
-3. **Navigation**: Redirects to `/assessment/goal?assessmentId={id}`
+3. **Navigation**: Redirects to `/assessment/${id}/goal`
 
 **Database Changes**:
 
@@ -45,7 +45,7 @@ const assessment = await client.assessment.start({
 
 ---
 
-### Step 2: Career Goal (`/assessment/goal`)
+### Step 2: Career Goal (`/assessment/[id]/goal`)
 
 **Purpose**: Define the specific career target or goal the user is working towards.
 
@@ -57,14 +57,14 @@ const assessment = await client.assessment.start({
 
 **API Calls**:
 
-- `client.assessment.updateGoal({ assessmentId, targetRole })`: Persists the selected goal to the `Assessment` record.
+- `client.assessment.updateGoal({ assessmentId: assessment.id, targetRole })`: Persists the selected goal to the `Assessment` record.
 
 **Business Logic**:
 
-1. **Authentication Check**: Server component verifies session.
+1. **Authentication Check**: Server component verifies session and fetches assessment via `[id]` param.
 2. **Goal Selection**: User chooses from predefined options or enters custom goal.
-3. **URL Parameter Storage**: Goal encoded in query params (`?assessmentId={id}&goal={encodedGoal}`).
-4. **Navigation**: Redirects to `/assessment/self-evaluation?assessmentId={id}&goal={encodedGoal}`.
+3. **Context Usage**: Uses `useAssessment()` hook to access the current assessment.
+4. **Navigation**: Redirects to `/assessment/${id}/self-evaluation`.
 
 **Database Changes**:
 
@@ -72,7 +72,7 @@ const assessment = await client.assessment.start({
 
 ---
 
-### Step 3: Self-Evaluation (`/assessment/self-evaluation`)
+### Step 3: Self-Evaluation (`/assessment/[id]/self-evaluation`)
 
 **Purpose**: User rates their confidence in AI-generated skills tailored to their profile and goals.
 
@@ -84,15 +84,15 @@ const assessment = await client.assessment.start({
 
 **API Calls**:
 
-- `client.skills.generateForProfile({ assessmentId })`: Fetches/generates the personalized skill list from AI and database.
-- `client.assessment.saveSelfEvaluations({ assessmentId, evaluations })`: Persists ratings and the `shouldTest` flag to `AssessmentResult`.
+- `client.skills.generateForProfile({ assessmentId: assessment.id })`: Fetches/generates the personalized skill list from AI and database.
+- `client.assessment.saveSelfEvaluations({ assessmentId: assessment.id, evaluations })`: Persists ratings and the `shouldTest` flag to `AssessmentResult`.
 
 **Business Logic**:
 
 1. **Authentication Check**: Server component verifies session.
 2. **Skill Generation**: AI selects the best skills from the database and suggests new ones (persisted automatically) for the user's target role.
 3. **Validation**: Ensures all skills are rated before proceeding.
-4. **Navigation**: Redirects to `/assessment/test?assessmentId={id}`.
+4. **Navigation**: Redirects to `/assessment/${id}/test`.
 
 **Database Changes**:
 
@@ -101,7 +101,7 @@ const assessment = await client.assessment.start({
 
 ---
 
-### Step 4: Skill Validation Test (`/assessment/test`)
+### Step 4: Skill Validation Test (`/assessment/[id]/test`)
 
 **Purpose**: AI generates specific interview questions for skills the user marked with "Test Me".
 
@@ -116,13 +116,13 @@ const assessment = await client.assessment.start({
 ```typescript
 // 1. Generate questions for marked skills
 const questions = await client.questions.generateForSkills({
-  assessmentId,
+  assessmentId: assessment.id,
   skillIds,
 });
 
 // 2. Submit answer for AI assessment
 await client.assessment.submitAnswer({
-  assessmentId,
+  assessmentId: assessment.id,
   skillId,
   question,
   answer,
@@ -143,7 +143,7 @@ await client.assessment.submitAnswer({
    - AI assesses level (1-5), confidence, and provides feedback (notes).
    - If a question is skipped, the system uses the user's self-evaluation score for that skill.
 
-3. **Navigation**: Redirects to `/assessment/evidence?assessmentId={id}`
+3. **Navigation**: Redirects to `/assessment/${id}/evidence`
 
 **Database Changes**:
 
@@ -153,7 +153,7 @@ await client.assessment.submitAnswer({
 
 ---
 
-### Step 5: Evidence Upload (`/assessment/evidence`)
+### Step 5: Evidence Upload (`/assessment/[id]/evidence`)
 
 **Purpose**: Optional step to connect external evidence (GitHub, portfolio, CV) for enhanced analysis.
 
@@ -176,7 +176,7 @@ await client.assessment.submitAnswer({
    - GitHub connection (simulated)
    - Portfolio URL input (validated as optional)
 3. **Optional Processing**: User can skip this step entirely.
-4. **Navigation**: Redirects to `/assessment/processing?assessmentId={id}`.
+4. **Navigation**: Redirects to `/assessment/${id}/processing`.
 
 **Database Changes**:
 
@@ -184,7 +184,7 @@ await client.assessment.submitAnswer({
 
 ---
 
-### Step 6: Processing (`/assessment/processing`)
+### Step 6: Processing (`/assessment/[id]/processing`)
 
 **Purpose**: Animated processing screen while AI analyzes results and generates gap analysis.
 
@@ -200,7 +200,7 @@ await client.assessment.submitAnswer({
 ```typescript
 // Finalize assessment
 await client.assessment.finalize({
-  assessmentId,
+  assessmentId: assessment.id,
 });
 ```
 
@@ -212,7 +212,7 @@ await client.assessment.finalize({
    - Step texts: "Analyzing self-assessment...", "Evaluating responses...", etc.
 3. **Assessment Finalization**:
    - Calls `client.assessment.finalize({ assessmentId })` which updates the `Assessment` record `status` to "COMPLETED".
-4. **Navigation**: Redirects to `/assessment/results?assessmentId={id}`.
+4. **Navigation**: Redirects to `/assessment/${id}/results`.
 
 **Database Changes**:
 
@@ -222,7 +222,7 @@ await client.assessment.finalize({
 
 ---
 
-### Step 7: Results Display (`/assessment/results`)
+### Step 7: Results Display (`/assessment/[id]/results`)
 
 **Purpose**: Present comprehensive skill gap analysis with personalized recommendations.
 
@@ -276,11 +276,12 @@ await client.assessment.finalize({
 - **Client Errors**: Console logging + user-friendly messages
 - **Fallback Mechanisms**: AI evaluation fallbacks to self-assessment scores
 
-### State Management
+### State Management & Context
 
-- **Server State**: Database queries in server components
-- **Client State**: React hooks for form state and UI interactions
-- **URL State**: Temporary storage in query parameters
+- **Server-Side Data**: The `layout.tsx` in `/assessment/[id]` fetches the assessment record and verifies ownership before rendering any sub-pages.
+- **AssessmentProvider**: Wraps all assessment sub-pages, making the `assessment` record available via the `useAssessment()` hook.
+- **Client State**: `useAssessment()` eliminates the need to pass `assessmentId` through query parameters between steps.
+- **URL State**: The assessment ID is part of the path (`/assessment/[id]/...`), serving as the primary identifier.
 
 ## Data Flow Architecture
 

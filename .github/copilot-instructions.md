@@ -137,21 +137,21 @@ submitAnswer: protectedProcedure
 
 **7-step flow** (`/app/(app)/assessment/*`):
 
-| Step | Route              | Purpose                       | Client Form          | DB Ops                                             |
-| ---- | ------------------ | ----------------------------- | -------------------- | -------------------------------------------------- |
-| 1    | `/start`           | Profile (role, exp, industry) | `ProfileSetupForm`   | Create `Assessment`                                |
-| 2    | `/goal`            | Career target selection       | `CareerGoalForm`     | Update `targetRole`                                |
-| 3    | `/self-evaluation` | Rate 15 skills (1-5)          | `SelfEvaluationForm` | Create `AssessmentResult` (×15)                    |
-| 4    | `/test`            | AI evaluates answers          | `SkillTestForm`      | Update `AssessmentResult` (×5) via `assessSkill()` |
-| 5    | `/evidence`        | Optional GitHub/portfolio     | `EvidenceUploadForm` | Create `Evidence` record                           |
-| 6    | `/processing`      | Animated processing screen    | `ProcessingContent`  | Calls `assessment.finalize`                        |
-| 7    | `/results`         | Gap report + readiness        | `ResultsContent`     | Create/update `AssessmentGaps`, `GapResources`     |
+| Step | Route                   | Purpose                       | Client Form          | DB Ops                                             |
+| ---- | ----------------------- | ----------------------------- | -------------------- | -------------------------------------------------- |
+| 1    | `/assessment/start`     | Profile (role, exp, industry) | `ProfileSetupForm`   | Create `Assessment`                                |
+| 2    | `/[id]/goal`            | Career target selection       | `CareerGoalForm`     | Update `targetRole`                                |
+| 3    | `/[id]/self-evaluation` | Rate 15 skills (1-5)          | `SelfEvaluationForm` | Create `AssessmentResult` (×15)                    |
+| 4    | `/[id]/test`            | AI evaluates answers          | `SkillTestForm`      | Update `AssessmentResult` (×5) via `assessSkill()` |
+| 5    | `/[id]/evidence`        | Optional GitHub/portfolio     | `EvidenceUploadForm` | Create `Evidence` record                           |
+| 6    | `/[id]/processing`      | Animated processing screen    | `ProcessingContent`  | Calls `assessment.finalize`                        |
+| 7    | `/[id]/results`         | Gap report + readiness        | `ResultsContent`     | Create/update `AssessmentGaps`, `GapResources`     |
 
 **Key patterns**:
 
-- Assessment state preserved in URL search params (`?assessmentId={id}`)
-- `assessmentId` passed to all oRPC procedures
-- Each step has server page + client form component
+- Assessment state preserved in React Context (`AssessmentProvider`) and dynamic route `[id]`.
+- `assessmentId` accessed via `useAssessment()` hook in client components.
+- Shared layout in `/assessment/[id]/layout.tsx` handles authentication and assessment ownership verification.
 
 ## Key Directories
 
@@ -216,7 +216,8 @@ pnpm build            # Production build
 - ✅ Assessment flow UI (7 steps)
 - ✅ oRPC procedures implemented
 - ✅ AI evaluation layer active
-- ⏳ Gap report generation (in progress)
+- ⏳ Gap report generation (completed)
+- ✅ Assessment route refactoring (dynamic routes + context)
 
 ## Reference Files
 
