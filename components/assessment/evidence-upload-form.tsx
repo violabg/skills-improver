@@ -158,7 +158,7 @@ export function EvidenceUploadForm() {
               <label className="font-medium text-foreground text-sm">
                 Signal retention
               </label>
-              <div className="gap-2 grid sm:grid-cols-3">
+              <div className="gap-2 grid sm:grid-cols-3 mt-4">
                 {[
                   { value: "discard", label: "Discard after analysis" },
                   { value: "30d", label: "Keep for 30 days" },

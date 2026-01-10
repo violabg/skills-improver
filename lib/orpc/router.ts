@@ -1310,8 +1310,8 @@ export const router = {
     analyzeSkill: protectedProcedure
       .input(
         z.object({
-          assessmentId: z.string().uuid(),
-          skillId: z.string().uuid(),
+          assessmentId: z.uuid(),
+          skillId: z.uuid(),
           skillName: z.string(),
           currentLevel: z.number().min(0).max(5),
           category: z.enum(["HARD", "SOFT", "META"]),
