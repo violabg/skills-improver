@@ -5,7 +5,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { getExistingGapResources } from "@/lib/actions/load-gap-resources";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
-import type { GapItem, GapsData } from "@/lib/services/assessment-results";
+import type { GapItem, GapsData } from "@/types";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

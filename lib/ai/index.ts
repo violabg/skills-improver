@@ -6,7 +6,7 @@
  *    - `generateSkills()` - Suggest skills for profile
  *    - `generateQuestions()` - Generate assessment questions
  *    - `recommendResources()` - Get learning resources
- *    - `analyzeGaps()` - Analyze skill gaps
+ *    - `analyzeSkillGap()` - Analyze single skill gap with evidence
  *
  * @example Direct Function Usage
  * ```typescript
@@ -16,7 +16,6 @@
  */
 
 // Direct functions
-export { analyzeGaps } from "./analyzeGaps";
 export { analyzeSkillGap, type SkillGapResult } from "./analyzeSkillGap";
 export { assessSkill } from "./assessSkill";
 export { generateAdvisorResponse } from "./chat-advisor";

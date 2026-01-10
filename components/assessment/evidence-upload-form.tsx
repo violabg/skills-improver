@@ -1,6 +1,6 @@
 "use client";
 
-import { FileUploadField, InputField } from "@/components/rhf-inputs";
+import { FileUploadField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAssessment } from "@/lib/hooks/use-assessment";
@@ -12,12 +12,6 @@ import { Controller, useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
 
 const EvidenceUploadSchema = z.object({
-  portfolioUrl: z.union([
-    z.url({
-      error: "Please enter a valid URL",
-    }),
-    z.literal(""),
-  ]),
   retentionChoice: z.enum(["discard", "30d", "90d"]).default("discard"),
   allowRawStorage: z.boolean().default(false),
 });
@@ -39,7 +33,6 @@ export function EvidenceUploadForm() {
   const form = useForm<EvidenceUploadData>({
     resolver,
     defaultValues: {
-      portfolioUrl: "",
       retentionChoice: "discard",
       allowRawStorage: false,
     },
@@ -48,14 +41,20 @@ export function EvidenceUploadForm() {
   const handleGithubConnect = async () => {
     setConnectingGithub(true);
     try {
-      // TODO: Implement GitHub OAuth connection via oRPC
-      // await orpc.assessment.connectGithub()
+      const { retentionChoice, allowRawStorage } = form.getValues();
+      const retentionDays =
+        retentionChoice === "30d" ? 30 : retentionChoice === "90d" ? 90 : 0;
 
-      // Simulate connection
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await client.evidence.connectGithub({
+        retentionDays,
+        allowRawStorage,
+      });
       setGithubConnected(true);
     } catch (error) {
       console.error("Failed to connect GitHub:", error);
+      alert(
+        "Failed to fetch GitHub data. Make sure you're logged in with GitHub."
+      );
     } finally {
       setConnectingGithub(false);
     }
@@ -72,8 +71,7 @@ export function EvidenceUploadForm() {
       onSubmit={form.handleSubmit(() => {
         startTransition(async () => {
           try {
-            const { portfolioUrl, retentionChoice, allowRawStorage } =
-              form.getValues();
+            const { retentionChoice, allowRawStorage } = form.getValues();
 
             const retentionDays =
               retentionChoice === "30d"
@@ -82,24 +80,8 @@ export function EvidenceUploadForm() {
                 ? 90
                 : 0;
 
-            // Send evidence items individually to keep inputs small and explicit
-            if (githubConnected) {
-              await client.evidence.create({
-                provider: "github",
-                retentionDays,
-                allowRawStorage,
-              });
-            }
-
-            if (portfolioUrl) {
-              await client.evidence.create({
-                provider: "portfolio",
-                referenceUrl: portfolioUrl,
-                retentionDays,
-                allowRawStorage,
-              });
-            }
-
+            // GitHub evidence is already created via handleGithubConnect
+            // CV upload is a placeholder for now
             if (cvFile) {
               console.warn(
                 "CV upload not yet wired to backend; skipping file."
@@ -148,20 +130,7 @@ export function EvidenceUploadForm() {
         </div>
       </Card>
 
-      {/* Portfolio URL */}
-      <Card className="bg-card p-6">
-        <InputField
-          label="Portfolio Website"
-          description="Share a link to your portfolio, personal website, or LinkedIn profile"
-          control={form.control}
-          name="portfolioUrl"
-          type="url"
-          placeholder="https://yourportfolio.com"
-          disabled={isPending}
-        />
-      </Card>
-
-      {/* Resume / CV Upload */}
+      {/* Resume / CV Upload (placeholder for future) */}
       <Card className="bg-card p-6">
         <FileUploadField
           label="Resume / CV"

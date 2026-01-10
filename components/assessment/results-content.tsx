@@ -1,11 +1,10 @@
 "use client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { GapsData } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GapCard } from "./gap-card";
-
-import { type GapsData } from "@/lib/services/assessment-results";
 
 export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
   const router = useRouter();

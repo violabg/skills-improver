@@ -17,6 +17,7 @@ interface AnalyzeSkillGapInput {
   targetRole: string;
   skillCategory: "HARD" | "SOFT" | "META";
   otherSkillsSummary?: string;
+  evidenceSummary?: string;
 }
 
 export interface SkillGapResult {
@@ -99,6 +100,16 @@ export async function analyzeSkillGap(
 }
 
 function buildSingleSkillPrompt(input: AnalyzeSkillGapInput): string {
+  const evidenceSection = input.evidenceSummary
+    ? `
+**External Evidence (GitHub/Portfolio):**
+${input.evidenceSummary}
+
+> Use this evidence to validate or challenge the self-reported skill level above.
+> If evidence contradicts (e.g., claims "Expert" but no matching public code), adjust your assessment.
+`
+    : "";
+
   return `You are a senior career advisor analyzing a single skill gap for career progression.
 
 **Target Role:** ${input.targetRole}
@@ -106,14 +117,13 @@ function buildSingleSkillPrompt(input: AnalyzeSkillGapInput): string {
 **Skill Being Analyzed:**
 - Name: ${input.skillName}
 - Category: ${input.skillCategory}
-- Current Level: ${input.currentLevel}/5
-
+- Current Level (Self-Reported): ${input.currentLevel}/5
+${evidenceSection}
 ${
   input.otherSkillsSummary
     ? `**Other Skills Context:**\n${input.otherSkillsSummary}\n`
     : ""
 }
-
 **Your Task:**
 1. Determine the target level (1-5) needed for this skill in the target role
 2. Calculate the gap size (target - current, minimum 0)

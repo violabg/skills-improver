@@ -2,7 +2,7 @@
 
 import { recommendResources } from "@/lib/ai/recommendResources";
 import db from "@/lib/db";
-import { type GapItem } from "@/lib/services/assessment-results";
+import { type GapItem } from "@/types";
 
 /**
  * Retrieve existing resources from database only (no generation).
