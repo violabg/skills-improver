@@ -62,8 +62,8 @@ export default function RootLayout({
         >
           <div className="relative bg-background min-h-screen overflow-hidden">
             {/* Background Gradients */}
-            <div className="top-0 left-1/2 -z-10 absolute bg-primary/20 opacity-20 blur-3xl rounded-full w-[800px] h-[800px] -translate-x-1/2 pointer-events-none" />
-            <div className="right-0 bottom-0 -z-10 absolute bg-secondary/20 opacity-20 blur-3xl rounded-full w-[600px] h-[600px] pointer-events-none" />
+            <div className="top-0 left-1/2 -z-10 absolute bg-primary/20 opacity-40 blur-[120px] rounded-full w-[1000px] h-[1000px] -translate-x-1/2 pointer-events-none" />
+            <div className="right-0 bottom-0 -z-10 absolute bg-secondary/20 opacity-40 blur-[120px] rounded-full w-[800px] h-[800px] pointer-events-none" />
 
             {/* Header */}
             <Suspense fallback={<HeaderSkeleton />}>
