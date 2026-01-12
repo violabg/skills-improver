@@ -1,6 +1,7 @@
 "use client";
 
 import { FileUploadField } from "@/components/rhf-inputs";
+import { SwitchField } from "@/components/rhf-inputs/switch-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAssessment } from "@/lib/hooks/use-assessment";
@@ -14,17 +15,29 @@ import { z } from "zod";
 const EvidenceUploadSchema = z.object({
   retentionChoice: z.enum(["discard", "30d", "90d"]).default("discard"),
   allowRawStorage: z.boolean().default(false),
+  useCvForAnalysis: z.boolean().default(false),
 });
 
 type EvidenceUploadData = z.infer<typeof EvidenceUploadSchema>;
 
-export function EvidenceUploadForm() {
+interface EvidenceUploadFormProps {
+  initialCvUrl: string | null;
+  initialUseCvForAnalysis: boolean;
+}
+
+export function EvidenceUploadForm({
+  initialCvUrl,
+  initialUseCvForAnalysis,
+}: EvidenceUploadFormProps) {
   const assessment = useAssessment();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [connectingGithub, setConnectingGithub] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
   const [cvFile, setCvFile] = useState<File | null>(null);
+  const [currentCvUrl, setCurrentCvUrl] = useState<string | null>(initialCvUrl);
+  const [isUploadingCv, setIsUploadingCv] = useState(false);
+  const [isDeletingCv, setIsDeletingCv] = useState(false);
 
   const resolver = zodResolver(
     EvidenceUploadSchema as unknown as never
@@ -35,6 +48,7 @@ export function EvidenceUploadForm() {
     defaultValues: {
       retentionChoice: "discard",
       allowRawStorage: false,
+      useCvForAnalysis: initialUseCvForAnalysis,
     },
   });
 
@@ -60,6 +74,61 @@ export function EvidenceUploadForm() {
     }
   };
 
+  const handleCvUpload = async (file: File) => {
+    setIsUploadingCv(true);
+    try {
+      // If there's an existing CV, delete it first
+      if (currentCvUrl) {
+        await client.user.deleteCv({});
+      }
+
+      // Convert file to base64
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ""
+        )
+      );
+
+      const result = await client.user.uploadCv({
+        fileName: file.name,
+        fileType: file.type,
+        fileBase64: base64,
+        fileSize: file.size,
+      });
+
+      setCurrentCvUrl(result.cvUrl);
+      setCvFile(null);
+    } catch (error) {
+      console.error("Failed to upload CV:", error);
+      alert("Failed to upload CV. Please try again.");
+    } finally {
+      setIsUploadingCv(false);
+    }
+  };
+
+  const handleCvDelete = async () => {
+    setIsDeletingCv(true);
+    try {
+      await client.user.deleteCv({});
+      setCurrentCvUrl(null);
+      setCvFile(null);
+    } catch (error) {
+      console.error("Failed to delete CV:", error);
+      alert("Failed to delete CV. Please try again.");
+    } finally {
+      setIsDeletingCv(false);
+    }
+  };
+
+  const handleFileSelect = async (file: File | null) => {
+    if (file) {
+      setCvFile(file);
+      await handleCvUpload(file);
+    }
+  };
+
   const handleSkip = () => {
     startTransition(async () => {
       router.push(`/assessment/${assessment.id}/results`);
@@ -71,7 +140,8 @@ export function EvidenceUploadForm() {
       onSubmit={form.handleSubmit(() => {
         startTransition(async () => {
           try {
-            const { retentionChoice, allowRawStorage } = form.getValues();
+            const { retentionChoice, allowRawStorage, useCvForAnalysis } =
+              form.getValues();
 
             const retentionDays =
               retentionChoice === "30d"
@@ -80,17 +150,12 @@ export function EvidenceUploadForm() {
                 ? 90
                 : 0;
 
-            // GitHub evidence is already created via handleGithubConnect
-            // CV upload is a placeholder for now
-            if (cvFile) {
-              console.warn(
-                "CV upload not yet wired to backend; skipping file."
-              );
-            }
+            // Update user's CV preference
+            await client.user.update({ useCvForAnalysis });
 
             router.push(`/assessment/${assessment.id}/results`);
           } catch (error) {
-            console.error("Failed to upload evidence:", error);
+            console.error("Failed to save evidence preferences:", error);
             alert(
               "We could not save your evidence preferences. Please retry or skip."
             );
@@ -130,13 +195,24 @@ export function EvidenceUploadForm() {
         </div>
       </Card>
 
-      {/* Resume / CV Upload (placeholder for future) */}
-      <Card className="bg-card p-6">
+      {/* Resume / CV Upload */}
+      <Card className="space-y-4 bg-card p-6">
         <FileUploadField
           label="Resume / CV"
           description="Upload your resume or CV (PDF or Word document, max 10MB)"
-          onFileSelect={(file) => setCvFile(file)}
-          disabled={isPending}
+          currentFileUrl={currentCvUrl}
+          onFileSelect={handleFileSelect}
+          onRemoveExisting={handleCvDelete}
+          isUploading={isUploadingCv}
+          disabled={isPending || isDeletingCv}
+        />
+
+        <SwitchField
+          control={form.control}
+          name="useCvForAnalysis"
+          label="Use CV for skill analysis"
+          description="When enabled, the AI will analyze your CV content to provide more accurate skill gap assessments."
+          disabled={!currentCvUrl && !cvFile}
         />
       </Card>
 
@@ -250,8 +326,8 @@ export function EvidenceUploadForm() {
           >
             Skip This Step
           </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Uploading..." : "Continue"}
+          <Button type="submit" disabled={isPending || isUploadingCv}>
+            {isPending ? "Saving..." : "Continue"}
           </Button>
         </div>
       </div>
