@@ -1,5 +1,5 @@
 import { AssessmentsList } from "@/components/dashboard/assessments-list";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -42,6 +42,62 @@ export async function DashboardContent() {
               Let&apos;s discover your skill gaps and create your growth plan
             </p>
           </div>
+          {/* Profile Card */}
+          <Card className="bg-card/60 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle>Account Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="font-medium text-foreground text-sm">Email</p>
+                  <p className="text-muted-foreground text-sm">
+                    {session.user.email}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground text-sm">Name</p>
+                  <p className="text-muted-foreground text-sm">
+                    {session.user.name || "Not set"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground text-sm">
+                    CV / Resume
+                  </p>
+                  {user?.cvUrl ? (
+                    <a
+                      href={user.cvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${buttonVariants({
+                        variant: "link",
+                      })} pl-0`}
+                    >
+                      View uploaded CV
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </a>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Not uploaded
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Assessment Options */}
           <div className="gap-6 grid md:grid-cols-3">
@@ -125,61 +181,6 @@ export async function DashboardContent() {
               <AssessmentsList />
             </Suspense>
           </div>
-
-          {/* Profile Card */}
-          <Card className="bg-card/60 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-medium text-foreground text-sm">Email</p>
-                  <p className="text-muted-foreground text-sm">
-                    {session.user.email}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground text-sm">Name</p>
-                  <p className="text-muted-foreground text-sm">
-                    {session.user.name || "Not set"}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground text-sm">
-                    CV / Resume
-                  </p>
-                  {user?.cvUrl ? (
-                    <a
-                      href={user.cvUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
-                    >
-                      View uploaded CV
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                    </a>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">
-                      Not uploaded
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </main>
     </div>
