@@ -155,32 +155,37 @@ await client.assessment.submitAnswer({
 
 ### Step 5: Evidence Upload (`/assessment/[id]/evidence`)
 
-**Purpose**: Optional step to connect external evidence (GitHub, portfolio, CV) for enhanced analysis.
+**Purpose**: Optional step to connect external evidence (GitHub, CV) for enhanced analysis.
 
 **UI Components**:
 
 - `PageShell` (variant: "default")
 - `EvidenceUploadForm` (client component)
-- GitHub connection button (simulated)
-- Portfolio URL input (optional)
-- CV file upload (optional)
+- GitHub connection button
+- CV file upload (PDF, stored in Cloudflare R2)
+- `SwitchField` for "Use CV for skill analysis"
 
 **API Calls**:
 
-- Currently uses placeholders for GitHub/CV upload. Portfolio URL is saved as part of the evidence record.
+- `client.evidence.connectGithub()` - Fetches GitHub repos and extracts skill signals
+- `client.user.uploadCv()` - Uploads CV to R2 and saves URL to user
+- `client.user.deleteCv()` - Deletes CV from R2 and clears user field
+- `client.user.update({ useCvForAnalysis })` - Saves CV analysis preference
 
 **Business Logic**:
 
-1. **Authentication Check**: Server component verifies session.
+1. **Authentication Check**: Server component verifies session and fetches user's CV settings.
 2. **Evidence Collection**:
-   - GitHub connection (simulated)
-   - Portfolio URL input (validated as optional)
-3. **Optional Processing**: User can skip this step entirely.
-4. **Navigation**: Redirects to `/assessment/${id}/results`.
+   - GitHub connection (fetches public repos)
+   - CV upload (stored in R2, URL saved to user)
+3. **CV Analysis Toggle**: User can enable/disable CV content in gap analysis.
+4. **Optional Processing**: User can skip this step entirely.
+5. **Navigation**: Redirects to `/assessment/${id}/results`.
 
 **Database Changes**:
 
-- Creates `Evidence` record on successful submission.
+- Creates `Evidence` record for GitHub data.
+- Updates `User.cvUrl` and `User.useCvForAnalysis` fields.
 
 ---
 
@@ -270,7 +275,7 @@ User Input → Form Validation → oRPC Call → Business Logic → Database →
 
 ### TODO Items in Codebase
 
-- **Evidence Ingestion**: Complete GitHub repo analysis and automated CV scraping.
+- **Evidence Ingestion**: Complete GitHub repo analysis and ~~automated CV scraping~~ (CV upload implemented).
 - **Background Processing**: Move heavy AI calculations to background jobs for faster UI response.
 - **Interactive Roadmap**: Convert the results list into an interactive, time-bound learning roadmap.
 
@@ -314,4 +319,4 @@ User Input → Form Validation → oRPC Call → Business Logic → Database →
 
 ---
 
-_This documentation reflects the current implementation as of January 8, 2026. The application uses dynamic AI generation for skills and validation questions, with server-side persistence for analysis and resources._
+_This documentation reflects the current implementation as of January 12, 2026. The application uses dynamic AI generation for skills and validation questions, with server-side persistence for analysis and resources. CV upload with PDF text extraction is now integrated into gap analysis._

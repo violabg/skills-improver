@@ -97,7 +97,7 @@ AI generates personalized interview questions for skills you want validated. Eac
 
 ### Step 5: Evidence (Optional)
 
-Connect external evidence: GitHub profile, portfolio URL, or CV for enhanced analysis.
+Connect external evidence: GitHub profile for repository analysis, or upload your CV (PDF) for enhanced skill assessment.
 
 ### Step 6: Results
 
@@ -345,11 +345,12 @@ pnpm start
 - 6-step assessment flow
 - Skill gap analysis and report
 - Dark theme implementation
+- CV upload with R2 storage and AI integration
 
 ### 📋 Phase 2 (Feb-Mar 2026)
 
-- oRPC procedures implementation
-- Evidence ingestion (GitHub analysis, CV parsing)
+- ~~oRPC procedures implementation~~ (completed)
+- ~~Evidence ingestion~~ (GitHub analysis + CV upload completed)
 - Learning path generation (weekly plans)
 - Progress tracking and reassessment
 
@@ -398,7 +399,7 @@ See [LICENSE](LICENSE) file.
 
 ---
 
-**Last updated:** January 9, 2026  
-**Status:** MVP Phase - Core assessment flow complete, AI orchestration in progress
+**Last updated:** January 12, 2026  
+**Status:** MVP Phase - Core assessment flow complete, CV upload and AI orchestration active
 
 For detailed technical documentation, see [plan/](plan/) directory.

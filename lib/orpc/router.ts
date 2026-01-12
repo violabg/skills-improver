@@ -1455,10 +1455,10 @@ export const router = {
             );
             const cvText = await extractTextFromPdfUrl(userSettings.cvUrl);
 
-            // Truncate CV text to avoid token limits (max ~2000 chars)
+            // Truncate CV text to avoid token limits (max ~12000 chars)
             const truncatedCvText =
-              cvText.length > 2000
-                ? cvText.substring(0, 2000) + "... [truncated]"
+              cvText.length > 12000
+                ? cvText.substring(0, 12000) + "... [truncated]"
                 : cvText;
 
             const cvEvidence = `\n\nCV/Resume Content:

@@ -123,7 +123,7 @@ submitAnswer: protectedProcedure
   });
 ```
 
-**Key procedures**: `assessment.start`, `assessment.submitAnswer`, `assessment.finalize`, `assessment.updateGoal`, `skills.list`, `questions.generateForSkills`, `gaps.analyzeSkill`, `gaps.save`
+**Key procedures**: `assessment.start`, `assessment.submitAnswer`, `assessment.finalize`, `assessment.updateGoal`, `skills.list`, `questions.generateForSkills`, `gaps.analyzeSkill`, `gaps.save`, `user.uploadCv`, `user.deleteCv`, `user.getCvSettings`
 
 ### AI Integration (ACTIVE)
 
@@ -132,6 +132,7 @@ submitAnswer: protectedProcedure
 - **Pattern**: AI SDK v6 `generateText()` with `Output.object({ schema })` for structured outputs
 - **Validation**: `GapAnalysisSchema`, `SkillEvaluationSchema` validate all LLM responses before persistence
 - **Data flow**: Assessment evaluation in `router.ts` handlers → AI evaluates → Zod validates → stores in `AssessmentResult`
+- **CV Integration**: If user enables `useCvForAnalysis`, CV text extracted via `unpdf` and included in gap analysis prompt
 
 ## Assessment Flow Architecture
 
@@ -143,7 +144,7 @@ submitAnswer: protectedProcedure
 | 2    | `/[id]/goal`            | Career target selection       | `CareerGoalForm`     | Update `targetRole`                                |
 | 3    | `/[id]/self-evaluation` | Rate 15 skills (1-5)          | `SelfEvaluationForm` | Create `AssessmentResult` (×15)                    |
 | 4    | `/[id]/test`            | AI evaluates answers          | `SkillTestForm`      | Update `AssessmentResult` (×5) via `assessSkill()` |
-| 5    | `/[id]/evidence`        | Optional GitHub/portfolio     | `EvidenceUploadForm` | Create `Evidence` record                           |
+| 5    | `/[id]/evidence`        | Optional GitHub/CV upload     | `EvidenceUploadForm` | Create `Evidence`, update User `cvUrl`             |
 | 6    | `/[id]/results`         | Gap report + readiness        | `ResultsContent`     | Create/update `AssessmentGaps`, `GapResources`     |
 
 **Key patterns**:
@@ -182,14 +183,14 @@ pnpm build            # Production build
 
 **Core tables**:
 
-- `User` — GitHub OAuth identity via better-auth
+- `User` — GitHub OAuth identity via better-auth, `cvUrl` (String?), `useCvForAnalysis` (Boolean)
 - `Skill` — 15 core skills (HARD/SOFT/META categories)
 - `SkillRelation` — Graph edges (prerequisites, dependencies)
 - `Assessment` — Run with status IN_PROGRESS/COMPLETED
 - `AssessmentResult` — Self-eval + AI test result (level 1-5, confidence, notes, rawAIOutput)
 - `AssessmentGaps` — Calculated gaps prioritized by impact
 - `GapResources` — Learning materials per gap
-- `Evidence` — User evidence uploads (GitHub, portfolio, CV)
+- `Evidence` — User evidence uploads (GitHub, portfolio)
 
 **Pattern**: All tables properly indexed; `onDelete: Cascade` ensures clean removal.
 
@@ -215,8 +216,9 @@ pnpm build            # Production build
 - ✅ Assessment flow UI (6 steps)
 - ✅ oRPC procedures implemented
 - ✅ AI evaluation layer active
-- ⏳ Gap report generation (completed)
+- ✅ Gap report generation (completed)
 - ✅ Assessment route refactoring (dynamic routes + context)
+- ✅ CV upload with R2 storage and AI integration
 
 ## Reference Files
 
