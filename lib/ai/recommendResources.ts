@@ -5,12 +5,59 @@ import { resourceModel } from "./models";
 import { type ResourceRecommendation } from "./schemas/resourceRecommendation.schema";
 import { isDevelopment } from "./utils";
 
+// Valid resource types
+const VALID_TYPES = [
+  "COURSE",
+  "VIDEO",
+  "ARTICLE",
+  "BOOK",
+  "TUTORIAL",
+  "PRACTICE",
+] as const;
+type ResourceType = (typeof VALID_TYPES)[number];
+
+// Map AI variations to valid types
+function normalizeResourceType(type: string): ResourceType {
+  const upper = type.toUpperCase().replace(/[_-]/g, "");
+
+  // Direct matches
+  if (VALID_TYPES.includes(upper as ResourceType)) {
+    return upper as ResourceType;
+  }
+
+  // Map variations
+  const typeMap: Record<string, ResourceType> = {
+    GUIDE: "ARTICLE",
+    DOCUMENTATION: "ARTICLE",
+    DOCS: "ARTICLE",
+    BLOG: "ARTICLE",
+    POST: "ARTICLE",
+    VIDEOSERIES: "VIDEO",
+    VIDEOCOURSE: "VIDEO",
+    YOUTUBE: "VIDEO",
+    WORKSHOP: "COURSE",
+    BOOTCAMP: "COURSE",
+    ONLINECOURSE: "COURSE",
+    EXERCISE: "PRACTICE",
+    PROJECT: "PRACTICE",
+    CHALLENGE: "PRACTICE",
+    LAB: "PRACTICE",
+    EBOOK: "BOOK",
+    HANDBOOK: "BOOK",
+    MANUAL: "BOOK",
+    HOWTO: "TUTORIAL",
+    WALKTHROUGH: "TUTORIAL",
+  };
+
+  return typeMap[upper] ?? "ARTICLE"; // Default to ARTICLE
+}
+
 // Flexible schema that handles LLM variations
 const FlexibleResourceSchema = z.object({
   title: z.string(),
   provider: z.string(),
   url: z.string(),
-  type: z.enum(["COURSE", "VIDEO", "ARTICLE", "BOOK", "TUTORIAL", "PRACTICE"]),
+  type: z.string().transform(normalizeResourceType),
   // Transform cost variations like "FREE (audit)" → "FREE"
   cost: z.string().transform((val) => {
     const upper = val.toUpperCase();
