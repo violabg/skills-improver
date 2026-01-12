@@ -1,7 +1,7 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { generateText, Output, wrapLanguageModel } from "ai";
 import { z } from "zod";
-import { gapAnalysisModel } from "./models";
+import { fastModel } from "./models";
 import { isDevelopment } from "./utils";
 
 export const ChatResponseSchema = z.object({
@@ -31,7 +31,8 @@ export async function generateAdvisorResponse(
 ): Promise<ChatResponse> {
   const contextPrompt = buildContextPrompt(context);
 
-  const aiModel = gapAnalysisModel;
+  // Use fastModel (GPT-OSS 20B) for chat - conversational, simpler task
+  const aiModel = fastModel;
 
   const devToolsEnabledModel = wrapLanguageModel({
     model: aiModel,

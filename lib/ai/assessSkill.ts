@@ -1,6 +1,6 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { generateText, Output, wrapLanguageModel } from "ai";
-import { skillEvaluationModel } from "./models";
+import { fastModel } from "./models";
 import {
   SkillEvaluationSchema,
   type SkillEvaluation,
@@ -21,7 +21,8 @@ export async function assessSkill(
 ): Promise<SkillEvaluation> {
   const prompt = buildAssessmentPrompt(input);
 
-  const aiModel = skillEvaluationModel;
+  // Use fastModel (GPT-OSS 20B) for high-frequency skill evaluations
+  const aiModel = fastModel;
 
   const devToolsEnabledModel = wrapLanguageModel({
     model: aiModel,

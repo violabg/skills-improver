@@ -1,11 +1,33 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
-import { generateText, Output, wrapLanguageModel } from "ai";
-import { gapAnalysisModel } from "./models";
-import {
-  ResourceListSchema,
-  type ResourceRecommendation,
-} from "./schemas/resourceRecommendation.schema";
+import { generateText, wrapLanguageModel } from "ai";
+import { z } from "zod";
+import { resourceModel } from "./models";
+import { type ResourceRecommendation } from "./schemas/resourceRecommendation.schema";
 import { isDevelopment } from "./utils";
+
+// Flexible schema that handles LLM variations
+const FlexibleResourceSchema = z.object({
+  title: z.string(),
+  provider: z.string(),
+  url: z.string(),
+  type: z.enum(["COURSE", "VIDEO", "ARTICLE", "BOOK", "TUTORIAL", "PRACTICE"]),
+  // Transform cost variations like "FREE (audit)" → "FREE"
+  cost: z.string().transform((val) => {
+    const upper = val.toUpperCase();
+    if (upper.includes("FREE") && !upper.includes("FREEMIUM")) return "FREE";
+    if (upper.includes("FREEMIUM")) return "FREEMIUM";
+    return "PAID";
+  }),
+  estimatedTimeMinutes: z.number(),
+  difficulty: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+  relevanceScore: z.number(),
+  description: z.string(),
+});
+
+// Simple schema for parsing AI response
+const AIResponseSchema = z.object({
+  recommendations: z.array(FlexibleResourceSchema),
+});
 
 interface RecommendResourcesInput {
   skillId: string;
@@ -21,7 +43,9 @@ export async function recommendResources(
 ): Promise<ResourceRecommendation[]> {
   const prompt = buildResourcePrompt(input);
 
-  const aiModel = gapAnalysisModel;
+  // Compound models have web search but don't support structured outputs
+  // Using text generation with JSON parsing instead
+  const aiModel = resourceModel;
 
   const devToolsEnabledModel = wrapLanguageModel({
     model: aiModel,
@@ -29,14 +53,48 @@ export async function recommendResources(
   });
 
   try {
-    const { output } = await generateText({
+    const { text } = await generateText({
       model: isDevelopment ? devToolsEnabledModel : aiModel,
-      output: Output.object({ schema: ResourceListSchema }),
       prompt,
-      maxRetries: 5,
+      maxRetries: 3,
     });
 
-    return output.recommendations;
+    // Log raw response for debugging
+    if (isDevelopment) {
+      console.log("Compound model raw response:", text?.substring(0, 500));
+    }
+
+    if (!text || text.trim().length === 0) {
+      throw new Error("Empty response from model");
+    }
+
+    // Extract JSON from response (may be wrapped in markdown code blocks)
+    // Try multiple patterns
+    let jsonStr = "";
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch && codeBlockMatch[1]) {
+      jsonStr = codeBlockMatch[1].trim();
+    } else {
+      // Try to find JSON object directly
+      const jsonObjMatch = text.match(/\{[\s\S]*"recommendations"[\s\S]*\}/);
+      if (jsonObjMatch) {
+        jsonStr = jsonObjMatch[0];
+      } else {
+        jsonStr = text.trim();
+      }
+    }
+
+    if (!jsonStr) {
+      throw new Error(
+        `Could not extract JSON from response: ${text.substring(0, 200)}`
+      );
+    }
+
+    // Parse and validate
+    const parsed = JSON.parse(jsonStr);
+    const validated = AIResponseSchema.parse(parsed);
+
+    return validated.recommendations;
   } catch (error) {
     console.error("Resource recommendation failed:", error);
 
@@ -68,7 +126,8 @@ function buildResourcePrompt(input: RecommendResourcesInput): string {
       ? "Moderate learning required"
       : "Significant learning effort needed";
 
-  return `You are a learning path advisor recommending resources for skill development.
+  return `You are a learning path advisor with web search access.
+USE WEB SEARCH to find current, working resource URLs.
 
 **Skill:** ${input.skillName}
 **Category:** ${input.skillCategory}
@@ -78,35 +137,32 @@ function buildResourcePrompt(input: RecommendResourcesInput): string {
 ${input.context ? `**Context:** ${input.context}` : ""}
 
 **Your Task:**
-Recommend the 5 best learning resources (courses, books, tutorials, videos, practice platforms) that would help someone progress from level ${
-    input.currentLevel
-  } to level ${input.targetLevel} in ${input.skillName}.
+Search the web and recommend 5 learning resources for ${input.skillName}.
 
 **Requirements:**
-1. Prioritize free or low-cost options
-2. Include a mix of learning formats (video, article, course, book, practice)
-3. Suggest resources in logical progression order
-4. Focus on practical, hands-on learning
-5. Include estimated time commitment
+1. USE WEB SEARCH to verify URLs exist
+2. Prioritize free or low-cost options
+3. Mix of formats (video, article, course, tutorial, practice)
+4. Include estimated time commitment
 
-**Recommended Providers:**
-- Coursera, edX, Udemy (for structured courses)
-- YouTube, Dev.to, Medium (for articles and tutorials)
-- Codecademy, LeetCode, HackerRank (for practice)
-- FreeCodeCamp, Khan Academy (for free structured learning)
-- LinkedIn Learning (for professional development)
-- O'Reilly Books (for deep dives)
+**Response Format (JSON):**
+\`\`\`json
+{
+  "recommendations": [
+    {
+      "title": "Resource Title",
+      "provider": "Platform Name",
+      "url": "https://verified-url.com",
+      "type": "COURSE",
+      "cost": "FREE",
+      "estimatedTimeMinutes": 120,
+      "difficulty": "INTERMEDIATE",
+      "relevanceScore": 0.9,
+      "description": "Brief description"
+    }
+  ]
+}
+\`\`\`
 
-Each resource should have:
-- A relevant, descriptive title
-- The platform/provider name
-- Direct URL to the resource
-- Type (COURSE, VIDEO, ARTICLE, BOOK, TUTORIAL, PRACTICE)
-- Cost category (FREE, FREEMIUM, PAID)
-- Estimated time in minutes
-- Difficulty level
-- Relevance score (0-1, how directly relevant to this skill)
-- Brief description of what it covers
-
-Order recommendations by relevance score and logical learning progression.`;
+Return ONLY the JSON.`;
 }

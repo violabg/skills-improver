@@ -1,7 +1,7 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { generateText, Output, wrapLanguageModel } from "ai";
 import { z } from "zod";
-import { skillEvaluationModel } from "./models";
+import { qualityModel } from "./models";
 import { GapExplanationSchema } from "./schemas/gapExplanation.schema";
 import { isDevelopment } from "./utils";
 
@@ -42,7 +42,8 @@ export async function analyzeSkillGap(
 ): Promise<SkillGapResult> {
   const prompt = buildSingleSkillPrompt(input);
 
-  const aiModel = skillEvaluationModel;
+  // Use qualityModel (GPT-OSS 120B) for gap analysis - needs deep reasoning
+  const aiModel = qualityModel;
 
   const devToolsEnabledModel = wrapLanguageModel({
     model: aiModel,

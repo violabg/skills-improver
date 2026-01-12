@@ -31,6 +31,14 @@ export type ResourceRecommendation = z.infer<
   typeof ResourceRecommendationSchema
 >;
 
+// Schema for AI response (just recommendations array, no wrapper)
+export const AIResourceResponseSchema = z.object({
+  recommendations: z
+    .array(ResourceRecommendationSchema)
+    .describe("Ranked list of recommended resources"),
+});
+
+// Full schema with skill context (for database storage)
 export const ResourceListSchema = z.object({
   skillId: z.string().uuid(),
   skillName: z.string(),

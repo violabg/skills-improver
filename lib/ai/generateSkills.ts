@@ -1,7 +1,7 @@
 import db from "@/lib/db";
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { generateText, Output, wrapLanguageModel } from "ai";
-import { skillEvaluationModel } from "./models"; // Using the same model for now
+import { qualityModel } from "./models";
 import {
   SkillSuggestionSchema,
   type SkillSuggestion,
@@ -29,7 +29,8 @@ export async function generateSkills(
 > {
   const prompt = buildSkillGenerationPrompt(input);
 
-  const aiModel = skillEvaluationModel;
+  // Use qualityModel (GPT-OSS 120B) for skill suggestions - needs good reasoning
+  const aiModel = qualityModel;
 
   const devToolsEnabledModel = wrapLanguageModel({
     model: aiModel,

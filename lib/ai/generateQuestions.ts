@@ -1,6 +1,6 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { generateText, Output, wrapLanguageModel } from "ai";
-import { skillEvaluationModel } from "./models";
+import { fastModel } from "./models";
 import {
   QuestionSuggestionSchema,
   type QuestionSuggestion,
@@ -26,7 +26,8 @@ export async function generateQuestions(
 
   const prompt = buildQuestionGenerationPrompt(input);
 
-  const aiModel = skillEvaluationModel;
+  // Use fastModel (GPT-OSS 20B) for question generation
+  const aiModel = fastModel;
 
   const devToolsEnabledModel = wrapLanguageModel({
     model: aiModel,

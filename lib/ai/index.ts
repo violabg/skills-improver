@@ -24,7 +24,13 @@ export { generateSkills } from "./generateSkills";
 export { recommendResources } from "./recommendResources";
 
 // Models
-export { gapAnalysisModel, skillEvaluationModel } from "./models";
+export {
+  fastModel,
+  gapAnalysisModel,
+  qualityModel,
+  scoutModel,
+  skillEvaluationModel,
+} from "./models";
 
 // Schemas (for structured output)
 export { SkillEvaluationSchema } from "./schemas/skillEvaluation.schema";
@@ -40,6 +46,7 @@ export type {
 } from "./schemas/gapExplanation.schema";
 
 export {
+  AIResourceResponseSchema,
   ResourceListSchema,
   ResourceRecommendationSchema,
 } from "./schemas/resourceRecommendation.schema";
