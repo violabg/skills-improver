@@ -159,7 +159,7 @@ app/(app)/assessment/
 // Creates assessment, redirects to /assessment/[id]/goal
 export default function StartPage() {
   return (
-    <PageShell variant="narrow">
+    <PageShell variant="default">
       <ProfileSetupForm />{" "}
       {/* On submit: create assessment, navigate to /assessment/123/goal */}
     </PageShell>
@@ -204,7 +204,7 @@ export default async function AssessmentLayout({
 // app/(app)/assessment/[id]/goal/page.tsx
 export default function GoalPage() {
   return (
-    <PageShell variant="narrow">
+    <PageShell variant="default">
       <div className="space-y-2 mb-8">
         <div className="text-muted-foreground text-sm">Step 2 of 7</div>
         <h1 className="font-bold text-foreground text-3xl">
@@ -268,7 +268,7 @@ async function PageContent() {
 
 export default function Page() {
   return (
-    <PageShell variant="narrow">
+    <PageShell variant="default">
       <Header />
       <Suspense fallback={<Skeleton />}>
         <PageContent />

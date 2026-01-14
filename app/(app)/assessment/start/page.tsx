@@ -25,7 +25,7 @@ export default function AssessmentStartPage() {
       totalSteps={6}
       title="Quick Profile Setup"
       description="Help us understand your current position and career goals"
-      variant="narrow"
+      variant="default"
     >
       <Suspense fallback={<FormShellSkeleton />}>
         <AssessmentStartContent />

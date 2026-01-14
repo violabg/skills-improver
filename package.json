@@ -11,7 +11,11 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "prebuild": "npm run db:generate",
-    "devAi": "pnpx @ai-sdk/devtools"
+    "devAi": "pnpx @ai-sdk/devtools",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.2",

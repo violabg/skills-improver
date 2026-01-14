@@ -68,7 +68,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col mx-auto max-w-4xl h-[calc(100vh-6rem)]">
+    <div className="flex flex-col mx-auto h-[calc(100vh-6rem)]">
       <div className="space-y-2 mb-6 text-center">
         <div className="inline-flex justify-center items-center bg-primary/10 mb-2 p-2 rounded-full">
           <span className="text-2xl">🤖</span>

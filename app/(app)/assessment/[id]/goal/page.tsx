@@ -10,7 +10,7 @@ export default function GoalPage() {
       totalSteps={6}
       title="Choose Your Target Goal"
       description="What role or position are you working towards?"
-      variant="narrow"
+      variant="default"
     >
       <Suspense fallback={<GoalSkeleton />}>
         <CareerGoalForm />

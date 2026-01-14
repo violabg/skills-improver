@@ -105,7 +105,7 @@ export function CareerGoalForm() {
           }
         });
       })}
-      className="space-y-8 mx-auto max-w-4xl"
+      className="space-y-8 mx-auto"
     >
       <div className="space-y-6">
         <Card className="shadow-sm border-border/50 overflow-hidden">

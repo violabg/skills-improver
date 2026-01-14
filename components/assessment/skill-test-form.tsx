@@ -148,7 +148,7 @@ export function SkillTestForm({
   }
 
   return (
-    <div className="space-y-8 mx-auto pb-12 max-w-4xl">
+    <div className="space-y-8 mx-auto pb-12">
       {/* Progress bar */}
       <div className="space-y-3">
         <div className="flex justify-between items-end">

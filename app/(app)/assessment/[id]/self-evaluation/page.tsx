@@ -34,7 +34,7 @@ export default async function SelfEvaluationPage({
       totalSteps={6}
       title="Rate Your Confidence"
       description="How confident are you in each of these skills? Be honest - there are no right or wrong answers."
-      variant="narrow"
+      variant="default"
     >
       <Suspense fallback={<FormShellSkeleton />}>
         <SelfEvaluationFormLoader assessmentId={id} />

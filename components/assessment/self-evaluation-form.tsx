@@ -113,7 +113,7 @@ export function SelfEvaluationForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 mx-auto pb-12 max-w-4xl">
+    <form onSubmit={handleSubmit} className="space-y-8 mx-auto pb-12">
       {reasoning && (
         <div className="bg-primary/5 shadow-sm p-4 border border-primary/20 rounded-xl text-sm">
           <div className="flex items-start gap-3">

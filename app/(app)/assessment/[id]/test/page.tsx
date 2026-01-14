@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 
 function TestSkeleton() {
   return (
-    <div className="space-y-8 mx-auto max-w-4xl">
+    <div className="space-y-8 mx-auto">
       <div className="space-y-3">
         <div className="flex justify-between items-end">
           <Skeleton className="w-32 h-4" />

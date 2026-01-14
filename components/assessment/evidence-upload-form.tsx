@@ -162,7 +162,7 @@ export function EvidenceUploadForm({
           }
         });
       })}
-      className="space-y-8 mx-auto max-w-4xl"
+      className="space-y-8 mx-auto"
     >
       <div className="gap-6 grid md:grid-cols-2">
         {/* GitHub Connection */}
