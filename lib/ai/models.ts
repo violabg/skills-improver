@@ -21,7 +21,8 @@ export const qualityModel = groq("openai/gpt-oss-120b");
 // Llama 4 Scout - Preview, best-effort structured outputs, faster
 // Use for: quick evaluations when rate limited on GPT-OSS
 export const scoutModel = groq("meta-llama/llama-4-scout-17b-16e-instruct");
-export const resourceModel = groq("groq/compound-mini");
+export const resourceModel = scoutModel;
+// export const resourceModel = groq("groq/compound-mini");
 
 // Legacy exports for backward compatibility
 export const skillEvaluationModel = fastModel;
