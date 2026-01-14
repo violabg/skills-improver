@@ -9,11 +9,42 @@ interface TestPageProps {
   params: Promise<{ id: string }>;
 }
 
+import { Card } from "@/components/ui/card";
+
 function TestSkeleton() {
   return (
-    <div className="space-y-6">
-      <Skeleton className="w-32 h-8" />
-      <Skeleton className="h-100" />
+    <div className="space-y-8 mx-auto max-w-4xl">
+      <div className="space-y-3">
+        <div className="flex justify-between items-end">
+          <Skeleton className="w-32 h-4" />
+          <Skeleton className="w-10 h-4" />
+        </div>
+        <Skeleton className="w-full h-2.5" />
+      </div>
+
+      <Card className="p-8">
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-20 h-6" />
+            <div className="bg-border w-px h-4" />
+            <Skeleton className="w-24 h-4" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="w-full h-8" />
+            <Skeleton className="w-3/4 h-8" />
+          </div>
+        </div>
+        <div className="space-y-6 mt-8">
+          <Skeleton className="w-full h-64" />
+          <div className="flex justify-between items-center pt-2">
+            <Skeleton className="w-20 h-10" />
+            <div className="flex gap-3">
+              <Skeleton className="w-32 h-10" />
+              <Skeleton className="rounded-full w-40 h-11" />
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

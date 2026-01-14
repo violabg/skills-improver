@@ -1,5 +1,5 @@
 import { CareerGoalForm } from "@/components/assessment/career-goal-form";
-import { FormShellSkeleton } from "@/components/skeletons";
+import { GoalSkeleton } from "@/components/skeletons";
 import { PageShell } from "@/components/ui/page-shell";
 import { Suspense } from "react";
 
@@ -12,7 +12,7 @@ export default function GoalPage() {
       description="What role or position are you working towards?"
       variant="narrow"
     >
-      <Suspense fallback={<FormShellSkeleton />}>
+      <Suspense fallback={<GoalSkeleton />}>
         <CareerGoalForm />
       </Suspense>
     </PageShell>
