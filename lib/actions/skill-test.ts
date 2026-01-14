@@ -50,11 +50,17 @@ export async function submitServerAction(payload: {
       continue;
     }
 
+    // Fetch skill details for better AI evaluation
+    const skill = await db.skill.findUnique({
+      where: { id: s.skillId },
+      select: { name: true, category: true },
+    });
+
     // Call AI evaluation
     const evaluation = await assessSkill({
       skillId: s.skillId,
-      skillName: "", // optional, will be validated in assessSkill if needed
-      skillCategory: "HARD",
+      skillName: skill?.name ?? "Unknown Skill",
+      skillCategory: skill?.category ?? "HARD",
       question: s.question,
       answer,
     });

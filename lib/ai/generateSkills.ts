@@ -44,21 +44,15 @@ export async function generateSkills(
       prompt,
     });
 
-    // Convert selected skill names to IDs by looking them up in the database
-    const selectedSkillIds = await Promise.all(
-      output.selectedSkillNames.map(async (name: string) => {
-        const skill = await db.skill.findUnique({
-          where: { name },
-          select: { id: true },
-        });
-        return skill?.id || null;
-      })
-    );
-
-    // Filter out null values (skills that couldn't be found)
-    const validSkillIds = selectedSkillIds.filter(
-      (id): id is string => id !== null
-    );
+    // Batch lookup: convert selected skill names to IDs with single query
+    const matchedSkills = await db.skill.findMany({
+      where: { name: { in: output.selectedSkillNames } },
+      select: { id: true, name: true },
+    });
+    const nameToId = new Map(matchedSkills.map((s) => [s.name, s.id]));
+    const validSkillIds = output.selectedSkillNames
+      .map((name: string) => nameToId.get(name))
+      .filter((id): id is string => id !== undefined);
 
     return {
       selectedSkillIds: validSkillIds,

@@ -78,13 +78,14 @@ export function GoalSkeleton() {
 
 export function DashboardShellSkeleton() {
   return (
-    <>
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-8">
+      <div className="flex md:flex-row flex-col justify-between md:items-end gap-4 pb-6 border-border/40 border-b">
         <div className="space-y-2">
           <Skeleton className="w-48 h-8" />
           <Skeleton className="w-96 h-5" />
+          <Skeleton className="w-96 h-5" />
         </div>
-        <Skeleton className="rounded-full w-40 h-11" />
+        <Skeleton className="rounded-full w-[216px] h-[36px]" />
       </div>
       <div className="gap-6 grid grid-cols-1 lg:grid-cols-3">
         {/* Main Content (2 cols) */}
@@ -111,7 +112,7 @@ export function DashboardShellSkeleton() {
           <Skeleton className="rounded-xl h-32" />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

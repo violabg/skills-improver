@@ -851,6 +851,8 @@ export const router = {
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
         const { id, ...rest } = input;
+        // Note: Resources are currently global (not user-scoped)
+        // TODO: Add createdBy field to Resource model if user-scoping is needed
         const resource = await ctx.db.resource.update({
           where: { id },
           data: rest as Partial<typeof input>,
@@ -867,6 +869,8 @@ export const router = {
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
+        // Note: Resources are currently global (not user-scoped)
+        // TODO: Add createdBy field to Resource model if user-scoping is needed
         await ctx.db.resource.delete({ where: { id: input.id } });
         return { ok: true };
       }),
@@ -997,7 +1001,10 @@ export const router = {
       .input(z.object({ id: z.string().uuid() }))
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
-        await ctx.db.evidence.delete({ where: { id: input.id } });
+        // Ensure user can only delete their own evidence
+        await ctx.db.evidence.delete({
+          where: { id: input.id, userId: ctx.user.id },
+        });
         return { ok: true };
       }),
 
@@ -1493,7 +1500,20 @@ ${truncatedCvText}
       .input(
         z.object({
           assessmentId: z.string().uuid(),
-          gaps: z.array(z.any()),
+          gaps: z.array(
+            z.object({
+              skillId: z.string().uuid(),
+              skillName: z.string(),
+              currentLevel: z.number().min(0).max(5),
+              targetLevel: z.number().min(0).max(5),
+              gapSize: z.number().min(0).max(5),
+              impact: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+              explanation: z.string(),
+              recommendedActions: z.array(z.string()),
+              estimatedTimeWeeks: z.number().positive(),
+              priority: z.number().min(1).max(10),
+            })
+          ),
           strengths: z.array(z.string()),
           readinessScore: z.number().min(0).max(100),
           overallRecommendation: z.string(),

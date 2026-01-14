@@ -23,6 +23,19 @@ interface SkillToAnalyze {
   category: "HARD" | "SOFT" | "META";
 }
 
+interface GapResult {
+  skillId: string;
+  skillName: string;
+  currentLevel: number;
+  targetLevel: number;
+  gapSize: number;
+  impact: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  explanation: string;
+  recommendedActions: string[];
+  estimatedTimeWeeks: number;
+  priority: number;
+}
+
 interface GapAnalysisProgressProps {
   skillsToAnalyze: SkillToAnalyze[];
   targetRole: string;
@@ -46,7 +59,7 @@ export function GapAnalysisProgress({
   const [isComplete, setIsComplete] = useState(false);
 
   // Use refs to avoid dependency issues
-  const gapsRef = useRef<unknown[]>([]);
+  const gapsRef = useRef<GapResult[]>([]);
   const strengthsRef = useRef<string[]>([]);
   const isRunningRef = useRef(false);
 
@@ -138,7 +151,7 @@ export function GapAnalysisProgress({
       try {
         await client.gaps.save({
           assessmentId: assessment.id,
-          gaps: gaps as unknown[],
+          gaps,
           strengths,
           readinessScore,
           overallRecommendation,
