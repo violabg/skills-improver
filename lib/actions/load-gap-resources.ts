@@ -55,12 +55,14 @@ export async function loadGapResources({
   assessmentGapId,
   skillId,
   skillName,
+  skillCategory = "HARD",
   currentLevel,
   targetLevel,
 }: {
   assessmentGapId: string;
   skillId: string;
   skillName: string;
+  skillCategory?: "HARD" | "SOFT" | "META";
   currentLevel: number;
   targetLevel: number;
 }) {
@@ -69,12 +71,12 @@ export async function loadGapResources({
     const recs = await recommendResources({
       skillId,
       skillName,
-      skillCategory: "HARD",
+      skillCategory,
       currentLevel,
       targetLevel,
     });
 
-    // Map to UI format
+    // Map to UI format (estimatedTime is in hours for display)
     const mappedResources = recs.map((r) => ({
       id: r.url || `${skillId}-${r.title}`,
       provider: r.provider,

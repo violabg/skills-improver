@@ -186,6 +186,9 @@ export const router = {
           });
 
           // Calculate confidence based on self-evaluation level
+          // Lower self-ratings get lower confidence (user is uncertain)
+          // Higher self-ratings get higher confidence (user is more certain)
+          // Scale: 0.3 (low) to 0.7 (high) - never fully confident for self-eval
           const confidence =
             ev.level <= 1
               ? 0.3

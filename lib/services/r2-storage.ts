@@ -202,7 +202,7 @@ export function validateResumeFile(file: File): {
   if (file.size > MAX_FILE_SIZE) {
     return {
       valid: false,
-      error: "Il file è troppo grande. Dimensione massima: 10MB",
+      error: "File is too large. Maximum size: 10MB",
     };
   }
 
@@ -214,7 +214,7 @@ export function validateResumeFile(file: File): {
   if (!isValidType) {
     return {
       valid: false,
-      error: "Formato file non supportato. Usa PDF, DOC o DOCX",
+      error: "Unsupported file format. Please use PDF, DOC or DOCX",
     };
   }
 

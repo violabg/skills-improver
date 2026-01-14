@@ -1,6 +1,7 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { generateText, wrapLanguageModel } from "ai";
 import { z } from "zod";
+import { aiLogger } from "../services/logger";
 import { resourceModel } from "./models";
 import { type ResourceRecommendation } from "./schemas/resourceRecommendation.schema";
 import { isDevelopment } from "./utils";
@@ -108,7 +109,9 @@ export async function recommendResources(
 
     // Log raw response for debugging
     if (isDevelopment) {
-      console.log("Compound model raw response:", text?.substring(0, 500));
+      aiLogger.debug("Compound model raw response", {
+        preview: text?.substring(0, 500),
+      });
     }
 
     if (!text || text.trim().length === 0) {
