@@ -8,37 +8,27 @@ export async function LandingBottomCTA() {
     headers: await headers(),
   });
 
-  return (
-    <section className="bg-primary text-primary-foreground">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-16 max-w-7xl text-center">
-        <h2 className="mb-4 font-bold text-3xl">
-          Ready to discover your skill gaps?
-        </h2>
-        <p className="opacity-90 mb-8 text-lg">
-          Start your personalized assessment and get a 30-day growth plan
-        </p>
-        {session ? (
-          <Link
-            href="/assessment/start"
-            className={`${buttonVariants({
-              variant: "secondary",
-              size: "lg",
-            })}`}
-          >
-            Start Assessment
-          </Link>
-        ) : (
-          <Link
-            href="/login?redirect=/assessment/start"
-            className={`${buttonVariants({
-              variant: "secondary",
-              size: "lg",
-            })}`}
-          >
-            Sign in to begin
-          </Link>
-        )}
-      </div>
-    </section>
+  return session ? (
+    <Link
+      href="/assessment/start"
+      className={buttonVariants({
+        size: "lg",
+        className:
+          "h-12 px-8 text-base shadow-lg shadow-primary/25 rounded-full",
+      })}
+    >
+      Start Assessment
+    </Link>
+  ) : (
+    <Link
+      href="/login?redirect=/assessment/start"
+      className={buttonVariants({
+        size: "lg",
+        className:
+          "h-12 px-8 text-base shadow-lg shadow-primary/25 rounded-full",
+      })}
+    >
+      Sign in to begin
+    </Link>
   );
 }

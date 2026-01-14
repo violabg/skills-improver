@@ -148,64 +148,88 @@ export function SkillTestForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 mx-auto pb-12 max-w-4xl">
       {/* Progress bar */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-muted-foreground">
-            Question {currentQuestionIndex + 1} of {questions.length}
+      <div className="space-y-3">
+        <div className="flex justify-between items-end">
+          <div className="space-y-1">
+            <span className="font-semibold text-primary text-xs uppercase tracking-wider">
+              Skill Assessment
+            </span>
+            <p className="font-medium text-foreground text-sm">
+              Question {currentQuestionIndex + 1}{" "}
+              <span className="text-muted-foreground">
+                of {questions.length}
+              </span>
+            </p>
+          </div>
+          <span className="font-bold text-foreground text-sm">
+            {Math.round(progress)}%
           </span>
-          <span className="text-muted-foreground">{Math.round(progress)}%</span>
         </div>
-        <div className="bg-muted rounded-full w-full h-2 overflow-hidden">
+        <div className="bg-muted ring-border/50 rounded-full ring-1 w-full h-2.5 overflow-hidden">
           <div
-            className="bg-primary h-full transition-all duration-300"
+            className="bg-primary bg-gradient-to-r from-primary/80 to-primary shadow-lg shadow-primary/20 h-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
       {/* Question card */}
-      <Card className="bg-card p-8">
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-2">
-            <Badge className={getTypeColor(currentQuestion.type)}>
-              {getTypeLabel(currentQuestion.type)}
-            </Badge>
-            <Badge variant="outline">{currentQuestion.skillName}</Badge>
-          </div>
-
-          {currentQuestion.context && (
-            <p className="text-muted-foreground text-sm italic">
-              {currentQuestion.context}
-            </p>
-          )}
-
-          <h2 className="font-medium text-foreground text-lg leading-relaxed">
-            {currentQuestion.question}
-          </h2>
+      <Card className="group relative bg-card shadow-black/5 shadow-lg p-8 border-border/50 overflow-hidden">
+        <div className="top-0 right-0 absolute opacity-10 group-hover:opacity-20 p-4 transition-opacity pointer-events-none">
+          <span className="font-serif font-bold text-primary text-9xl">?</span>
         </div>
 
-        <div className="space-y-4">
+        <div className="z-10 relative space-y-6">
+          <div className="flex items-center gap-3">
+            <Badge
+              className={`${getTypeColor(
+                currentQuestion.type
+              )} border-transparent px-3 py-1 font-medium bg-opacity-20`}
+            >
+              {getTypeLabel(currentQuestion.type)}
+            </Badge>
+            <div className="bg-border w-px h-4" />
+            <span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
+              {currentQuestion.skillName}
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {currentQuestion.context && (
+              <div className="bg-muted/50 p-4 border-primary/50 border-l-4 rounded-lg text-muted-foreground text-sm italic leading-relaxed">
+                {currentQuestion.context}
+              </div>
+            )}
+
+            <h2 className="font-medium text-foreground text-xl md:text-2xl leading-relaxed">
+              {currentQuestion.question}
+            </h2>
+          </div>
+        </div>
+
+        <div className="z-10 relative space-y-6 mt-8">
           <Textarea
             value={currentAnswer}
             onChange={(e) => setCurrentAnswer(e.target.value)}
             placeholder="Type your answer here..."
             rows={8}
-            className="resize-none"
+            className="bg-background/50 focus:bg-background shadow-inner p-4 border-border/60 focus:border-primary/50 text-base leading-relaxed transition-all resize-none"
           />
 
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center pt-2">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={handleBack}
               disabled={isPending}
+              className="hover:bg-muted/50"
             >
-              Back
+              ← Back
             </Button>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Button
                 type="button"
                 variant="ghost"
@@ -218,20 +242,22 @@ export function SkillTestForm({
                   }
                 }}
                 disabled={isPending}
-                className="text-muted-foreground"
+                className="text-muted-foreground hover:text-foreground"
               >
-                Skip
+                Skip Question
               </Button>
 
               <Button
                 onClick={handleNext}
                 disabled={!currentAnswer.trim() || isPending}
+                className="shadow-lg shadow-primary/20 px-8 rounded-full"
+                size="lg"
               >
                 {isPending
                   ? "Submitting..."
                   : isLastQuestion
-                  ? "Submit Answers"
-                  : "Next Question"}
+                  ? "Finish Assessment"
+                  : "Next Question →"}
               </Button>
             </div>
           </div>
@@ -239,16 +265,16 @@ export function SkillTestForm({
       </Card>
 
       {/* Help text */}
-      <div className="bg-muted/50 p-4 rounded-lg text-muted-foreground text-sm">
-        <p>
-          💡 <strong>Tip:</strong> We&apos;re looking for your thinking process,
-          not perfect answers. Explain your reasoning and share real examples
-          where possible.
-        </p>
-        <p className="mt-2">
-          ℹ️ If you skip a question, we&apos;ll use your self-evaluation score
-          for that skill instead.
-        </p>
+      <div className="flex items-start gap-3 bg-blue-500/5 p-4 border border-blue-500/10 rounded-xl">
+        <span className="text-xl">💡</span>
+        <div className="space-y-1 text-foreground/80 text-sm">
+          <p className="font-medium text-foreground">Tip for success</p>
+          <p className="leading-relaxed">
+            We&apos;re analyzing your problem-solving approach, not just the
+            final code. Explain your reasoning ("why") alongside your solution
+            ("how"). Real-world examples boost your score.
+          </p>
+        </div>
       </div>
     </div>
   );

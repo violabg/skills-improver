@@ -149,101 +149,125 @@ export function ProfileSetupForm() {
           }
         });
       })}
+      className="space-y-8"
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>Tell us about yourself</CardTitle>
-          <CardDescription>
-            This helps us personalize your skill assessment
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Current Role */}
-          <div className="space-y-4">
-            <SelectField
-              label="Current role"
-              control={form.control}
-              name="currentRole"
-              placeholder="Select your role"
-              required
-              options={ROLES.map((role) => ({ value: role, label: role }))}
-            />
-
-            {currentRole === "Other" && (
-              <InputField
-                label="Your role title"
+      <div className="gap-6 grid md:grid-cols-2">
+        {/* Role & Experience */}
+        <Card className="md:col-span-2 shadow-sm border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="bg-primary/10 p-1.5 rounded-md text-primary">
+                💼
+              </span>
+              Professional Background
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <SelectField
+                label="Current Role"
                 control={form.control}
-                name="customRole"
-                placeholder="e.g. AI Prompt Engineer"
+                name="currentRole"
+                placeholder="Select your current role"
                 required
-                disabled={isPending}
+                options={ROLES.map((role) => ({ value: role, label: role }))}
               />
-            )}
-          </div>
 
-          {/* Years Experience */}
-          <SelectField
-            label="Years of experience"
-            control={form.control}
-            name="yearsExperience"
-            placeholder="Select range"
-            required
-            options={["0-2", "3-5", "6-10", "10+"].map((r) => ({
-              value: r,
-              label: r,
-            }))}
-          />
+              {currentRole === "Other" && (
+                <div className="slide-in-from-top-2 animate-in fade-in">
+                  <InputField
+                    label="Specific Job Title"
+                    control={form.control}
+                    name="customRole"
+                    placeholder="e.g. AI Prompt Engineer"
+                    required
+                    disabled={isPending}
+                  />
+                </div>
+              )}
+            </div>
 
-          {/* Industry */}
-          <div className="space-y-4">
-            <SelectField
-              label="Industry"
+            <div className="gap-6 grid sm:grid-cols-2">
+              <SelectField
+                label="Years of Experience"
+                control={form.control}
+                name="yearsExperience"
+                placeholder="Select range"
+                required
+                options={["0-2", "3-5", "6-10", "10+"].map((r) => ({
+                  value: r,
+                  label: r,
+                }))}
+              />
+
+              <div className="space-y-4">
+                <SelectField
+                  label="Industry"
+                  control={form.control}
+                  name="industry"
+                  placeholder="Select your industry"
+                  required
+                  options={INDUSTRIES.map((industry) => ({
+                    value: industry,
+                    label: industry,
+                  }))}
+                />
+
+                {industry === "Other" && (
+                  <div className="slide-in-from-top-2 animate-in fade-in">
+                    <InputField
+                      label="Specific Industry"
+                      control={form.control}
+                      name="customIndustry"
+                      placeholder="e.g. Aerospace"
+                      required
+                      disabled={isPending}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Career Intent */}
+        <Card className="md:col-span-2 shadow-sm border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="bg-blue-500/10 p-1.5 rounded-md text-blue-500">
+                🚀
+              </span>
+              Career Goals
+            </CardTitle>
+            <CardDescription>Where do you want to go next?</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RadioGroupField
+              label="My current objective is to..."
               control={form.control}
-              name="industry"
-              placeholder="Select your industry"
-              required
-              options={INDUSTRIES.map((industry) => ({
-                value: industry,
-                label: industry,
+              name="careerIntent"
+              options={CAREER_INTENTS.map((i) => ({
+                value: i.value,
+                label: i.label,
+                description: i.description,
               }))}
+              required
+              className="gap-4 grid sm:grid-cols-3"
             />
+          </CardContent>
+        </Card>
+      </div>
 
-            {industry === "Other" && (
-              <InputField
-                label="Your industry"
-                control={form.control}
-                name="customIndustry"
-                placeholder="e.g. Aerospace"
-                required
-                disabled={isPending}
-              />
-            )}
-          </div>
-
-          {/* Career Intent */}
-          <RadioGroupField
-            label="Career intent"
-            control={form.control}
-            name="careerIntent"
-            options={CAREER_INTENTS.map((i) => ({
-              value: i.value,
-              label: i.label,
-              description: i.description,
-            }))}
-            required
-          />
-
-          {/* Submit */}
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="w-full"
-            size="lg"
-          >
-            {isPending ? "Starting..." : "Continue"}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex justify-end pt-4">
+        <Button
+          type="submit"
+          disabled={isPending}
+          size="lg"
+          className="shadow-lg shadow-primary/20 hover:shadow-primary/30 px-8 rounded-full w-full sm:w-auto transition-all"
+        >
+          {isPending ? "Setting up..." : "Begin Assessment →"}
+        </Button>
+      </div>
     </form>
   );
 }

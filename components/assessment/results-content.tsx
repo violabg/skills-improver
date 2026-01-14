@@ -1,6 +1,6 @@
 "use client";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GapsData } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,104 +23,155 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="mx-auto px-4 py-12 max-w-5xl">
-        {/* Header */}
-        <div className="mb-12 text-center">
-          <div className="inline-flex justify-center items-center mb-4">
-            <div
-              className={`font-bold text-7xl ${getScoreColor(
-                gapsData.readinessScore
-              )}`}
-            >
-              {gapsData.readinessScore}%
+      <div className="mx-auto px-4 pt-8 pb-16 max-w-7xl">
+        {/* Hero Header */}
+        <div className="relative bg-muted/30 mb-12 p-12 border border-border/50 rounded-3xl overflow-hidden text-center">
+          <div className="top-0 right-0 absolute bg-primary/5 blur-3xl -mt-10 -mr-10 rounded-full w-64 h-64 pointer-events-none" />
+          <div className="bottom-0 left-0 absolute bg-green-500/5 blur-3xl -mb-10 -ml-10 rounded-full w-64 h-64 pointer-events-none" />
+
+          <div className="z-10 relative">
+            <div className="inline-flex relative justify-center items-center mb-6">
+              <svg
+                className="absolute opacity-20 w-[160%] h-[160%] animate-spin-slow"
+                viewBox="0 0 100 100"
+              >
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                  className={getScoreColor(gapsData.readinessScore)}
+                />
+              </svg>
+              <div
+                className={`text-8xl md:text-9xl font-black tracking-tighter ${getScoreColor(
+                  gapsData.readinessScore
+                )}`}
+              >
+                {gapsData.readinessScore}
+                <span className="opacity-60 text-4xl align-top">%</span>
+              </div>
             </div>
+            <h1 className="mb-3 font-bold text-foreground text-3xl md:text-5xl tracking-tight">
+              {getScoreLabel(gapsData.readinessScore)} for{" "}
+              <span className="text-primary">{gapsData.targetRole}</span>
+            </h1>
+            <p className="mx-auto max-w-2xl text-muted-foreground text-lg md:text-xl leading-relaxed">
+              We've analyzed your skills against industry standards. Here is
+              your personalized roadmap to close the gap.
+            </p>
           </div>
-          <h1 className="mb-2 font-bold text-foreground text-4xl">
-            {getScoreLabel(gapsData.readinessScore)} for {gapsData.targetRole}
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            {"Here's your personalized skill gap analysis and growth roadmap"}
-          </p>
         </div>
 
-        {/* Strengths */}
-        <section className="mb-12">
-          <h2 className="mb-4 font-semibold text-foreground text-2xl">
-            Your Strengths
-          </h2>
-          <div className="gap-4 grid md:grid-cols-3">
-            {gapsData.strengths.map((strength) => (
-              <Card
-                key={strength}
-                className="bg-green-500/5 p-4 border-green-500/50"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium text-foreground">{strength}</p>
+        <div className="gap-10 grid grid-cols-1 lg:grid-cols-12">
+          {/* Sidebar / Strengths */}
+          <div className="space-y-8 order-2 lg:order-1 lg:col-span-4">
+            <section className="top-8 sticky bg-card shadow-sm p-6 border border-border/50 rounded-2xl">
+              <h2 className="flex items-center gap-2 mb-6 font-bold text-foreground text-xl">
+                <span className="text-green-500">🌟</span> Your Strengths
+              </h2>
+              <div className="space-y-3">
+                {gapsData.strengths.map((strength) => (
+                  <div
+                    key={strength}
+                    className="flex items-start gap-3 bg-green-500/5 p-4 border border-green-500/20 rounded-xl text-sm"
+                  >
+                    <div className="mt-0.5 text-green-600 dark:text-green-400">
+                      ✓
+                    </div>
+                    <p className="font-medium text-foreground leading-relaxed">
+                      {strength}
+                    </p>
                   </div>
-                  <div className="text-green-600 dark:text-green-400">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                ))}
+              </div>
+            </section>
+
+            <div className="hidden lg:block">
+              <Card className="relative bg-primary/5 border-primary/10 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-primary">
+                    Ready to level up?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="mb-4 text-foreground/80 text-sm">
+                    Start working on these gaps today. Check back in 30 days to
+                    re-evaluate.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      size="lg"
+                      className="shadow-lg shadow-primary/20 w-full"
+                      onClick={() => router.push("/dashboard")}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                      Go to Dashboard
+                    </Button>
+                    <Link href="/chat" className="w-full">
+                      <Button variant="outline" className="w-full">
+                        Chat with AI Advisor
+                      </Button>
+                    </Link>
                   </div>
-                </div>
+                </CardContent>
               </Card>
-            ))}
+            </div>
           </div>
-        </section>
 
-        {/* Skill Gaps */}
-        <section className="mb-12">
-          <h2 className="mb-4 font-semibold text-foreground text-2xl">
-            Priority Skill Gaps
-          </h2>
-          <p className="mb-6 text-muted-foreground">
-            Focus on these areas to accelerate your career progression
-          </p>
+          {/* Main Content / Gaps */}
+          <div className="space-y-8 order-1 lg:order-2 lg:col-span-8">
+            <section>
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <h2 className="font-bold text-foreground text-2xl">
+                    Priority Skill Gaps
+                  </h2>
+                  <p className="mt-1 text-muted-foreground">
+                    Focus on these high-impact areas first
+                  </p>
+                </div>
+              </div>
 
-          <div className="space-y-4">
-            {gapsData.gaps.map((gap) => (
-              <GapCard
-                key={gap.skillId}
-                assessmentGapId={gapsData.assessmentGapsId}
-                skillId={gap.skillId}
-                skillName={gap.skillName}
-                currentLevel={gap.currentLevel}
-                targetLevel={gap.targetLevel}
-                gapSize={gap.gapSize}
-                impact={gap.impact}
-                explanation={gap.explanation}
-                recommendedActions={gap.recommendedActions}
-                estimatedTimeWeeks={gap.estimatedTimeWeeks}
-                priority={gap.priority}
-                evidence={gap.evidence}
-                resources={gap.resources}
-              />
-            ))}
+              <div className="space-y-6">
+                {gapsData.gaps.map((gap) => (
+                  <GapCard
+                    key={gap.skillId}
+                    assessmentGapId={gapsData.assessmentGapsId}
+                    skillId={gap.skillId}
+                    skillName={gap.skillName}
+                    currentLevel={gap.currentLevel}
+                    targetLevel={gap.targetLevel}
+                    gapSize={gap.gapSize}
+                    impact={gap.impact}
+                    explanation={gap.explanation}
+                    recommendedActions={gap.recommendedActions}
+                    estimatedTimeWeeks={gap.estimatedTimeWeeks}
+                    priority={gap.priority}
+                    evidence={gap.evidence}
+                    resources={gap.resources}
+                  />
+                ))}
+              </div>
+            </section>
           </div>
-        </section>
 
-        {/* Actions */}
-        <div className="flex sm:flex-row flex-col justify-center items-center gap-4">
-          <Button size="lg" onClick={() => router.push("/dashboard")}>
-            Go to Dashboard
-          </Button>
-          <Link
-            href="/chat"
-            className={`${buttonVariants({ variant: "outline", size: "lg" })}`}
-          >
-            Talk to Career Advisor
-          </Link>
+          <div className="lg:hidden space-y-4 order-3 col-span-1">
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() => router.push("/dashboard")}
+            >
+              Go to Dashboard
+            </Button>
+            <Link href="/chat" className="block w-full">
+              <Button variant="outline" size="lg" className="w-full">
+                Talk to Career Advisor
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

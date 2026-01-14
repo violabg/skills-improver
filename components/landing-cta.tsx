@@ -9,7 +9,7 @@ export async function LandingCTA() {
   });
 
   return (
-    <div className="pt-4">
+    <div>
       {session ? (
         <Link
           href="/assessment/start"

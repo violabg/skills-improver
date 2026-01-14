@@ -1,9 +1,10 @@
 import { AssessmentsList } from "@/components/dashboard/assessments-list";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -30,156 +31,208 @@ export async function DashboardContent() {
   });
 
   return (
-    <div className="bg-transparent min-h-screen">
-      {/* Main Content */}
-      <main className="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-7xl">
+    <div className="min-h-screen">
+      <main className="mx-auto max-w-7xl">
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h1 className="font-bold text-foreground text-3xl">
-              Welcome back!
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Let&apos;s discover your skill gaps and create your growth plan
-            </p>
-          </div>
-          {/* Profile Card */}
-          <Card className="bg-card/60 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-medium text-foreground text-sm">Email</p>
-                  <p className="text-muted-foreground text-sm">
-                    {session.user.email}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground text-sm">Name</p>
-                  <p className="text-muted-foreground text-sm">
-                    {session.user.name || "Not set"}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground text-sm">
-                    CV / Resume
-                  </p>
-                  {user?.cvUrl ? (
-                    <a
-                      href={user.cvUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${buttonVariants({
-                        variant: "link",
-                      })} pl-0`}
-                    >
-                      View uploaded CV
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                    </a>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">
-                      Not uploaded
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Assessment Options */}
-          <div className="gap-6 grid md:grid-cols-3">
-            {/* New Assessment Card */}
-            <Card className="bg-card/60 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
-              <CardHeader>
-                <CardTitle>Start New Assessment</CardTitle>
-                <CardDescription>
-                  Evaluate your skills for a career goal
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4 text-muted-foreground text-sm">
-                  Get AI-powered evaluation of your hard and soft skills against
-                  a target role. Takes about 20 minutes.
-                </p>
-                <Link href="/assessment/start">
-                  <Button className="w-full">Begin Assessment</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Skills Graph Card */}
-            <Card className="bg-card/60 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
-              <CardHeader>
-                <CardTitle>Skills Knowledge Graph</CardTitle>
-                <CardDescription>Explore skill relationships</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4 text-muted-foreground text-sm">
-                  Interactive visualization of how skills connect and depend on
-                  each other.
-                </p>
-                <Link href="/skills">
-                  <Button variant="outline" className="w-full">
-                    View Graph
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Previous Assessments Info Card */}
-            <Card className="bg-card/60 hover:shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1">
-              <CardHeader>
-                <CardTitle>Your Assessments</CardTitle>
-                <CardDescription>
-                  View past results and progress
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4 text-muted-foreground text-sm">
-                  Review your skill gap reports, track improvements, and revisit
-                  your growth plans below.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Saved Assessments Section */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="font-semibold text-foreground text-xl">
-                Your Assessment History
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                View and manage your skill assessments
+          {/* Header Section */}
+          <div className="flex md:flex-row flex-col justify-between md:items-end gap-4 pb-6 border-border/40 border-b">
+            <div className="space-y-1">
+              <h1 className="font-bold text-foreground text-3xl sm:text-4xl tracking-tight">
+                Dashboard
+              </h1>
+              <p className="max-w-2xl text-muted-foreground text-lg">
+                Track your career growth, identify skill gaps, and master your
+                path to Senior Engineer.
               </p>
             </div>
-            <Suspense
-              fallback={
-                <Card className="bg-muted/50">
+            <Link href="/assessment/start">
+              <Button
+                size="lg"
+                className="shadow-lg shadow-primary/20 hover:shadow-primary/30 px-8 rounded-full transition-all"
+              >
+                Start New Assessment
+              </Button>
+            </Link>
+          </div>
+
+          <div className="gap-6 grid grid-cols-1 lg:grid-cols-12">
+            {/* Main Content Column */}
+            <div className="space-y-8 lg:col-span-8">
+              {/* Featured Card */}
+              <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
+                <Card className="group relative bg-gradient-to-br from-card to-muted/50 hover:border-primary/50 overflow-hidden transition-all">
+                  <div className="top-0 right-0 absolute bg-primary/10 group-hover:bg-primary/20 blur-2xl -mt-4 -mr-4 rounded-full w-24 h-24 transition-all" />
                   <CardHeader>
-                    <div className="space-y-2">
-                      <div className="bg-slate-200 rounded w-32 h-6 animate-pulse" />
-                      <div className="bg-slate-200 rounded w-48 h-4 animate-pulse" />
-                    </div>
+                    <CardTitle className="flex items-center gap-2">
+                      <span className="bg-primary/10 p-2 rounded-lg text-primary">
+                        🎯
+                      </span>
+                      Career Goal
+                    </CardTitle>
+                    <CardDescription>
+                      Set your target role and requirements
+                    </CardDescription>
                   </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 text-muted-foreground text-sm">
+                      Define where you want to go. AI will analyze the gap
+                      between your current skills and your dream role.
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Link href="/assessment/start" className="w-full">
+                      <Button
+                        variant="outline"
+                        className="group-hover:border-primary/50 w-full"
+                      >
+                        Set Goal
+                      </Button>
+                    </Link>
+                  </CardFooter>
                 </Card>
-              }
-            >
-              <AssessmentsList />
-            </Suspense>
+
+                <Card className="group relative bg-gradient-to-br from-card to-muted/50 hover:border-primary/50 overflow-hidden transition-all">
+                  <div className="top-0 right-0 absolute bg-blue-500/10 group-hover:bg-blue-500/20 blur-2xl -mt-4 -mr-4 rounded-full w-24 h-24 transition-all" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <span className="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                        🧬
+                      </span>
+                      Skill Graph
+                    </CardTitle>
+                    <CardDescription>Visualize your knowledge</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 text-muted-foreground text-sm">
+                      Explore the interactive map of 15 core frontend skills and
+                      see how they connect.
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Link href="/skills" className="w-full">
+                      <Button
+                        variant="outline"
+                        className="group-hover:border-blue-500/50 w-full"
+                      >
+                        View Graph
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              </div>
+
+              {/* Assessment History */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="font-semibold text-xl tracking-tight">
+                    Recent Activity
+                  </h2>
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-primary text-sm transition-colors"
+                  >
+                    View all history →
+                  </Link>
+                </div>
+                <Suspense
+                  fallback={
+                    <div className="space-y-4 bg-card/50 p-8 border border-border/50 rounded-xl text-center">
+                      <div className="bg-muted mx-auto rounded w-3/4 h-4 animate-pulse" />
+                      <div className="bg-muted mx-auto rounded w-1/2 h-4 animate-pulse" />
+                    </div>
+                  }
+                >
+                  <AssessmentsList />
+                </Suspense>
+              </div>
+            </div>
+
+            {/* Sidebar Column */}
+            <div className="space-y-6 lg:col-span-4">
+              {/* Profile Card */}
+              <Card className="shadow-sm border-border/60">
+                <CardHeader className="bg-muted/20 pb-3 border-border/40 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="flex justify-center items-center bg-primary/10 rounded-full w-10 h-10 font-bold text-primary">
+                      {session.user.name?.charAt(0) || "U"}
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">
+                        {session.user.name || "User"}
+                      </CardTitle>
+                      <CardDescription className="max-w-[200px] text-xs truncate">
+                        {session.user.email}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-medium text-sm">CV / Resume</span>
+                      {user?.cvUrl ? (
+                        <span className="bg-green-500/10 px-2 py-0.5 rounded-full text-green-600 dark:text-green-400 text-xs">
+                          Uploaded
+                        </span>
+                      ) : (
+                        <span className="bg-muted px-2 py-0.5 rounded-full text-muted-foreground text-xs">
+                          Missing
+                        </span>
+                      )}
+                    </div>
+                    {user?.cvUrl ? (
+                      <a
+                        href={user.cvUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-muted-foreground hover:text-primary text-xs transition-colors"
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                        View Document
+                      </a>
+                    ) : (
+                      <p className="text-muted-foreground text-xs">
+                        Upload your CV to get better recommendations.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Resources / Tips */}
+              <Card className="bg-primary/5 border-primary/10">
+                <CardHeader>
+                  <CardTitle className="font-medium text-primary text-sm">
+                    💡 Pro Tip
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-foreground/80 text-sm">
+                    Regular assessments help track your progress. Try to
+                    evaluate your skills every month to keep your growth plan up
+                    to date.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </main>

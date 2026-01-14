@@ -35,19 +35,28 @@ export function LoginForm() {
   }, [redirectTo]);
 
   return (
-    <Card className="bg-card/50 shadow-xl backdrop-blur-sm">
-      <CardHeader className="space-y-2 text-center">
-        <CardTitle className="text-2xl">Sign in</CardTitle>
-        <CardDescription>
-          Sign in to save progress & access your skill gap report
+    <Card className="relative bg-card/80 shadow-2xl shadow-primary/10 backdrop-blur-xl border-border/50 w-full max-w-md overflow-hidden">
+      {/* Decorative gradient blob */}
+      <div className="top-0 right-0 absolute bg-primary/10 opacity-50 blur-3xl -mt-20 -mr-20 rounded-full w-64 h-64 pointer-events-none" />
+
+      <CardHeader className="space-y-3 pt-10 pb-8 text-center">
+        <div className="flex justify-center items-center bg-primary/10 mx-auto mb-2 rounded-2xl w-16 h-16 text-3xl">
+          🚀
+        </div>
+        <CardTitle className="font-bold text-3xl tracking-tight">
+          Welcome Back
+        </CardTitle>
+        <CardDescription className="text-base">
+          Sign in to access your personalized growth roadmap
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 px-8 pb-10">
         {/* Error message */}
         {error && (
-          <div className="bg-destructive/10 p-3 border border-destructive/20 rounded-lg">
-            <p className="text-destructive text-sm">{error}</p>
+          <div className="flex items-start gap-3 bg-destructive/10 p-4 border border-destructive/20 rounded-xl">
+            <div className="mt-0.5 text-destructive">⚠️</div>
+            <p className="font-medium text-destructive text-sm">{error}</p>
           </div>
         )}
 
@@ -55,27 +64,37 @@ export function LoginForm() {
         <Button
           onClick={handleGitHubLogin}
           disabled={loading}
-          className="w-full h-10"
+          size="lg"
+          className="shadow-lg shadow-primary/20 hover:shadow-primary/30 w-full h-12 font-semibold text-base transition-all"
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="animate-spin">⚙️</span>
+              <span className="border-2 border-white/30 border-t-white rounded-full w-4 h-4 animate-spin" />
               Signing in...
             </span>
           ) : (
-            <span className="flex items-center gap-2">
-              <GitHubIcon className="w-4 h-4" />
-              Login with GitHub
+            <span className="flex items-center gap-3">
+              <GitHubIcon className="w-5 h-5" />
+              Continue with GitHub
             </span>
           )}
         </Button>
 
         {/* Privacy Notice */}
-        <div className="bg-accent/50 p-3 border border-border rounded-lg">
-          <p className="text-xs leading-relaxed text-accent-foreground">
-            <strong>Privacy & Data:</strong> We only store minimal profile
-            information from GitHub. Evidence uploads require explicit consent.
-            No courses or content is hosted on our platform.
+        <div className="space-y-4 pt-2 text-center">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="border-t w-full" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Secure Authentication
+              </span>
+            </div>
+          </div>
+          <p className="mx-auto max-w-xs text-muted-foreground text-xs leading-relaxed">
+            By signing in, you agree to our Terms of Service. We only access
+            your public GitHub profile info.
           </p>
         </div>
       </CardContent>

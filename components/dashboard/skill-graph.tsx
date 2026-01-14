@@ -145,8 +145,8 @@ export function SkillGraph({ skills }: SkillGraphProps) {
   }, [buildGraph, selectedCategory]);
 
   return (
-    <Card className="overflow-hidden">
-      <div style={{ width: "100%", height: "600px" }}>
+    <Card className="bg-background/50 shadow-sm backdrop-blur-sm border-border/50 h-full overflow-hidden">
+      <div style={{ width: "100%", height: "100%", minHeight: "600px" }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -154,24 +154,25 @@ export function SkillGraph({ skills }: SkillGraphProps) {
           onEdgesChange={onEdgesChange}
           fitView
           attributionPosition="bottom-left"
+          proOptions={{ hideAttribution: true }}
         >
-          <Background />
-          <Controls />
+          <Background color="#888" gap={16} size={1} style={{ opacity: 0.1 }} />
+          <Controls className="bg-card shadow-md border-border" />
           <Panel
             position="top-right"
-            className="bg-card shadow-lg p-4 border border-border rounded-lg"
+            className="bg-card/90 shadow-lg backdrop-blur p-3 border border-border/50 rounded-xl"
           >
             <div className="space-y-2">
-              <p className="font-medium text-foreground text-sm">
+              <p className="font-semibold text-foreground text-xs uppercase tracking-wider">
                 Filter by Category
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 <button
                   onClick={() => setSelectedCategory(null)}
-                  className={`px-3 py-1 text-sm rounded transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                     selectedCategory === null
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   All Skills
@@ -180,10 +181,10 @@ export function SkillGraph({ skills }: SkillGraphProps) {
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-2 ${
                       selectedCategory === cat
-                        ? "text-white"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        ? "text-white shadow-sm"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                     style={
                       selectedCategory === cat
@@ -191,6 +192,13 @@ export function SkillGraph({ skills }: SkillGraphProps) {
                         : undefined
                     }
                   >
+                    <span
+                      className="rounded-full w-2 h-2"
+                      style={{
+                        backgroundColor:
+                          selectedCategory === cat ? "white" : color,
+                      }}
+                    />
                     {cat}
                   </button>
                 ))}

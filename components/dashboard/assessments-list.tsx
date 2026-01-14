@@ -117,13 +117,13 @@ export function AssessmentsList() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "COMPLETED":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        return "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/20";
       case "IN_PROGRESS":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+        return "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20";
       case "REVIEW_PENDING":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+        return "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/20";
       default:
-        return "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
+        return "bg-slate-500/15 text-slate-700 dark:text-slate-400 border-slate-500/20";
     }
   };
 
@@ -141,98 +141,102 @@ export function AssessmentsList() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {assessments.map((assessment) => (
-        <Card key={assessment.id} className="hover:shadow-md transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <CardTitle className="text-lg">
-                    {assessment.targetRole || "Assessment"}
-                  </CardTitle>
-                  <Badge className={getStatusColor(assessment.status)}>
-                    {getStatusText(assessment.status)}
-                  </Badge>
-                </div>
-                <CardDescription>
-                  {assessment.completedAt
-                    ? `Completed ${new Date(
-                        assessment.completedAt
-                      ).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`
-                    : `Started ${new Date(
-                        assessment.startedAt
-                      ).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`}
-                </CardDescription>
-              </div>
+        <div
+          key={assessment.id}
+          className="group flex sm:flex-row flex-col justify-between sm:items-center gap-4 bg-card hover:bg-muted/50 hover:shadow-sm p-4 border border-border/50 hover:border-primary/20 rounded-xl transition-all"
+        >
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-semibold text-base truncate">
+                {assessment.targetRole || "Untitled Assessment"}
+              </h3>
+              <Badge
+                variant="outline"
+                className={`border ${getStatusColor(assessment.status)}`}
+              >
+                {getStatusText(assessment.status)}
+              </Badge>
             </div>
-          </CardHeader>
 
-          <CardContent className="space-y-4">
-            {/* Results Summary */}
-            {assessment.results.length > 0 && (
-              <div className="bg-muted/50 p-3 rounded-lg">
-                <p className="mb-2 font-medium text-foreground text-sm">
-                  Skills Evaluated: {assessment.results.length}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(
-                    new Map(
-                      assessment.results.map((r) => [r.skill.name, r.skill])
-                    ).values()
-                  )
-                    .slice(0, 5)
-                    .map((skill) => (
-                      <Badge key={skill.name} variant="outline">
-                        {skill.name}
-                      </Badge>
-                    ))}
-                  {assessment.results.length > 5 && (
-                    <Badge variant="outline">
-                      +{assessment.results.length - 5} more
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              {assessment.status === "COMPLETED" ? (
-                <Link
-                  href={`/assessment/${assessment.id}/results`}
-                  className={`${buttonVariants({
-                    variant: "default",
-                  })} flex-1 w-full`}
+            <div className="flex items-center gap-3 text-muted-foreground text-sm">
+              <span className="flex items-center gap-1">
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  View Results
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    href={`/assessment/${assessment.id}/test`}
-                    className={`${buttonVariants({
-                      variant: "default",
-                    })} flex-1 w-full`}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                {assessment.completedAt
+                  ? new Date(assessment.completedAt).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }
+                    )
+                  : new Date(assessment.startedAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+              </span>
+              {assessment.results.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    Continue Assessment
-                  </Link>
-                  <Button variant="outline" className="flex-1" disabled>
-                    Delete
-                  </Button>
-                </>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  {assessment.results.length} skills evaluated
+                </span>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="flex items-center sm:self-center gap-3 pt-2 sm:pt-0 border-border/50 border-t sm:border-t-0 transition-opacity">
+            {assessment.status === "COMPLETED" ? (
+              <Link
+                href={`/assessment/${assessment.id}/results`}
+                className={buttonVariants({
+                  variant: "secondary",
+                  size: "sm",
+                  className: "w-full sm:w-auto font-medium",
+                })}
+              >
+                View Results
+              </Link>
+            ) : (
+              <Link
+                href={`/assessment/${assessment.id}/test`}
+                className={buttonVariants({
+                  variant: "default",
+                  size: "sm",
+                  className: "w-full sm:w-auto",
+                })}
+              >
+                Continue
+              </Link>
+            )}
+          </div>
+        </div>
       ))}
     </div>
   );
