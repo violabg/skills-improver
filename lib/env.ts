@@ -15,7 +15,7 @@
  * ```
  */
 
-import { z } from "zod/v4";
+import { z } from "zod";
 
 // Schema for server-side environment variables
 const serverEnvSchema = z.object({
