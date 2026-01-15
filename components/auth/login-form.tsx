@@ -43,7 +43,7 @@ export function LoginForm() {
         <div className="flex justify-center items-center bg-primary/10 mx-auto mb-2 rounded-2xl w-16 h-16 text-3xl">
           🚀
         </div>
-        <CardTitle className="font-bold text-3xl tracking-tight">
+        <CardTitle className="bg-clip-text bg-gradient-to-r from-primary to-blue-600 pb-1 font-bold text-transparent text-3xl tracking-tight">
           Welcome Back
         </CardTitle>
         <CardDescription className="text-base">

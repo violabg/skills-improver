@@ -37,7 +37,9 @@ export function PageShell({
           <div className="text-muted-foreground text-sm">
             Step {currentStep} of {totalSteps}
           </div>
-          <h1 className="font-bold text-foreground text-3xl">{title}</h1>
+          <h1 className="bg-clip-text bg-gradient-to-r from-primary to-blue-600 pb-1 font-bold text-transparent text-3xl">
+            {title}
+          </h1>
           <p className="text-muted-foreground">{description}</p>
         </div>
         {children}

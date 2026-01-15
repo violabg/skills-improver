@@ -55,9 +55,9 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                 <span className="opacity-60 text-4xl align-top">%</span>
               </div>
             </div>
-            <h1 className="mb-3 font-bold text-foreground text-3xl md:text-5xl tracking-tight">
+            <h1 className="bg-clip-text bg-gradient-to-r from-primary to-blue-600 mb-2 pb-1 font-bold text-transparent text-3xl md:text-5xl tracking-tight">
               {getScoreLabel(gapsData.readinessScore)} for{" "}
-              <span className="text-primary">{gapsData.targetRole}</span>
+              <span>{gapsData.targetRole}</span>
             </h1>
             <p className="mx-auto max-w-2xl text-muted-foreground text-lg md:text-xl leading-relaxed">
               We've analyzed your skills against industry standards. Here is
