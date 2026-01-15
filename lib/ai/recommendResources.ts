@@ -95,14 +95,16 @@ export async function recommendResources(
   // Using text generation with JSON parsing instead
   const aiModel = resourceModel;
 
-  const devToolsEnabledModel = wrapLanguageModel({
-    model: aiModel,
-    middleware: devToolsMiddleware(),
-  });
+  const model = isDevelopment
+    ? wrapLanguageModel({
+        model: aiModel,
+        middleware: devToolsMiddleware(),
+      })
+    : aiModel;
 
   try {
     const { text } = await generateText({
-      model: isDevelopment ? devToolsEnabledModel : aiModel,
+      model,
       prompt,
       maxRetries: 3,
     });

@@ -24,14 +24,16 @@ export async function assessSkill(
   // Use fastModel (GPT-OSS 20B) for high-frequency skill evaluations
   const aiModel = fastModel;
 
-  const devToolsEnabledModel = wrapLanguageModel({
-    model: aiModel,
-    middleware: devToolsMiddleware(),
-  });
+  const model = isDevelopment
+    ? wrapLanguageModel({
+        model: aiModel,
+        middleware: devToolsMiddleware(),
+      })
+    : aiModel;
 
   try {
     const { output } = await generateText({
-      model: isDevelopment ? devToolsEnabledModel : aiModel,
+      model,
       output: Output.object({ schema: SkillEvaluationSchema }),
       prompt,
       maxRetries: 5,

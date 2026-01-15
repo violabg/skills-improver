@@ -29,14 +29,16 @@ export async function generateQuestions(
   // Use fastModel (GPT-OSS 20B) for question generation
   const aiModel = fastModel;
 
-  const devToolsEnabledModel = wrapLanguageModel({
-    model: aiModel,
-    middleware: devToolsMiddleware(),
-  });
+  const model = isDevelopment
+    ? wrapLanguageModel({
+        model: aiModel,
+        middleware: devToolsMiddleware(),
+      })
+    : aiModel;
 
   try {
     const { output } = await generateText({
-      model: isDevelopment ? devToolsEnabledModel : aiModel,
+      model,
       output: Output.object({ schema: QuestionSuggestionSchema }),
       prompt,
     });

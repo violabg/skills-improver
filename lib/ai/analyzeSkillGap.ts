@@ -45,14 +45,16 @@ export async function analyzeSkillGap(
   // Use qualityModel (GPT-OSS 120B) for gap analysis - needs deep reasoning
   const aiModel = qualityModel;
 
-  const devToolsEnabledModel = wrapLanguageModel({
-    model: aiModel,
-    middleware: devToolsMiddleware(),
-  });
+  const model = isDevelopment
+    ? wrapLanguageModel({
+        model: aiModel,
+        middleware: devToolsMiddleware(),
+      })
+    : aiModel;
 
   try {
     const { output } = await generateText({
-      model: isDevelopment ? devToolsEnabledModel : aiModel,
+      model,
       output: Output.object({ schema: SingleGapSchema }),
       prompt,
     });

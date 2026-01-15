@@ -34,13 +34,15 @@ export async function generateAdvisorResponse(
   // Use fastModel (GPT-OSS 20B) for chat - conversational, simpler task
   const aiModel = fastModel;
 
-  const devToolsEnabledModel = wrapLanguageModel({
-    model: aiModel,
-    middleware: devToolsMiddleware(),
-  });
+  const model = isDevelopment
+    ? wrapLanguageModel({
+        model: aiModel,
+        middleware: devToolsMiddleware(),
+      })
+    : aiModel;
 
   const { output } = await generateText({
-    model: isDevelopment ? devToolsEnabledModel : aiModel,
+    model,
     output: Output.object({ schema: ChatResponseSchema }),
     prompt: `You are an expert career advisor helping a professional with their skill development and career transition.
 
