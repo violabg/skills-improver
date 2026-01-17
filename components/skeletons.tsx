@@ -151,3 +151,25 @@ export function ResultsShellSkeleton() {
     </div>
   );
 }
+
+export function SkillGraphSkeleton() {
+  return (
+    <div className="flex flex-col justify-center items-center gap-4 bg-card/50 p-8 border border-border/50 rounded-xl h-full">
+      {/* Central node */}
+      <Skeleton className="rounded-full w-16 h-16" />
+
+      {/* Loading text */}
+      <div className="space-y-2 text-center">
+        <Skeleton className="mx-auto w-48 h-4" />
+        <Skeleton className="mx-auto w-32 h-4" />
+      </div>
+
+      {/* Simulated graph nodes */}
+      <div className="flex justify-center items-center gap-8 mt-4">
+        <Skeleton className="rounded-full w-10 h-10" />
+        <Skeleton className="rounded-full w-12 h-12" />
+        <Skeleton className="rounded-full w-10 h-10" />
+      </div>
+    </div>
+  );
+}

@@ -1,23 +1,17 @@
 import { SkillGraph } from "@/components/dashboard/skill-graph";
+import { SkillGraphSkeleton } from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/auth";
-import db from "@/lib/db";
+import { getSkillGraph } from "@/lib/data/get-skills";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
-async function fetchSkillGraph() {
-  const skills = await db.skill.findMany({
-    include: {
-      fromRelations: {
-        include: {
-          toSkill: true,
-        },
-      },
-    },
-  });
-
-  return skills;
+// Server component that fetches cached skill data
+async function SkillGraphLoader() {
+  const skills = await getSkillGraph();
+  return <SkillGraph skills={skills} />;
 }
 
 export default async function SkillsPage() {
@@ -28,8 +22,6 @@ export default async function SkillsPage() {
   if (!session) {
     redirect("/login");
   }
-
-  const skills = await fetchSkillGraph();
 
   return (
     <div className="min-h-screen">
@@ -78,7 +70,9 @@ export default async function SkillsPage() {
 
           <div className="gap-6 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-16rem)] min-h-[600px]">
             <div className="lg:col-span-12 h-full">
-              <SkillGraph skills={skills} />
+              <Suspense fallback={<SkillGraphSkeleton />}>
+                <SkillGraphLoader />
+              </Suspense>
             </div>
           </div>
         </div>

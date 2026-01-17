@@ -3,10 +3,12 @@
 import { recommendResources } from "@/lib/ai/recommendResources";
 import db from "@/lib/db";
 import { type GapItem } from "@/types";
+import { cacheLife, cacheTag, updateTag } from "next/cache";
 
 /**
  * Retrieve existing resources from database only (no generation).
  * Used for page load to show cached resources.
+ * Cached for ~1 hour since resources don't change frequently.
  */
 export async function getExistingGapResources({
   assessmentGapId,
@@ -15,6 +17,10 @@ export async function getExistingGapResources({
   assessmentGapId: string;
   skillId: string;
 }) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(`gap-resources-${assessmentGapId}`, `gap-skill-${skillId}`);
+
   try {
     const existingResources = await db.gapResources.findUnique({
       where: {
@@ -50,6 +56,7 @@ export async function getExistingGapResources({
 /**
  * Generate new resources using AI and save to database.
  * Used when user clicks "Generate Resources" button.
+ * Invalidates the cache after saving.
  */
 export async function loadGapResources({
   assessmentGapId,
@@ -104,6 +111,10 @@ export async function loadGapResources({
         resources: mappedResources,
       },
     });
+
+    // Invalidate cache for this gap's resources
+    updateTag(`gap-resources-${assessmentGapId}`);
+    updateTag(`gap-skill-${skillId}`);
 
     return {
       success: true,
