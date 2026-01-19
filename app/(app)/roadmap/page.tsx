@@ -1,5 +1,5 @@
 import { RoadmapContent } from "@/components/roadmap";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { auth } from "@/lib/auth";
@@ -115,24 +115,26 @@ async function RoadmapContainer({ userId }: { userId: string }) {
                       {completedAssessment.gaps?.readinessScore ?? 0}%
                     </span>
                   </p>
-                  <Link href={`/assessment/${completedAssessment.id}/results`}>
-                    <Button className="w-full">
-                      Generate Roadmap
-                      <HugeiconsIcon
-                        icon={ArrowRight01Icon}
-                        className="ml-2 w-4 h-4"
-                      />
-                    </Button>
+                  <Link
+                    href={`/assessment/${completedAssessment.id}/results`}
+                    className={`${buttonVariants({ variant: "default" })} w-full`}
+                  >
+                    Generate Roadmap
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      className="ml-2 w-4 h-4"
+                    />
                   </Link>
                 </CardContent>
               </Card>
             </div>
           ) : (
-            <Link href="/assessment/start">
-              <Button size="lg">
-                <HugeiconsIcon icon={PlayIcon} className="mr-2 w-5 h-5" />
-                Start Assessment
-              </Button>
+            <Link
+              href="/assessment/start"
+              className={`${buttonVariants({ variant: "default", size: "lg" })} w-full`}
+            >
+              <HugeiconsIcon icon={PlayIcon} className="mr-2 w-5 h-5" />
+              Start Assessment
             </Link>
           )}
         </div>

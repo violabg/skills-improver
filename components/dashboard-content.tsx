@@ -1,5 +1,5 @@
 import { AssessmentsList } from "@/components/dashboard/assessments-list";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -45,13 +45,11 @@ export async function DashboardContent() {
                 path to Senior Engineer.
               </p>
             </div>
-            <Link href="/assessment/start">
-              <Button
-                size="lg"
-                className="shadow-lg shadow-primary/20 hover:shadow-primary/30 px-8 rounded-full transition-all"
-              >
-                Start New Assessment
-              </Button>
+            <Link
+              href="/assessment/start"
+              className={`${buttonVariants({ variant: "default", size: "lg" })} shadow-lg shadow-primary/20 hover:shadow-primary/30 px-8 rounded-full transition-all`}
+            >
+              Start New Assessment
             </Link>
           </div>
 
@@ -80,13 +78,11 @@ export async function DashboardContent() {
                     </p>
                   </CardContent>
                   <CardFooter>
-                    <Link href="/assessment/start" className="w-full">
-                      <Button
-                        variant="outline"
-                        className="group-hover:border-primary/50 w-full"
-                      >
-                        Set Goal
-                      </Button>
+                    <Link
+                      href="/assessment/start"
+                      className={`${buttonVariants({ variant: "outline" })} group-hover:border-primary/50 w-full`}
+                    >
+                      Set Goal
                     </Link>
                   </CardFooter>
                 </Card>
@@ -109,13 +105,11 @@ export async function DashboardContent() {
                     </p>
                   </CardContent>
                   <CardFooter>
-                    <Link href="/skills" className="w-full">
-                      <Button
-                        variant="outline"
-                        className="group-hover:border-blue-500/50 w-full"
-                      >
-                        View Graph
-                      </Button>
+                    <Link
+                      href="/skills"
+                      className={`${buttonVariants({ variant: "outline" })} group-hover:border-blue-500/50 w-full`}
+                    >
+                      View Graph
                     </Link>
                   </CardFooter>
                 </Card>

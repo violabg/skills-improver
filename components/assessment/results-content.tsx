@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GapsData } from "@/types";
 import Link from "next/link";
@@ -102,13 +102,11 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                     Generate a personalized learning roadmap based on your gaps.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <Link href={`/assessment/${gapsData.assessmentId}/roadmap`}>
-                      <Button
-                        size="lg"
-                        className="shadow-lg shadow-primary/20 w-full"
-                      >
-                        Generate Roadmap
-                      </Button>
+                    <Link
+                      href={`/assessment/${gapsData.assessmentId}/roadmap`}
+                      className={`${buttonVariants({ variant: "default", size: "lg" })} shadow-lg shadow-primary/20 w-full`}
+                    >
+                      Generate Roadmap
                     </Link>
                     <Button
                       variant="outline"
@@ -117,10 +115,11 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                     >
                       Go to Dashboard
                     </Button>
-                    <Link href="/chat" className="w-full">
-                      <Button variant="ghost" className="w-full">
-                        Chat with AI Advisor
-                      </Button>
+                    <Link
+                      href="/chat"
+                      className={`${buttonVariants({ variant: "ghost" })} w-full`}
+                    >
+                      Chat with AI Advisor
                     </Link>
                   </div>
                 </CardContent>
@@ -173,10 +172,11 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
             >
               Go to Dashboard
             </Button>
-            <Link href="/chat" className="block w-full">
-              <Button variant="outline" size="lg" className="w-full">
-                Talk to Career Advisor
-              </Button>
+            <Link
+              href="/chat"
+              className={`${buttonVariants({ variant: "outline", size: "lg" })} block w-full`}
+            >
+              Talk to Career Advisor
             </Link>
           </div>
         </div>

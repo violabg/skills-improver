@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ArrowRight01Icon,
@@ -218,20 +218,22 @@ export function RoadmapContent({ roadmap }: RoadmapContentProps) {
                 Consider taking a new assessment to measure your progress!
               </p>
               <div className="flex gap-3">
-                <Link href="/assessment/start">
-                  <Button>
-                    <HugeiconsIcon icon={PlayIcon} className="mr-2 w-4 h-4" />
-                    Start New Assessment
-                  </Button>
+                <Link
+                  href="/assessment/start"
+                  className={`${buttonVariants({ variant: "default" })}`}
+                >
+                  <HugeiconsIcon icon={PlayIcon} className="mr-2 w-4 h-4" />
+                  Start New Assessment
                 </Link>
-                <Link href="/dashboard">
-                  <Button variant="outline">
-                    Go to Dashboard
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      className="ml-2 w-4 h-4"
-                    />
-                  </Button>
+                <Link
+                  href="/dashboard"
+                  className={`${buttonVariants({ variant: "outline" })}`}
+                >
+                  Go to Dashboard
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    className="ml-2 w-4 h-4"
+                  />
                 </Link>
               </div>
             </CardContent>

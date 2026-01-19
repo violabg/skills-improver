@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -47,7 +47,7 @@ export function AssessmentsList() {
       } catch (err) {
         console.error("Failed to load assessments:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to load assessments"
+          err instanceof Error ? err.message : "Failed to load assessments",
         );
       } finally {
         setLoading(false);
@@ -106,8 +106,11 @@ export function AssessmentsList() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href="/assessment/start">
-            <Button>Start Your First Assessment</Button>
+          <Link
+            href="/assessment/start"
+            className={`${buttonVariants({ variant: "default" })}`}
+          >
+            Start Your First Assessment
           </Link>
         </CardContent>
       </Card>
@@ -182,7 +185,7 @@ export function AssessmentsList() {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
-                      }
+                      },
                     )
                   : new Date(assessment.startedAt).toLocaleDateString("en-US", {
                       month: "short",
