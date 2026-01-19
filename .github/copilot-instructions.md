@@ -2,7 +2,7 @@
 
 **Skills Improver** is an AI-powered career growth platform that analyzes skill gaps and generates personalized learning paths for frontend developers transitioning to senior/lead roles.
 
-**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), shadcn/ui (base-ui), PostgreSQL (Neon)
+**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), HugeIcons (free-icons + react), shadcn/ui (base-ui), PostgreSQL (Neon)
 
 ## Critical Architecture Patterns
 
@@ -113,7 +113,7 @@ submitAnswer: protectedProcedure
       assessmentId: z.string().uuid(),
       skillId: z.string().uuid(),
       answer: z.string(),
-    })
+    }),
   )
   .handler(async ({ input, context }) => {
     const assessment = await context.db.assessment.findFirst({
@@ -123,7 +123,14 @@ submitAnswer: protectedProcedure
   });
 ```
 
-**Key procedures**: `assessment.start`, `assessment.submitAnswer`, `assessment.finalize`, `assessment.updateGoal`, `skills.list`, `questions.generateForSkills`, `gaps.analyzeSkill`, `gaps.save`, `user.uploadCv`, `user.deleteCv`, `user.getCvSettings`
+**Key procedures**:
+
+- `assessment.*`: `start`, `submitAnswer`, `finalize`, `updateGoal`
+- `skills.list`: Standard skill library
+- `questions.generateForSkills`: AI question generation
+- `gaps.*`: `analyzeSkill`, `save`
+- `user.*`: `uploadCv`, `deleteCv`, `getCvSettings`
+- `roadmap.*`: `generate`, `startVerification`, `updateMilestone`, `getLatest`
 
 ### AI Integration (ACTIVE)
 
@@ -146,6 +153,7 @@ submitAnswer: protectedProcedure
 | 4    | `/[id]/test`            | AI evaluates answers          | `SkillTestForm`      | Update `AssessmentResult` (×5) via `assessSkill()` |
 | 5    | `/[id]/evidence`        | Optional GitHub/CV upload     | `EvidenceUploadForm` | Create `Evidence`, update User `cvUrl`             |
 | 6    | `/[id]/results`         | Gap report + readiness        | `ResultsContent`     | Create/update `AssessmentGaps`, `GapResources`     |
+| 7    | `/[id]/roadmap`         | Interactive learning plan     | `RoadmapContent`     | Create `Roadmap`, `RoadmapWeek`, `Milestone`       |
 
 **Key patterns**:
 
@@ -219,6 +227,9 @@ pnpm build            # Production build
 - ✅ Gap report generation (completed)
 - ✅ Assessment route refactoring (dynamic routes + context)
 - ✅ CV upload with R2 storage and AI integration
+- ✅ Interactive Learning Roadmap UI
+- ✅ Milestone-based progress tracking (Manual + AI verification)
+- ✅ Lucide to HugeIcons replacement (free-icons set)
 
 ## Reference Files
 

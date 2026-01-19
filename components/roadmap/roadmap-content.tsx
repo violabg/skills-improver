@@ -53,7 +53,7 @@ interface RoadmapContentProps {
 export function RoadmapContent({ roadmap }: RoadmapContentProps) {
   const router = useRouter();
   const [milestones, setMilestones] = useState(roadmap.milestones);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const completedCount = milestones.filter(
     (m) => m.status === "COMPLETED",
@@ -147,7 +147,6 @@ export function RoadmapContent({ roadmap }: RoadmapContentProps) {
             const isPastWeek =
               weekMilestones.every((m) => m.status === "COMPLETED") &&
               weekNumber < currentWeek;
-            const isFutureWeek = weekNumber > currentWeek;
 
             return (
               <div key={weekNumber} className="relative">

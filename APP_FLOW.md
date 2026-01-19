@@ -132,13 +132,11 @@ await client.assessment.submitAnswer({
 **Business Logic**:
 
 1. **Data Loading**:
-
    - Fetches assessment results to identify skills with `shouldTest: true`.
    - Calls AI to generate 1 tailored question for each selected skill.
    - If no skills were marked for testing, skips to Step 5.
 
 2. **Answer Processing**:
-
    - Each answer is sent to AI for immediate evaluation.
    - AI assesses level (1-5), confidence, and provides feedback (notes).
    - If a question is skipped, the system uses the user's self-evaluation score for that skill.
@@ -224,6 +222,61 @@ await client.assessment.submitAnswer({
 - Creates `AssessmentGaps` record after all skills analyzed.
 - Updates `Assessment.status` to "COMPLETED" with `completedAt` timestamp.
 - Creates `GapResources` records as user expands skill gaps.
+
+---
+
+### Step 7: Learning Roadmap (`/roadmap` or `/assessment/[id]/roadmap`)
+
+**Purpose**: Provide a structured, time-bound plan to help users bridge their identified skill gaps.
+
+**UI Components**:
+
+- `PageShell` (variant: "default")
+- `RoadmapContent` (client component)
+- `RoadmapSkeleton` (loading state)
+- `MilestoneCard` (individual learning items)
+- `HugeIcons` (visual indicators)
+
+**oRPC Endpoints**:
+
+```typescript
+// 1. Generate roadmap from assessment results
+await client.roadmap.generate({ assessmentId: assessment.id });
+
+// 2. Fetch latest active roadmap
+const latestRoadmap = await client.roadmap.getLatest();
+
+// 3. Start AI verification for a milestone
+await client.roadmap.startVerification({ milestoneId, assessmentId });
+
+// 4. Manually update milestone status
+await client.roadmap.updateMilestone({ milestoneId, isCompleted });
+```
+
+**Business Logic**:
+
+1.  **Generation Flow**:
+    - Triggered automatically after Step 6 is completed.
+    - AI analyzes `AssessmentGaps` and categorizes them into a 4-8 week plan.
+    - Each week contains specific `Milestones` with type (COURSE, ARTICLE, PROJECT, EXERCISE).
+2.  **Interactive View**:
+    - Users see their progress via a total progress bar.
+    - Current week is highlighted with a "Current" indicator.
+    - Each milestone can be expanded to view AI-curated resources.
+3.  **Verification Flow**:
+    - **Self-Report**: Users can mark a milestone as complete manually.
+    - **AI Verification**: Users can request AI to verify their competence (Phase 2 completion).
+    - AI analyzes updated evidence (CV/GitHub) or requests a short answer to verify understanding.
+4.  **Navigation**: Users can access their latest roadmap from the global navigation or sidebar.
+
+**Database Changes**:
+
+- Creates `Roadmap` record linked to `Assessment` and `User`.
+- Creates `RoadmapWeek` records (Week 1, Week 2, etc.).
+- Creates `Milestone` records with type, title, description, and initial resources.
+- Updates `Milestone` status (`isCompleted`, `verificationMethod`).
+
+---
 
 ## Key Business Logic Patterns
 
