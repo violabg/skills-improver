@@ -61,6 +61,7 @@ Current focus: ${inProgressMilestone?.title ?? "All milestones complete!"}
       const aiResponse = await generateAdvisorResponse(input.message, {
         userId: ctx.user.id,
         assessmentSummary: roadmapContext,
+        history: historyContext,
       });
 
       // Save interaction

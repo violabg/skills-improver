@@ -1,4 +1,5 @@
 import { AssessmentsList } from "@/components/dashboard/assessments-list";
+import { RoadmapWidget } from "@/components/dashboard/roadmap-widget";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -143,6 +144,9 @@ export async function DashboardContent() {
 
             {/* Sidebar Column */}
             <div className="space-y-6 lg:col-span-4">
+              {/* Roadmap Widget */}
+              <RoadmapWidget />
+
               {/* Profile Card */}
               <Card className="shadow-sm border-border/60">
                 <CardHeader className="bg-muted/20 pb-3 border-border/40 border-b">

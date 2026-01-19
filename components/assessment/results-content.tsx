@@ -55,7 +55,7 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                 <span className="opacity-60 text-4xl align-top">%</span>
               </div>
             </div>
-            <h1 className="bg-clip-text bg-gradient-to-r from-primary to-blue-600 mb-2 pb-1 font-bold text-transparent text-3xl md:text-5xl tracking-tight">
+            <h1 className="bg-clip-text bg-linear-to-r from-primary to-blue-600 mb-2 pb-1 font-bold text-transparent text-3xl md:text-5xl tracking-tight">
               {getScoreLabel(gapsData.readinessScore)} for{" "}
               <span>{gapsData.targetRole}</span>
             </h1>

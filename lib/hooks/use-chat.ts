@@ -8,21 +8,22 @@ export function useChat() {
   const [error, setError] = useState<string | null>(null);
 
   const sendMessage = async (
-    message: string
+    message: string,
+    roadmapId?: string,
   ): Promise<{
-    message: string;
+    response: string;
     suggestions?: string[];
   } | null> => {
     setError(null);
 
     try {
       const response = await new Promise<{
-        message: string;
+        response: string;
         suggestions?: string[];
       }>((resolve, reject) => {
         startTransition(async () => {
           try {
-            const result = await client.chat.sendMessage({ message });
+            const result = await client.mentor.chat({ message, roadmapId });
             resolve(result);
           } catch (err) {
             reject(err);

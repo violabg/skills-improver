@@ -1,8 +1,12 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChat } from "@/lib/hooks/use-chat";
-import { useRef, useState } from "react";
+import { client } from "@/lib/orpc/client";
+import { AiChat01Icon, SentIcon, UserIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Message = {
   id: string;
@@ -28,54 +32,80 @@ export default function ChatPage() {
   const { sendMessage, isPending, error } = useChat();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSendMessage = async (messageText?: string) => {
-    const textToSend = messageText || input;
-    if (!textToSend.trim()) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      from: "user",
-      text: textToSend,
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const history = await client.mentor.getHistory({ limit: 20 });
+        if (history && history.length > 0) {
+          const formattedHistory: Message[] = history.flatMap((h) => [
+            {
+              id: `u-${h.id}`,
+              from: "user" as const,
+              text: h.userMessage || "",
+            },
+            { id: `b-${h.id}`, from: "bot" as const, text: h.mentorMessage },
+          ]);
+          setMessages(formattedHistory);
+        }
+      } catch (err) {
+        console.error("Failed to load chat history:", err);
+      }
     };
-    setMessages((m) => [...m, userMsg]);
-    setInput("");
+    loadHistory();
+  }, []);
 
-    const response = await sendMessage(textToSend);
+  const messageIdCounter = useRef(0);
+  const handleSendMessage = useCallback(
+    async (messageText?: string) => {
+      const textToSend = messageText || input;
+      if (!textToSend.trim()) return;
 
-    if (response) {
-      const botMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        from: "bot",
-        text: response.message,
-        suggestions: response.suggestions,
+      const userMsg: Message = {
+        id: `u-${messageIdCounter.current++}`,
+        from: "user",
+        text: textToSend,
       };
-      setMessages((m) => [...m, botMsg]);
+      setMessages((m) => [...m, userMsg]);
+      setInput("");
 
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({
-          top: scrollRef.current.scrollHeight,
-          behavior: "smooth",
-        });
-      }, 100);
-    } else if (error) {
-      const errorMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        from: "bot",
-        text: `Sorry, I encountered an error: ${error}. Please try again.`,
-      };
-      setMessages((m) => [...m, errorMsg]);
-    }
-  };
+      const response = await sendMessage(textToSend);
+
+      if (response) {
+        const botMsg: Message = {
+          id: `b-${messageIdCounter.current++}`,
+          from: "bot",
+          text: response.response,
+          suggestions: response.suggestions,
+        };
+        setMessages((m) => [...m, botMsg]);
+
+        setTimeout(() => {
+          scrollRef.current?.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }, 100);
+      } else if (error) {
+        const errorMsg: Message = {
+          id: `e-${messageIdCounter.current++}`,
+          from: "bot",
+          text: `Sorry, I encountered an error: ${error}. Please try again.`,
+        };
+        setMessages((m) => [...m, errorMsg]);
+      }
+    },
+    [input, sendMessage, error],
+  );
 
   return (
-    <div className="flex flex-col mx-auto h-[calc(100vh-6rem)]">
+    <div className="flex flex-col mx-auto h-[calc(100vh-10rem)]">
       <div className="space-y-2 mb-6 text-center">
-        <div className="inline-flex justify-center items-center bg-primary/10 mb-2 p-2 rounded-full">
-          <span className="text-2xl">🤖</span>
+        <div className="inline-flex justify-center items-center bg-primary/10 mb-2 p-3 rounded-full">
+          <HugeiconsIcon icon={AiChat01Icon} className="w-6 h-6 text-primary" />
         </div>
-        <h1 className="font-bold text-3xl tracking-tight">Career Advisor</h1>
+        <h1 className="font-bold text-3xl tracking-tight">AI Career Mentor</h1>
         <p className="text-muted-foreground text-lg">
-          Your personal AI mentor for skills growth
+          Personalized guidance for your career transition
         </p>
       </div>
 
@@ -88,6 +118,21 @@ export default function ChatPage() {
           ref={scrollRef}
           className="z-10 relative flex-1 space-y-6 p-6 scrollbar-thumb-border overflow-y-auto scrollbar-thin scrollbar-track-transparent"
         >
+          {messages.length === 0 && (
+            <div className="flex flex-col justify-center items-center py-12 text-center">
+              <div className="bg-muted mb-4 p-4 rounded-full">
+                <HugeiconsIcon
+                  icon={AiChat01Icon}
+                  className="w-8 h-8 text-muted-foreground"
+                />
+              </div>
+              <p className="text-muted-foreground">
+                How can I help you today? Ask about your roadmap or assessment
+                results.
+              </p>
+            </div>
+          )}
+
           {messages.map((m) => (
             <div
               key={m.id}
@@ -105,7 +150,10 @@ export default function ChatPage() {
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  {m.from === "bot" ? "AI" : "You"}
+                  <HugeiconsIcon
+                    icon={m.from === "bot" ? AiChat01Icon : UserIcon}
+                    className="w-5 h-5"
+                  />
                 </div>
 
                 <div
@@ -149,7 +197,7 @@ export default function ChatPage() {
           {isPending && (
             <div className="flex gap-4">
               <div className="flex justify-center items-center bg-primary shadow-sm rounded-full w-10 h-10 text-primary-foreground shrink-0">
-                AI
+                <HugeiconsIcon icon={AiChat01Icon} className="w-5 h-5" />
               </div>
               <div className="bg-muted/50 px-5 py-4 border border-border/50 rounded-2xl rounded-tl-none">
                 <div className="flex gap-1.5">
@@ -183,14 +231,7 @@ export default function ChatPage() {
               size="icon"
               className="shadow-md shadow-primary/20 rounded-full w-12 h-12 shrink-0"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5 -translate-y-0.5 translate-x-0.5"
-              >
-                <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-              </svg>
+              <HugeiconsIcon icon={SentIcon} className="w-5 h-5" />
             </Button>
           </div>
         </div>

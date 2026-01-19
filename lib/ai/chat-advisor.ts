@@ -22,6 +22,7 @@ interface UserContext {
     impact: string;
   }>;
   targetRole?: string;
+  history?: string;
 }
 
 export async function generateAdvisorResponse(
@@ -81,6 +82,11 @@ function buildContextPrompt(context: UserContext): string {
         `  • ${gap.skillName}: ${gap.gapSize} level gap (${gap.impact} impact)`,
       );
     });
+  }
+
+  if (context.history) {
+    parts.push("\n**Recent Conversation History:**");
+    parts.push(context.history);
   }
 
   if (parts.length === 1) {
