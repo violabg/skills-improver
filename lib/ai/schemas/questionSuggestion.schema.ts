@@ -14,12 +14,13 @@ export const QuestionSuggestionSchema = z.object({
         question: z.string().describe("The actual question text"),
         context: z
           .string()
-          .optional()
-          .describe("Additional context or scenario description if needed"),
+          .describe(
+            "Additional context or scenario description if needed, or empty string if not needed",
+          ),
         evaluationCriteria: z
           .string()
           .describe("Brief notes on what a good answer should include"),
-      })
+      }),
     )
     .describe("List of questions generated for the requested skills"),
 });

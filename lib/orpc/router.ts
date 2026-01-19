@@ -3,8 +3,20 @@ import { generateAdvisorResponse } from "@/lib/ai/chat-advisor";
 import type { AuthenticatedContext, BaseContext } from "@/lib/orpc/context";
 import { processEvidence } from "@/lib/services/evidenceProcessor";
 import { z } from "zod";
-import { analyzeSkillGap, generateQuestions, generateSkills } from "../ai";
-import { AssessmentResult, Resource } from "../prisma/client";
+import {
+  analyzeSkillGap,
+  generateQuestions,
+  generateRoadmap,
+  generateSkills,
+  generateVerificationQuestion,
+  verifySkillProgress,
+} from "../ai";
+import {
+  AssessmentResult,
+  MilestoneStatus,
+  Resource,
+  VerificationMethod,
+} from "../prisma/client";
 import { protectedProcedure, publicProcedure } from "./procedures";
 
 export const router = {
@@ -23,7 +35,7 @@ export const router = {
           yearsExperience: z.string().optional(),
           industry: z.string().optional(),
           careerIntent: z.string().optional(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -49,7 +61,7 @@ export const router = {
           skillId: z.string().uuid(),
           answer: z.string().min(1, "Answer is required"),
           question: z.string().min(1, "Question is required"),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -133,7 +145,7 @@ export const router = {
         z.object({
           assessmentId: z.string().uuid(),
           targetRole: z.string().min(1),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -161,9 +173,9 @@ export const router = {
               skillId: z.string().uuid(),
               level: z.number().int(),
               shouldTest: z.boolean().optional(),
-            })
+            }),
           ),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -193,12 +205,12 @@ export const router = {
             ev.level <= 1
               ? 0.3
               : ev.level <= 2
-              ? 0.4
-              : ev.level <= 3
-              ? 0.5
-              : ev.level <= 4
-              ? 0.6
-              : 0.7;
+                ? 0.4
+                : ev.level <= 3
+                  ? 0.5
+                  : ev.level <= 4
+                    ? 0.6
+                    : 0.7;
 
           if (existing) {
             const updated = await ctx.db.assessmentResult.update({
@@ -235,7 +247,7 @@ export const router = {
       .input(
         z.object({
           assessmentId: z.string().uuid(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -287,7 +299,7 @@ export const router = {
       .input(
         z.object({
           assessmentId: z.string().uuid(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -330,7 +342,7 @@ export const router = {
             category: z.enum(["HARD", "SOFT", "META"]).optional(),
             domain: z.string().optional(),
           })
-          .optional()
+          .optional(),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as BaseContext;
@@ -352,7 +364,7 @@ export const router = {
       .input(
         z.object({
           assessmentId: z.string().uuid(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -427,7 +439,7 @@ export const router = {
       .input(
         z.object({
           id: z.string().uuid(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as BaseContext;
@@ -475,7 +487,7 @@ export const router = {
       .input(
         z.object({
           assessmentId: z.string().uuid(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -508,13 +520,13 @@ export const router = {
 
         // Build assessment results map
         const resultsMap = new Map(
-          assessment.results.map((r) => [r.skillId, r])
+          assessment.results.map((r) => [r.skillId, r]),
         );
 
         // Calculate gaps using profile data for personalization
         // Only include skills that were actually evaluated by the user
         const evaluatedSkills = allSkills.filter((skill) =>
-          resultsMap.has(skill.id)
+          resultsMap.has(skill.id),
         );
 
         const gaps = evaluatedSkills.map((skill) => {
@@ -547,8 +559,8 @@ export const router = {
             categoryWeight = isLeadershipIntent
               ? 1.4
               : leadershipRole
-              ? 1.2
-              : 1;
+                ? 1.2
+                : 1;
           } else if (skill.category === "HARD") {
             // Boost hard skills for role switchers (need to learn new tech)
             categoryWeight = isSwitchIntent ? 1.3 : 1;
@@ -566,9 +578,9 @@ export const router = {
                   (leadershipRole &&
                   (skill.category === "SOFT" || skill.category === "META")
                     ? 1
-                    : 0)
-              )
-            )
+                    : 0),
+              ),
+            ),
           );
           const gapSize = Math.max(0, targetLevel - currentLevel);
 
@@ -577,18 +589,18 @@ export const router = {
             gapRatio >= 0.6
               ? "CRITICAL"
               : gapRatio >= 0.35
-              ? "HIGH"
-              : gapRatio > 0
-              ? "MEDIUM"
-              : "NONE";
+                ? "HIGH"
+                : gapRatio > 0
+                  ? "MEDIUM"
+                  : "NONE";
 
           // Build contextual explanation using industry and intent
           const intentContext =
             careerIntent === "LEADERSHIP"
               ? "leadership transition"
               : careerIntent === "SWITCH"
-              ? "role transition"
-              : "career growth";
+                ? "role transition"
+                : "career growth";
           const industryContext = industry ? ` in ${industry}` : "";
 
           return {
@@ -608,12 +620,12 @@ export const router = {
               categoryWeight > 1.2
                 ? `High priority for your ${intentContext} path`
                 : categoryWeight > 1
-                ? `Practice with role-play or stakeholder scenarios`
-                : `Complete a practical exercise or code review`,
+                  ? `Practice with role-play or stakeholder scenarios`
+                  : `Complete a practical exercise or code review`,
             ],
             estimatedTimeWeeks: Math.max(
               1,
-              Math.ceil(gapSize * categoryWeight)
+              Math.ceil(gapSize * categoryWeight),
             ),
             priority: Math.round(gapSize * categoryWeight * 10),
           };
@@ -639,7 +651,7 @@ export const router = {
             resourceLinks = await (
               dbAny.resourceSkill as {
                 findMany: (
-                  args: unknown
+                  args: unknown,
                 ) => Promise<Array<{ skillId: string; resource: unknown }>>;
               }
             ).findMany({
@@ -707,7 +719,7 @@ export const router = {
               referenceUrl: e.referenceUrl,
               signals: e.signals,
               createdAt: e.createdAt,
-            })
+            }),
           );
         }
 
@@ -736,8 +748,8 @@ export const router = {
               categoryWeight = isLeadershipIntent
                 ? 1.4
                 : leadershipRole
-                ? 1.2
-                : 1;
+                  ? 1.2
+                  : 1;
             } else if (skill.category === "HARD") {
               categoryWeight = isSwitchIntent ? 1.3 : 1;
             }
@@ -752,9 +764,9 @@ export const router = {
                     (leadershipRole &&
                     (skill.category === "SOFT" || skill.category === "META")
                       ? 1
-                      : 0)
-                )
-              )
+                      : 0),
+                ),
+              ),
             );
             const weightedTarget = targetLevel * categoryWeight;
             const weightedCurrent =
@@ -763,7 +775,7 @@ export const router = {
             acc.current += weightedCurrent;
             return acc;
           },
-          { target: 0, current: 0 }
+          { target: 0, current: 0 },
         );
         const readinessScore =
           totals.target === 0
@@ -791,7 +803,7 @@ export const router = {
           .object({
             provider: z.string().optional(),
           })
-          .optional()
+          .optional(),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as BaseContext;
@@ -810,7 +822,7 @@ export const router = {
       .input(
         z.object({
           id: z.string().uuid(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as BaseContext;
@@ -831,7 +843,7 @@ export const router = {
           title: z.string().optional(),
           cost: z.string().optional(),
           estimatedTime: z.number().int().optional(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -849,7 +861,7 @@ export const router = {
           title: z.string().optional(),
           cost: z.string().optional(),
           estimatedTime: z.number().int().optional(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -868,7 +880,7 @@ export const router = {
       .input(
         z.object({
           id: z.string().uuid(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -886,7 +898,7 @@ export const router = {
         z.object({
           assessmentId: z.string().uuid(),
           skillIds: z.array(z.string().uuid()),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -943,7 +955,7 @@ export const router = {
           referenceUrl: z.string().url().optional(),
           retentionDays: z.number().int().min(0).max(365).optional(),
           allowRawStorage: z.boolean().optional(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -1017,7 +1029,7 @@ export const router = {
         z.object({
           retentionDays: z.number().int().min(0).max(365).optional(),
           allowRawStorage: z.boolean().optional(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -1032,7 +1044,7 @@ export const router = {
 
         if (!account || !account.accessToken) {
           throw new Error(
-            "No GitHub account linked. Please log in with GitHub first."
+            "No GitHub account linked. Please log in with GitHub first.",
           );
         }
 
@@ -1044,7 +1056,7 @@ export const router = {
               Authorization: `Bearer ${account.accessToken}`,
               Accept: "application/vnd.github.v3+json",
             },
-          }
+          },
         );
 
         if (!reposRes.ok) {
@@ -1099,7 +1111,7 @@ export const router = {
             (r) =>
               `${r.name} ${r.description || ""} ${r.language || ""} ${
                 r.topics?.join(" ") || ""
-              }`
+              }`,
           )
           .join(" ")
           .toLowerCase();
@@ -1164,7 +1176,7 @@ export const router = {
       .input(
         z.object({
           message: z.string().min(1, "Message cannot be empty"),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -1210,8 +1222,8 @@ export const router = {
             .map(
               (r) =>
                 `${r.skill.name}: Level ${r.level}/5 (${Math.round(
-                  r.confidence * 100
-                )}% confidence)`
+                  r.confidence * 100,
+                )}% confidence)`,
             )
             .join("\n");
 
@@ -1240,7 +1252,7 @@ export const router = {
         // Generate AI response
         const response = await generateAdvisorResponse(
           input.message,
-          userContext
+          userContext,
         );
 
         return response;
@@ -1275,7 +1287,7 @@ export const router = {
           fileType: z.string(),
           fileBase64: z.string(),
           fileSize: z.number(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -1316,9 +1328,8 @@ export const router = {
 
       if (user?.cvUrl) {
         // Import R2 functions dynamically
-        const { deleteResumeFromR2 } = await import(
-          "@/lib/services/r2-storage"
-        );
+        const { deleteResumeFromR2 } =
+          await import("@/lib/services/r2-storage");
         await deleteResumeFromR2(user.cvUrl);
       }
 
@@ -1337,7 +1348,7 @@ export const router = {
         z.object({
           name: z.string().optional(),
           useCvForAnalysis: z.boolean().optional(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -1405,7 +1416,7 @@ export const router = {
           category: z.enum(["HARD", "SOFT", "META"]),
           targetRole: z.string(),
           otherSkillsSummary: z.string().optional(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -1439,7 +1450,7 @@ export const router = {
           if (github) {
             // Check if this skill was matched in repos
             const skillMatched = matchedSkills?.some(
-              (s) => s.toLowerCase() === input.skillName.toLowerCase()
+              (s) => s.toLowerCase() === input.skillName.toLowerCase(),
             );
 
             evidenceSummary = `GitHub Profile:
@@ -1460,9 +1471,8 @@ export const router = {
 
         if (userSettings?.useCvForAnalysis && userSettings?.cvUrl) {
           try {
-            const { extractTextFromPdfUrl } = await import(
-              "@/lib/services/pdf-extractor"
-            );
+            const { extractTextFromPdfUrl } =
+              await import("@/lib/services/pdf-extractor");
             const cvText = await extractTextFromPdfUrl(userSettings.cvUrl);
 
             // Truncate CV text to avoid token limits (max ~12000 chars)
@@ -1515,12 +1525,12 @@ ${truncatedCvText}
               recommendedActions: z.array(z.string()),
               estimatedTimeWeeks: z.number().positive(),
               priority: z.number().min(1).max(10),
-            })
+            }),
           ),
           strengths: z.array(z.string()),
           readinessScore: z.number().min(0).max(100),
           overallRecommendation: z.string(),
-        })
+        }),
       )
       .handler(async ({ input, context }) => {
         const ctx = context as AuthenticatedContext;
@@ -1566,6 +1576,527 @@ ${truncatedCvText}
 
         return { success: true, gapsId: savedGaps.id };
       }),
+  },
+
+  // ============================================
+  // ROADMAP PROCEDURES
+  // ============================================
+  roadmap: {
+    // Generate roadmap from completed assessment
+    generate: protectedProcedure
+      .input(z.object({ assessmentId: z.string().uuid() }))
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        // Fetch assessment with gaps
+        const assessment = await ctx.db.assessment.findFirst({
+          where: { id: input.assessmentId, userId: ctx.user.id },
+          include: { gaps: true },
+        });
+
+        if (!assessment) throw new Error("Assessment not found");
+        if (!assessment.gaps) throw new Error("Assessment has no gap analysis");
+        if (!assessment.targetRole)
+          throw new Error("Assessment has no target role");
+
+        // Check if roadmap already exists - return it instead of creating a new one
+        const existingRoadmap = await ctx.db.roadmap.findUnique({
+          where: { assessmentId: input.assessmentId },
+          include: { milestones: true },
+        });
+        if (existingRoadmap) {
+          return existingRoadmap;
+        }
+
+        // Parse gaps from JSON
+        const gapsJson = assessment.gaps.gaps as Array<{
+          skillId: string;
+          skillName: string;
+          currentLevel: number;
+          targetLevel: number;
+          gapSize: number;
+          impact: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+          priority: number;
+        }>;
+
+        // Filter to only include actual gaps (gapSize > 0)
+        const actualGaps = gapsJson.filter((g) => g.gapSize > 0);
+
+        if (actualGaps.length === 0) {
+          throw new Error("No skill gaps found - you're already ready!");
+        }
+
+        // Generate roadmap via AI
+        const suggestion = await generateRoadmap({
+          targetRole: assessment.targetRole,
+          currentRole: assessment.currentRole ?? undefined,
+          gaps: actualGaps,
+          yearsExperience: assessment.yearsExperience ?? undefined,
+          careerIntent: assessment.careerIntent ?? undefined,
+          industry: assessment.industry ?? undefined,
+        });
+
+        // Create roadmap in database
+        const roadmap = await ctx.db.roadmap.create({
+          data: {
+            assessmentId: input.assessmentId,
+            userId: ctx.user.id,
+            title: suggestion.title,
+            totalWeeks: suggestion.totalWeeks,
+            milestones: {
+              create: suggestion.milestones.map((m) => ({
+                skillId: m.skillId,
+                weekNumber: m.weekNumber,
+                title: m.title,
+                description: m.description,
+                resources: m.resources,
+                status: "PENDING" as MilestoneStatus,
+              })),
+            },
+          },
+          include: { milestones: true },
+        });
+
+        return roadmap;
+      }),
+
+    // Get user's active roadmap (most recent incomplete)
+    getActive: protectedProcedure.handler(async ({ context }) => {
+      const ctx = context as AuthenticatedContext;
+
+      const roadmap = await ctx.db.roadmap.findFirst({
+        where: {
+          userId: ctx.user.id,
+          completedAt: null,
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+          milestones: {
+            include: { progress: true },
+            orderBy: { weekNumber: "asc" },
+          },
+          assessment: {
+            select: { targetRole: true, currentRole: true },
+          },
+        },
+      });
+
+      return roadmap;
+    }),
+
+    // Get roadmap by ID
+    get: protectedProcedure
+      .input(z.object({ roadmapId: z.string().uuid() }))
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        const roadmap = await ctx.db.roadmap.findFirst({
+          where: { id: input.roadmapId, userId: ctx.user.id },
+          include: {
+            milestones: {
+              include: { progress: true },
+              orderBy: { weekNumber: "asc" },
+            },
+            assessment: {
+              select: { targetRole: true, currentRole: true },
+            },
+          },
+        });
+
+        if (!roadmap) throw new Error("Roadmap not found");
+        return roadmap;
+      }),
+
+    // Mark milestone as complete (self-reported)
+    completeMilestone: protectedProcedure
+      .input(
+        z.object({
+          milestoneId: z.string().uuid(),
+          method: z.enum(["SELF_REPORTED", "AI_VERIFIED"]),
+        }),
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        // Verify ownership
+        const milestone = await ctx.db.roadmapMilestone.findFirst({
+          where: { id: input.milestoneId },
+          include: { roadmap: true },
+        });
+
+        if (!milestone || milestone.roadmap.userId !== ctx.user.id) {
+          throw new Error("Milestone not found");
+        }
+
+        // Create progress record
+        const progress = await ctx.db.milestoneProgress.create({
+          data: {
+            milestoneId: input.milestoneId,
+            verificationMethod: input.method as VerificationMethod,
+            selfReportedAt:
+              input.method === "SELF_REPORTED" ? new Date() : null,
+          },
+        });
+
+        // Update milestone status
+        await ctx.db.roadmapMilestone.update({
+          where: { id: input.milestoneId },
+          data: { status: "COMPLETED" as MilestoneStatus },
+        });
+
+        // Update UserSkillHistory for cross-assessment knowledge
+        await ctx.db.userSkillHistory.create({
+          data: {
+            userId: ctx.user.id,
+            skillId: milestone.skillId,
+            level: 4, // Assume level 4 for self-reported completion
+            confidence: input.method === "SELF_REPORTED" ? 0.6 : 0.8,
+            source: input.method as VerificationMethod,
+            assessmentId: milestone.roadmap.assessmentId,
+          },
+        });
+
+        // Check if all milestones completed
+        const allMilestones = await ctx.db.roadmapMilestone.findMany({
+          where: { roadmapId: milestone.roadmapId },
+        });
+        const allCompleted = allMilestones.every(
+          (m) => m.status === "COMPLETED",
+        );
+
+        if (allCompleted) {
+          await ctx.db.roadmap.update({
+            where: { id: milestone.roadmapId },
+            data: { completedAt: new Date() },
+          });
+        }
+
+        return { success: true, progressId: progress.id };
+      }),
+
+    // Start AI verification quiz for milestone
+    startVerification: protectedProcedure
+      .input(z.object({ milestoneId: z.string().uuid() }))
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        const milestone = await ctx.db.roadmapMilestone.findFirst({
+          where: { id: input.milestoneId },
+          include: { roadmap: true },
+        });
+
+        if (!milestone || milestone.roadmap.userId !== ctx.user.id) {
+          throw new Error("Milestone not found");
+        }
+
+        // Fetch skill details
+        const skill = await ctx.db.skill.findUnique({
+          where: { id: milestone.skillId },
+        });
+
+        if (!skill) throw new Error("Skill not found");
+
+        // Generate verification question
+        const question = await generateVerificationQuestion({
+          skillId: skill.id,
+          skillName: skill.name,
+          skillCategory: skill.category,
+          currentLevel: 3, // Assume mid-level for verification
+          targetLevel: 4,
+          milestoneTitle: milestone.title,
+          milestoneDescription: milestone.description ?? undefined,
+        });
+
+        return {
+          milestoneId: input.milestoneId,
+          skillName: skill.name,
+          question: question.question,
+          expectedTopics: question.expectedTopics,
+          difficulty: question.difficulty,
+        };
+      }),
+
+    // Submit verification answer
+    submitVerificationAnswer: protectedProcedure
+      .input(
+        z.object({
+          milestoneId: z.string().uuid(),
+          question: z.string(),
+          answer: z.string().min(1, "Answer is required"),
+        }),
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        const milestone = await ctx.db.roadmapMilestone.findFirst({
+          where: { id: input.milestoneId },
+          include: { roadmap: true },
+        });
+
+        if (!milestone || milestone.roadmap.userId !== ctx.user.id) {
+          throw new Error("Milestone not found");
+        }
+
+        const skill = await ctx.db.skill.findUnique({
+          where: { id: milestone.skillId },
+        });
+
+        if (!skill) throw new Error("Skill not found");
+
+        // Verify with AI
+        const result = await verifySkillProgress({
+          skillId: skill.id,
+          skillName: skill.name,
+          skillCategory: skill.category,
+          currentLevel: 3,
+          targetLevel: 4,
+          milestoneTitle: milestone.title,
+          milestoneDescription: milestone.description ?? undefined,
+          question: input.question,
+          userAnswer: input.answer,
+        });
+
+        if (result.passed) {
+          // Create progress record
+          await ctx.db.milestoneProgress.create({
+            data: {
+              milestoneId: input.milestoneId,
+              verificationMethod: "AI_VERIFIED" as VerificationMethod,
+              aiVerifiedAt: new Date(),
+              aiVerificationScore: result.score,
+              aiVerificationNotes: result.feedback,
+            },
+          });
+
+          // Update milestone status
+          await ctx.db.roadmapMilestone.update({
+            where: { id: input.milestoneId },
+            data: { status: "COMPLETED" as MilestoneStatus },
+          });
+
+          // Update UserSkillHistory
+          await ctx.db.userSkillHistory.create({
+            data: {
+              userId: ctx.user.id,
+              skillId: milestone.skillId,
+              level: result.newLevel,
+              confidence: result.score,
+              source: "AI_VERIFIED" as VerificationMethod,
+              assessmentId: milestone.roadmap.assessmentId,
+            },
+          });
+
+          // Check if all milestones completed
+          const allMilestones = await ctx.db.roadmapMilestone.findMany({
+            where: { roadmapId: milestone.roadmapId },
+          });
+          const allCompleted = allMilestones.every(
+            (m) => m.status === "COMPLETED" || m.id === input.milestoneId,
+          );
+
+          if (allCompleted) {
+            await ctx.db.roadmap.update({
+              where: { id: milestone.roadmapId },
+              data: { completedAt: new Date() },
+            });
+          }
+        }
+
+        return {
+          passed: result.passed,
+          score: result.score,
+          newLevel: result.newLevel,
+          feedback: result.feedback,
+          followUpQuestion: result.followUpQuestion,
+        };
+      }),
+
+    // List user's roadmaps
+    list: protectedProcedure.handler(async ({ context }) => {
+      const ctx = context as AuthenticatedContext;
+
+      const roadmaps = await ctx.db.roadmap.findMany({
+        where: { userId: ctx.user.id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          milestones: { select: { id: true, status: true } },
+          assessment: { select: { targetRole: true } },
+        },
+      });
+
+      return roadmaps.map((r) => ({
+        id: r.id,
+        title: r.title,
+        totalWeeks: r.totalWeeks,
+        targetRole: r.assessment.targetRole,
+        completedAt: r.completedAt,
+        progress: {
+          total: r.milestones.length,
+          completed: r.milestones.filter((m) => m.status === "COMPLETED")
+            .length,
+        },
+      }));
+    }),
+  },
+
+  // ============================================
+  // MENTOR CHAT PROCEDURES
+  // ============================================
+  mentor: {
+    // Send message to AI mentor
+    chat: protectedProcedure
+      .input(
+        z.object({
+          message: z.string().min(1),
+          roadmapId: z.string().uuid().optional(),
+        }),
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        // Get roadmap context if provided
+        let roadmapContext = "";
+        if (input.roadmapId) {
+          const roadmap = await ctx.db.roadmap.findFirst({
+            where: { id: input.roadmapId, userId: ctx.user.id },
+            include: {
+              milestones: { orderBy: { weekNumber: "asc" } },
+              assessment: { select: { targetRole: true } },
+            },
+          });
+
+          if (roadmap) {
+            const completedCount = roadmap.milestones.filter(
+              (m) => m.status === "COMPLETED",
+            ).length;
+            const inProgressMilestone = roadmap.milestones.find(
+              (m) => m.status === "PENDING" || m.status === "IN_PROGRESS",
+            );
+
+            roadmapContext = `
+User is on a ${roadmap.totalWeeks}-week roadmap to become ${roadmap.assessment.targetRole}.
+Progress: ${completedCount}/${roadmap.milestones.length} milestones completed.
+Current focus: ${inProgressMilestone?.title ?? "All milestones complete!"}
+`;
+          }
+        }
+
+        // Get recent mentor history for context
+        const recentHistory = await ctx.db.mentorInteraction.findMany({
+          where: { userId: ctx.user.id },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        });
+
+        const historyContext = recentHistory
+          .reverse()
+          .map(
+            (h) =>
+              `User: ${h.userMessage ?? "(system)"}\nMentor: ${h.mentorMessage}`,
+          )
+          .join("\n\n");
+
+        // Generate mentor response
+        const aiResponse = await generateAdvisorResponse(input.message, {
+          userId: ctx.user.id,
+          assessmentSummary: roadmapContext,
+        });
+
+        // Save interaction
+        await ctx.db.mentorInteraction.create({
+          data: {
+            userId: ctx.user.id,
+            roadmapId: input.roadmapId,
+            type: "QUESTION",
+            userMessage: input.message,
+            mentorMessage: aiResponse.message,
+            context: { roadmapContext, historyContext },
+          },
+        });
+
+        return {
+          response: aiResponse.message,
+          suggestions: aiResponse.suggestions,
+        };
+      }),
+
+    // Get recent mentor interactions
+    getHistory: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().int().min(1).max(50).default(20),
+        }),
+      )
+      .handler(async ({ input, context }) => {
+        const ctx = context as AuthenticatedContext;
+
+        const interactions = await ctx.db.mentorInteraction.findMany({
+          where: { userId: ctx.user.id },
+          orderBy: { createdAt: "desc" },
+          take: input.limit,
+        });
+
+        return interactions.reverse();
+      }),
+  },
+
+  // ============================================
+  // USER SKILL HISTORY (Cross-Assessment Knowledge)
+  // ============================================
+  skillHistory: {
+    // Get user's skill history
+    get: protectedProcedure.handler(async ({ context }) => {
+      const ctx = context as AuthenticatedContext;
+
+      // Get most recent level for each skill
+      const history = await ctx.db.userSkillHistory.findMany({
+        where: { userId: ctx.user.id },
+        orderBy: { createdAt: "desc" },
+        include: { skill: { select: { name: true, category: true } } },
+      });
+
+      // Dedupe to most recent per skill
+      const latestBySkill = new Map<string, (typeof history)[0]>();
+      for (const h of history) {
+        if (!latestBySkill.has(h.skillId)) {
+          latestBySkill.set(h.skillId, h);
+        }
+      }
+
+      return Array.from(latestBySkill.values());
+    }),
+
+    // Pre-populate assessment with historical skill levels
+    getForAssessment: protectedProcedure.handler(async ({ context }) => {
+      const ctx = context as AuthenticatedContext;
+
+      // Get AI-verified skills (highest confidence)
+      const verifiedSkills = await ctx.db.userSkillHistory.findMany({
+        where: {
+          userId: ctx.user.id,
+          source: "AI_VERIFIED",
+        },
+        orderBy: { createdAt: "desc" },
+        include: { skill: true },
+      });
+
+      // Dedupe to most recent per skill
+      const latestBySkill = new Map<
+        string,
+        { skillId: string; level: number; confidence: number }
+      >();
+      for (const h of verifiedSkills) {
+        if (!latestBySkill.has(h.skillId)) {
+          latestBySkill.set(h.skillId, {
+            skillId: h.skillId,
+            level: h.level,
+            confidence: h.confidence,
+          });
+        }
+      }
+
+      return Array.from(latestBySkill.values());
+    }),
   },
 };
 

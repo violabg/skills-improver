@@ -20,8 +20,19 @@ export { analyzeSkillGap, type SkillGapResult } from "./analyzeSkillGap";
 export { assessSkill } from "./assessSkill";
 export { generateAdvisorResponse } from "./chat-advisor";
 export { generateQuestions } from "./generateQuestions";
+export {
+  generateRoadmap,
+  type RoadmapMilestone,
+  type RoadmapSuggestion,
+} from "./generateRoadmap";
 export { generateSkills } from "./generateSkills";
 export { recommendResources } from "./recommendResources";
+export {
+  generateVerificationQuestion,
+  verifySkillProgress,
+  type QuizQuestion,
+  type VerificationResult,
+} from "./verifySkillProgress";
 
 // Models
 export {

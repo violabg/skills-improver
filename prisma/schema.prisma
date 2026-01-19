@@ -22,6 +22,24 @@ enum AssessmentStatus {
   REVIEW_PENDING
 }
 
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum VerificationMethod {
+  SELF_REPORTED
+  AI_VERIFIED
+}
+
+enum MentorInteractionType {
+  QUESTION
+  CHECK_IN
+  VERIFICATION
+  MILESTONE
+}
+
 model User {
   id               String    @id @default(uuid())
   githubId         String?   @unique
@@ -34,10 +52,13 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  assessments Assessment[]
-  evidences   Evidence[]
-  sessions    Session[]
-  accounts    Account[]
+  assessments        Assessment[]
+  evidences          Evidence[]
+  sessions           Session[]
+  accounts           Account[]
+  roadmaps           Roadmap[]
+  skillHistory       UserSkillHistory[]
+  mentorInteractions MentorInteraction[]
 }
 
 model Session {
@@ -100,8 +121,8 @@ model Skill {
   fromRelations     SkillRelation[]    @relation("fromSkill")
   toRelations       SkillRelation[]    @relation("toSkill")
   assessmentResults AssessmentResult[]
-
-  resourceSkills     ResourceSkill[]
+  resourceSkills    ResourceSkill[]
+  userHistory       UserSkillHistory[]
 
   @@index([category])
   @@index([domain])
@@ -137,6 +158,7 @@ model Assessment {
   user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   results AssessmentResult[]
   gaps    AssessmentGaps?
+  roadmap Roadmap?
 
   @@index([userId])
   @@index([status])
@@ -235,4 +257,108 @@ model Evidence {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ============================================
+// ROADMAP & PROGRESS TRACKING
+// ============================================
+
+model Roadmap {
+  id           String    @id @default(uuid())
+  assessmentId String    @unique
+  userId       String
+  title        String
+  totalWeeks   Int
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assessment         Assessment          @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones         RoadmapMilestone[]
+  mentorInteractions MentorInteraction[]
+
+  @@index([userId])
+  @@index([assessmentId])
+}
+
+model RoadmapMilestone {
+  id          String          @id @default(uuid())
+  roadmapId   String
+  skillId     String
+  weekNumber  Int
+  title       String
+  description String?
+  resources   Json
+  status      MilestoneStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  roadmap  Roadmap             @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  progress MilestoneProgress[]
+
+  @@index([roadmapId])
+  @@index([skillId])
+  @@index([weekNumber])
+}
+
+model MilestoneProgress {
+  id                  String             @id @default(uuid())
+  milestoneId         String
+  verificationMethod  VerificationMethod
+  selfReportedAt      DateTime?
+  aiVerifiedAt        DateTime?
+  aiVerificationScore Float?
+  aiVerificationNotes String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  milestone RoadmapMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  @@index([milestoneId])
+}
+
+// ============================================
+// CROSS-ASSESSMENT KNOWLEDGE (USER-LEVEL)
+// ============================================
+
+model UserSkillHistory {
+  id           String             @id @default(uuid())
+  userId       String
+  skillId      String
+  level        Int
+  confidence   Float
+  source       VerificationMethod
+  assessmentId String?
+  createdAt    DateTime           @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([skillId])
+  @@index([userId, skillId])
+}
+
+// ============================================
+// PERSISTENT AI MENTOR MEMORY
+// ============================================
+
+model MentorInteraction {
+  id            String                @id @default(uuid())
+  userId        String
+  roadmapId     String?
+  type          MentorInteractionType
+  userMessage   String?
+  mentorMessage String
+  context       Json?
+  createdAt     DateTime              @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roadmap Roadmap? @relation(fields: [roadmapId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([roadmapId])
+  @@index([createdAt])
 }

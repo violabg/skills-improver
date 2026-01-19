@@ -48,7 +48,7 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
               </svg>
               <div
                 className={`text-8xl md:text-9xl font-black tracking-tighter ${getScoreColor(
-                  gapsData.readinessScore
+                  gapsData.readinessScore,
                 )}`}
               >
                 {gapsData.readinessScore}
@@ -60,8 +60,8 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
               <span>{gapsData.targetRole}</span>
             </h1>
             <p className="mx-auto max-w-2xl text-muted-foreground text-lg md:text-xl leading-relaxed">
-              We've analyzed your skills against industry standards. Here is
-              your personalized roadmap to close the gap.
+              We&apos;ve analyzed your skills against industry standards. Here
+              is your personalized roadmap to close the gap.
             </p>
           </div>
         </div>
@@ -99,19 +99,26 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                 </CardHeader>
                 <CardContent>
                   <p className="mb-4 text-foreground/80 text-sm">
-                    Start working on these gaps today. Check back in 30 days to
-                    re-evaluate.
+                    Generate a personalized learning roadmap based on your gaps.
                   </p>
                   <div className="flex flex-col gap-2">
+                    <Link href={`/assessment/${gapsData.assessmentId}/roadmap`}>
+                      <Button
+                        size="lg"
+                        className="shadow-lg shadow-primary/20 w-full"
+                      >
+                        Generate Roadmap
+                      </Button>
+                    </Link>
                     <Button
-                      size="lg"
-                      className="shadow-lg shadow-primary/20 w-full"
+                      variant="outline"
+                      className="w-full"
                       onClick={() => router.push("/dashboard")}
                     >
                       Go to Dashboard
                     </Button>
                     <Link href="/chat" className="w-full">
-                      <Button variant="outline" className="w-full">
+                      <Button variant="ghost" className="w-full">
                         Chat with AI Advisor
                       </Button>
                     </Link>
