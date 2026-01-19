@@ -1,13 +1,31 @@
 "use client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { client } from "@/lib/orpc/client";
 import { GapsData } from "@/types";
+import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { GapCard } from "./gap-card";
 
 export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const handleGenerateRoadmap = () => {
+    startTransition(async () => {
+      try {
+        await client.roadmap.generate({
+          assessmentId: gapsData.assessmentId,
+        });
+        router.push("/roadmap");
+      } catch (error) {
+        console.error("Failed to generate roadmap:", error);
+      }
+    });
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600 dark:text-green-400";
@@ -102,12 +120,24 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                     Generate a personalized learning roadmap based on your gaps.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <Link
-                      href={`/assessment/${gapsData.assessmentId}/roadmap`}
-                      className={`${buttonVariants({ variant: "default", size: "lg" })} shadow-lg shadow-primary/20 w-full`}
+                    <Button
+                      onClick={handleGenerateRoadmap}
+                      disabled={isPending}
+                      className="shadow-lg shadow-primary/20 w-full"
+                      size="lg"
                     >
-                      Generate Roadmap
-                    </Link>
+                      {isPending ? (
+                        <>
+                          <HugeiconsIcon
+                            icon={Loading03Icon}
+                            className="mr-2 w-4 h-4 animate-spin"
+                          />
+                          Generating...
+                        </>
+                      ) : (
+                        "Generate Roadmap"
+                      )}
+                    </Button>
                     <Button
                       variant="outline"
                       className="w-full"
