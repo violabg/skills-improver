@@ -1,5 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { PrismaClient, User } from "../../prisma/client";
 import { router } from "../router";
 
 // Mock auth
@@ -67,13 +68,24 @@ describe("AI Assessment Logic", () => {
     },
   };
 
-  const mockUser = { id: "user-123", email: "test@example.com" };
+  const mockUser: User = {
+    id: "user-123",
+    email: "test@example.com",
+    name: "Test User",
+    githubId: "123456",
+    emailVerified: true,
+    image: null,
+    cvUrl: null,
+    useCvForAnalysis: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
   // Helper to create client
   const createClient = () =>
     createRouterClient(router, {
       context: async () => ({
-        db: mockDb as any,
+        db: mockDb as unknown as PrismaClient,
         headers: new Headers(),
       }),
     });
@@ -84,8 +96,24 @@ describe("AI Assessment Logic", () => {
     vi.clearAllMocks();
 
     // Setup default auth mocks
-    (auth.api.getSession as any).mockResolvedValue({
-      user: { id: mockUser.id },
+    vi.mocked(auth.api.getSession).mockResolvedValue({
+      user: mockUser as unknown as {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
+        emailVerified: boolean;
+        name: string;
+        image?: string | null;
+      },
+      session: {
+        id: "test-session-id",
+        userId: mockUser.id,
+        token: "test-token",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     });
     mockDb.user.findUnique.mockResolvedValue(mockUser);
   });
@@ -126,7 +154,7 @@ describe("AI Assessment Logic", () => {
     expect(mockDb.skill.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ name: "New Skill A" }),
-      })
+      }),
     );
   });
 

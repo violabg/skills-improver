@@ -132,13 +132,11 @@ await client.assessment.submitAnswer({
 **Business Logic**:
 
 1. **Data Loading**:
-
    - Fetches assessment results to identify skills with `shouldTest: true`.
    - Calls AI to generate 1 tailored question for each selected skill.
    - If no skills were marked for testing, skips to Step 5.
 
 2. **Answer Processing**:
-
    - Each answer is sent to AI for immediate evaluation.
    - AI assesses level (1-5), confidence, and provides feedback (notes).
    - If a question is skipped, the system uses the user's self-evaluation score for that skill.
@@ -224,6 +222,55 @@ await client.assessment.submitAnswer({
 - Creates `AssessmentGaps` record after all skills analyzed.
 - Updates `Assessment.status` to "COMPLETED" with `completedAt` timestamp.
 - Creates `GapResources` records as user expands skill gaps.
+
+---
+
+### Step 7: Learning Roadmap (`/roadmap`)
+
+**Purpose**: Provide a structured, time-bound plan to help users bridge their identified skill gaps.
+
+**UI Components**:
+
+- `PageShell` (variant: "default")
+- `RoadmapContent` (client component)
+- `RoadmapSkeleton` (loading state)
+- `MilestoneCard` (individual learning items)
+- `HugeIcons` (visual indicators)
+
+**Generation Flow**:
+
+1. **Direct Generation**: Triggered by the "Generate Roadmap" button on the Results page (`Step 6`).
+2. **Loading State**: A spinner is shown on the button during AI generation (approx. 10-20 seconds).
+3. **oRPC Call**: `client.roadmap.generate({ assessmentId })` handles the logic.
+4. **Smart Redirection**: Redirects directly to `/roadmap` (the user's active/latest roadmap) upon completion.
+
+**oRPC Endpoints**:
+
+```typescript
+// 1. Generate roadmap from assessment results (checks if exists or creates new)
+await client.roadmap.generate({ assessmentId: assessment.id });
+
+// 2. Fetch latest active roadmap
+const latestRoadmap = await client.roadmap.getActive();
+
+// 3. Start AI verification for a milestone
+await client.roadmap.startVerification({ milestoneId });
+
+// 4. Mark milestone as complete
+await client.roadmap.completeMilestone({
+  milestoneId,
+  method: "SELF_REPORTED" | "AI_VERIFIED",
+});
+```
+
+**Database Changes**:
+
+- Creates `Roadmap` record linked to `Assessment` and `User`.
+- Creates `RoadmapWeek` records (Week 1, Week 2, etc.).
+- Creates `Milestone` records with type, title, description, and initial resources.
+- Updates `Milestone` status (`isCompleted`, `verificationMethod`).
+
+---
 
 ## Key Business Logic Patterns
 

@@ -9,22 +9,23 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
 ### Key capabilities
 
 - **AI-Powered Assessment** - 6-step guided process that combines self-evaluation with AI-driven skill testing
-- **Skill Gap Analysis** - Comprehensive report showing readiness score, strengths, and prioritized improvement areas
-- **Personalized Recommendations** - AI-generated learning resources tailored to your identified gaps
-- **Goal-Centric Learning** - Define your career target (e.g., "Senior Frontend Developer" or "Tech Lead") and get aligned recommendations
+- **Skill Gap Analysis** - Individualized reports showing readiness scores and prioritized gaps
+- **Interactive Roadmap** - AI-generated weekly learning path with milestones and verification
+- **Evidence Integration** - Connect GitHub repos and upload CVs for more accurate analysis
+- **Goal-Centric Growth** - Define targets (e.g., "Senior Frontend Developer") and focus your efforts
 
 ## Tech Stack
 
-| Layer        | Technology                     | Purpose                                |
-| ------------ | ------------------------------ | -------------------------------------- |
-| **Frontend** | Next.js 16 (App Router)        | Server components with React 19        |
-| **Backend**  | Node.js + TypeScript           | Server-side logic and AI orchestration |
-| **API**      | oRPC 1.13                      | Type-safe RPC procedures               |
-| **Database** | PostgreSQL (Neon) via Prisma   | Skill graph, assessments, results      |
-| **AI**       | AI SDK 6 with Groq (Kimi 2)    | Structured skill evaluation            |
-| **Auth**     | better-auth 1.4                | GitHub OAuth                           |
-| **UI**       | shadcn/ui + base-ui + Tailwind | Component library with dark theme      |
-| **Forms**    | react-hook-form + Zod          | Type-safe form validation              |
+| Layer        | Technology                       | Purpose                                |
+| ------------ | -------------------------------- | -------------------------------------- |
+| **Frontend** | Next.js 16 (App Router)          | Server components with React 19        |
+| **Backend**  | Node.js + TypeScript             | Server-side logic and AI orchestration |
+| **API**      | oRPC 1.13                        | Type-safe RPC procedures               |
+| **Database** | PostgreSQL (Neon) via Prisma     | Skill graph, assessments, results      |
+| **AI**       | AI SDK 6 with Groq (Kimi 2)      | Structured skill evaluation            |
+| **Auth**     | better-auth 1.4                  | GitHub OAuth                           |
+| **UI**       | shadcn/ui + HugeIcons + Tailwind | Component library with dark theme      |
+| **Forms**    | react-hook-form + Zod            | Type-safe form validation              |
 
 ## Getting Started
 
@@ -108,6 +109,14 @@ Comprehensive skill gap report with real-time per-skill AI analysis:
 - **Strengths** - Core competencies you already have
 - **Prioritized Gaps** - Skills ranked by impact on your goal
 - **Resources** - AI-curated learning materials for each gap
+
+### Step 7: Learning Roadmap
+
+A personalized, time-bound plan to close your gaps:
+
+- **Weekly Milestones** - Structured learning journey
+- **Interactive Verification** - Self-report or AI-verify your progress
+- **Rich Resources** - Direct links to curated learning materials
 
 ## Project Structure
 
@@ -346,13 +355,15 @@ pnpm start
 - Skill gap analysis and report
 - Dark theme implementation
 - CV upload with R2 storage and AI integration
+- Lucide to HugeIcons migration
 
-### 📋 Phase 2 (Feb-Mar 2026)
+### ✅ Phase 2 (Feb-Mar 2026)
 
-- ~~oRPC procedures implementation~~ (completed)
-- ~~Evidence ingestion~~ (GitHub analysis + CV upload completed)
+- oRPC procedures implementation
+- Evidence ingestion (GitHub analysis + CV upload)
 - Learning path generation (weekly plans)
-- Progress tracking and reassessment
+- Interactive learning roadmap UI
+- [ ] Progress tracking and reassessment
 
 ### 🎯 Phase 3+ (Apr 2026+)
 

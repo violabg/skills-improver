@@ -6,8 +6,8 @@ import { GapExplanationSchema } from "./schemas/gapExplanation.schema";
 import { isDevelopment } from "./utils";
 
 const SingleGapSchema = GapExplanationSchema.extend({
-  // Make skillId optional since we provide it
-  skillId: z.string().optional(),
+  // Make skillId required for Groq strict mode
+  skillId: z.string(),
 });
 
 interface AnalyzeSkillGapInput {
@@ -38,7 +38,7 @@ export interface SkillGapResult {
  * This is called for each assessed skill individually to ensure all are analyzed.
  */
 export async function analyzeSkillGap(
-  input: AnalyzeSkillGapInput
+  input: AnalyzeSkillGapInput,
 ): Promise<SkillGapResult> {
   const prompt = buildSingleSkillPrompt(input);
 
@@ -90,10 +90,10 @@ export async function analyzeSkillGap(
         gapSize > 2
           ? "CRITICAL"
           : gapSize > 1
-          ? "HIGH"
-          : gapSize > 0
-          ? "MEDIUM"
-          : "LOW",
+            ? "HIGH"
+            : gapSize > 0
+              ? "MEDIUM"
+              : "LOW",
       explanation: `${input.skillName} needs improvement for ${input.targetRole}.`,
       recommendedActions: [`Focus on improving ${input.skillName}`],
       estimatedTimeWeeks: gapSize * 2,

@@ -8,8 +8,7 @@ export const ChatResponseSchema = z.object({
   message: z.string().describe("The advisor's response message"),
   suggestions: z
     .array(z.string())
-    .optional()
-    .describe("Optional list of suggested follow-up questions"),
+    .describe("List of suggested follow-up questions (can be empty)"),
 });
 
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;
@@ -23,11 +22,12 @@ interface UserContext {
     impact: string;
   }>;
   targetRole?: string;
+  history?: string;
 }
 
 export async function generateAdvisorResponse(
   userMessage: string,
-  context: UserContext
+  context: UserContext,
 ): Promise<ChatResponse> {
   const contextPrompt = buildContextPrompt(context);
 
@@ -79,9 +79,14 @@ function buildContextPrompt(context: UserContext): string {
     parts.push("- Top Skill Gaps:");
     context.recentGaps.forEach((gap) => {
       parts.push(
-        `  • ${gap.skillName}: ${gap.gapSize} level gap (${gap.impact} impact)`
+        `  • ${gap.skillName}: ${gap.gapSize} level gap (${gap.impact} impact)`,
       );
     });
+  }
+
+  if (context.history) {
+    parts.push("\n**Recent Conversation History:**");
+    parts.push(context.history);
   }
 
   if (parts.length === 1) {

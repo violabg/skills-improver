@@ -1,13 +1,31 @@
 "use client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { client } from "@/lib/orpc/client";
 import { GapsData } from "@/types";
+import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { GapCard } from "./gap-card";
 
 export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const handleGenerateRoadmap = () => {
+    startTransition(async () => {
+      try {
+        await client.roadmap.generate({
+          assessmentId: gapsData.assessmentId,
+        });
+        router.push("/roadmap");
+      } catch (error) {
+        console.error("Failed to generate roadmap:", error);
+      }
+    });
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600 dark:text-green-400";
@@ -48,20 +66,20 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
               </svg>
               <div
                 className={`text-8xl md:text-9xl font-black tracking-tighter ${getScoreColor(
-                  gapsData.readinessScore
+                  gapsData.readinessScore,
                 )}`}
               >
                 {gapsData.readinessScore}
                 <span className="opacity-60 text-4xl align-top">%</span>
               </div>
             </div>
-            <h1 className="bg-clip-text bg-gradient-to-r from-primary to-blue-600 mb-2 pb-1 font-bold text-transparent text-3xl md:text-5xl tracking-tight">
+            <h1 className="bg-clip-text bg-linear-to-r from-primary to-blue-600 mb-2 pb-1 font-bold text-transparent text-3xl md:text-5xl tracking-tight">
               {getScoreLabel(gapsData.readinessScore)} for{" "}
               <span>{gapsData.targetRole}</span>
             </h1>
             <p className="mx-auto max-w-2xl text-muted-foreground text-lg md:text-xl leading-relaxed">
-              We've analyzed your skills against industry standards. Here is
-              your personalized roadmap to close the gap.
+              We&apos;ve analyzed your skills against industry standards. Here
+              is your personalized roadmap to close the gap.
             </p>
           </div>
         </div>
@@ -99,21 +117,39 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                 </CardHeader>
                 <CardContent>
                   <p className="mb-4 text-foreground/80 text-sm">
-                    Start working on these gaps today. Check back in 30 days to
-                    re-evaluate.
+                    Generate a personalized learning roadmap based on your gaps.
                   </p>
                   <div className="flex flex-col gap-2">
                     <Button
-                      size="lg"
+                      onClick={handleGenerateRoadmap}
+                      disabled={isPending}
                       className="shadow-lg shadow-primary/20 w-full"
+                      size="lg"
+                    >
+                      {isPending ? (
+                        <>
+                          <HugeiconsIcon
+                            icon={Loading03Icon}
+                            className="mr-2 w-4 h-4 animate-spin"
+                          />
+                          Generating...
+                        </>
+                      ) : (
+                        "Generate Roadmap"
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
                       onClick={() => router.push("/dashboard")}
                     >
                       Go to Dashboard
                     </Button>
-                    <Link href="/chat" className="w-full">
-                      <Button variant="outline" className="w-full">
-                        Chat with AI Advisor
-                      </Button>
+                    <Link
+                      href="/chat"
+                      className={`${buttonVariants({ variant: "ghost" })} w-full`}
+                    >
+                      Chat with AI Advisor
                     </Link>
                   </div>
                 </CardContent>
@@ -166,10 +202,11 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
             >
               Go to Dashboard
             </Button>
-            <Link href="/chat" className="block w-full">
-              <Button variant="outline" size="lg" className="w-full">
-                Talk to Career Advisor
-              </Button>
+            <Link
+              href="/chat"
+              className={`${buttonVariants({ variant: "outline", size: "lg" })} block w-full`}
+            >
+              Talk to Career Advisor
             </Link>
           </div>
         </div>
