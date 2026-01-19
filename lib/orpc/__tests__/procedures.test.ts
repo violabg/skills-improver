@@ -1,7 +1,7 @@
 import { router } from "@/lib/orpc/router";
 import { createRouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { User } from "../../prisma/client";
+import type { PrismaClient, User } from "../../prisma/client";
 
 // Mock auth library
 vi.mock("@/lib/auth", () => ({
@@ -20,11 +20,10 @@ const mockUser: User = {
   githubId: "123456",
   email: "test@example.com",
   name: "Test User",
-  avatarUrl: null,
+  image: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   emailVerified: true,
-  image: null,
   cvUrl: null,
   useCvForAnalysis: false,
 };
@@ -54,7 +53,7 @@ const mockDb = {
 const createCaller = () => {
   return createRouterClient(router, {
     context: async () => ({
-      db: mockDb as any,
+      db: mockDb as unknown as PrismaClient,
       headers: new Headers(),
     }),
   });
@@ -77,8 +76,24 @@ describe("oRPC Skills Procedures (Public)", () => {
 
   it("should list all skills", async () => {
     // Auth setup
-    (auth.api.getSession as any).mockResolvedValue({
-      user: { id: mockUser.id },
+    vi.mocked(auth.api.getSession).mockResolvedValue({
+      user: mockUser as unknown as {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
+        emailVerified: boolean;
+        name: string;
+        image?: string | null;
+      },
+      session: {
+        id: "test-session-id",
+        userId: mockUser.id,
+        token: "test-token",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     });
     mockDb.user.findUnique.mockResolvedValue(mockUser);
 
@@ -94,8 +109,24 @@ describe("oRPC Skills Procedures (Public)", () => {
 
   it("should filter skills by category", async () => {
     // Auth setup
-    (auth.api.getSession as any).mockResolvedValue({
-      user: { id: mockUser.id },
+    vi.mocked(auth.api.getSession).mockResolvedValue({
+      user: mockUser as unknown as {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
+        emailVerified: boolean;
+        name: string;
+        image?: string | null;
+      },
+      session: {
+        id: "test-session-id",
+        userId: mockUser.id,
+        token: "test-token",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     });
     mockDb.user.findUnique.mockResolvedValue(mockUser);
 
@@ -109,7 +140,7 @@ describe("oRPC Skills Procedures (Public)", () => {
     expect(mockDb.skill.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ category: "HARD" }),
-      })
+      }),
     );
   });
 });
@@ -121,22 +152,37 @@ describe("oRPC Protected Procedures", () => {
 
   it("should require authentication for assessment.start", async () => {
     // Mock getSession to return null
-    (auth.api.getSession as any).mockResolvedValue(null);
+    vi.mocked(auth.api.getSession).mockResolvedValue(null);
 
     const caller = createCaller();
 
     await expect(
       caller.assessment.start({
         currentRole: "Student",
-        targetRole: "Senior Frontend Developer",
-      })
+      }),
     ).rejects.toThrow();
   });
 
   it("should create assessment when authenticated", async () => {
     // Mock authenticated session
-    (auth.api.getSession as any).mockResolvedValue({
-      user: { id: mockUser.id },
+    vi.mocked(auth.api.getSession).mockResolvedValue({
+      user: mockUser as unknown as {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
+        emailVerified: boolean;
+        name: string;
+        image?: string | null;
+      },
+      session: {
+        id: "test-session-id",
+        userId: mockUser.id,
+        token: "test-token",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     });
     // Mock DB finding user
     mockDb.user.findUnique.mockResolvedValue(mockUser);
@@ -174,9 +220,8 @@ describe("oRPC Protected Procedures", () => {
 
 describe("AI Evaluation Schema Validation", () => {
   it("should validate skill evaluation output", async () => {
-    const { SkillEvaluationSchema } = await import(
-      "@/lib/ai/schemas/skillEvaluation.schema"
-    );
+    const { SkillEvaluationSchema } =
+      await import("@/lib/ai/schemas/skillEvaluation.schema");
 
     const validOutput = {
       skillId: "123e4567-e89b-12d3-a456-426614174000",
@@ -192,9 +237,8 @@ describe("AI Evaluation Schema Validation", () => {
   });
 
   it("should reject invalid skill evaluation output", async () => {
-    const { SkillEvaluationSchema } = await import(
-      "@/lib/ai/schemas/skillEvaluation.schema"
-    );
+    const { SkillEvaluationSchema } =
+      await import("@/lib/ai/schemas/skillEvaluation.schema");
 
     const invalidOutput = {
       skillId: "test-skill-id",
