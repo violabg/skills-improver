@@ -6,7 +6,7 @@ import { Suspense } from "react";
 
 export default function Page() {
   return (
-    <div className="p-6">
+    <div className="mx-auto p-6 max-w-7xl">
       <Card className="pb-0">
         <div className="flex flex-col mx-auto h-[calc(100vh-10rem)]">
           <div className="space-y-2 mb-6 text-center">
