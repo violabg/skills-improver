@@ -11,6 +11,7 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
 - **AI-Powered Assessment** - 6-step guided process that combines self-evaluation with AI-driven skill testing
 - **Skill Gap Analysis** - Individualized reports showing readiness scores and prioritized gaps
 - **Interactive Roadmap** - AI-generated weekly learning path with milestones and verification
+- **AI Career Advisor** - Persistent chat with history and Markdown support for ongoing mentorship
 - **Evidence Integration** - Connect GitHub repos and upload CVs for more accurate analysis
 - **Goal-Centric Growth** - Define targets (e.g., "Senior Frontend Developer") and focus your efforts
 
@@ -23,6 +24,7 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
 | **API**      | oRPC 1.13                        | Type-safe RPC procedures               |
 | **Database** | PostgreSQL (Neon) via Prisma     | Skill graph, assessments, results      |
 | **AI**       | AI SDK 6 with Groq (Kimi 2)      | Structured skill evaluation            |
+| **Markdown** | react-markdown 10.1              | Chat message rendering                 |
 | **Auth**     | better-auth 1.4                  | GitHub OAuth                           |
 | **UI**       | shadcn/ui + HugeIcons + Tailwind | Component library with dark theme      |
 | **Forms**    | react-hook-form + Zod            | Type-safe form validation              |
@@ -74,7 +76,7 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
    pnpm dev
    ```
 
-   Open http://localhost:3000 in your browser.
+   Open <http://localhost:3000> in your browser.
 
 ## Assessment Flow
 
@@ -120,7 +122,7 @@ A personalized, time-bound plan to close your gaps:
 
 ## Project Structure
 
-```
+```text
 skills-improver/
 ├── app/
 │   ├── (app)/              # Protected routes (requires auth)
@@ -133,6 +135,7 @@ skills-improver/
 │   │   └── login/
 │   ├── api/
 │   │   ├── auth/          # OAuth handler
+│   │   ├── chat/          # AI Chat streaming & history
 │   │   ├── orpc/          # oRPC endpoint
 │   │   └── seed/          # Database seeding
 │   ├── layout.tsx         # Root layout
@@ -166,7 +169,11 @@ skills-improver/
 
 - `id`, `userId`, `status`, `startedAt`, `completedAt`
 - Profile: `currentRole`, `yearsExperience`, `industry`, `careerIntent`
-- Goal: `targetRole`
+- Goal: `currentRole`, `yearsExperience`, `industry`, `careerIntent`, `targetRole`
+
+**ChatConversation** - Tracks AI-powered mentorship sessions
+
+- `id`, `userId`, `title`, `messages` (JSON), `createdAt`, `updatedAt`
 
 **Skill** - Master list of skills
 
@@ -362,13 +369,13 @@ pnpm start
 - oRPC procedures implementation
 - Evidence ingestion (GitHub analysis + CV upload)
 - Learning path generation (weekly plans)
-- Interactive learning roadmap UI
+- ✅ Interactive learning roadmap UI
+- ✅ AI SDK Chat Streaming with History Persistence
+- ✅ Markdown chat rendering with Prism syntax highlighting
 - [ ] Progress tracking and reassessment
 
 ### 🎯 Phase 3+ (Apr 2026+)
 
-- Vector embeddings for semantic skill matching
-- Interactive learning roadmap UI
 - Background job processing for heavy AI tasks
 - Analytics and learning outcome tracking
 

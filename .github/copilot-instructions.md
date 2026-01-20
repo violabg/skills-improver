@@ -2,7 +2,7 @@
 
 **Skills Improver** is an AI-powered career growth platform that analyzes skill gaps and generates personalized learning paths for frontend developers transitioning to senior/lead roles.
 
-**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), HugeIcons (free-icons + react), shadcn/ui (base-ui), PostgreSQL (Neon)
+**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), react-markdown 10.1.0, HugeIcons (free-icons + react), shadcn/ui (base-ui), PostgreSQL (Neon)
 
 ## Critical Architecture Patterns
 
@@ -137,6 +137,8 @@ submitAnswer: protectedProcedure
 - **Location**: `lib/ai/` — `assessSkill()`, `generateAdvisorResponse()`, schema definitions
 - **Model**: Groq Kimi 2 (`moonshotai/kimi-k2-instruct-0905`), `temperature: 0.3`
 - **Pattern**: AI SDK v6 `generateText()` with `Output.object({ schema })` for structured outputs
+- **Streaming Pattern**: Chat uses `useChat` from `@ai-sdk/react` with `toUIMessageStreamResponse()` for real-time AI responses.
+- **Persistence**: Chat history stored as JSON (`UIMessage[]`) in `ChatConversation` model via `onFinish` callback in `/api/chat/route.ts`.
 - **Validation**: `GapAnalysisSchema`, `SkillEvaluationSchema` validate all LLM responses before persistence
 - **Data flow**: Assessment evaluation in `router.ts` handlers → AI evaluates → Zod validates → stores in `AssessmentResult`
 - **CV Integration**: If user enables `useCvForAnalysis`, CV text extracted via `unpdf` and included in gap analysis prompt
@@ -192,6 +194,7 @@ pnpm build            # Production build
 **Core tables**:
 
 - `User` — GitHub OAuth identity via better-auth, `cvUrl` (String?), `useCvForAnalysis` (Boolean)
+- `ChatConversation` — Tracks full AI chat histories as `messages` (Json array of `UIMessage`).
 - `Skill` — 15 core skills (HARD/SOFT/META categories)
 - `SkillRelation` — Graph edges (prerequisites, dependencies)
 - `Assessment` — Run with status IN_PROGRESS/COMPLETED
@@ -213,6 +216,7 @@ pnpm build            # Production build
 | **Forms**           | `useTransition()` for pending, disable submit            | Missing loading states                 |
 | **rhf-inputs**      | Specific components: `InputField`, `SelectField`         | Generic `Field` component              |
 | **Auth routes**     | Check session in server component, redirect              | Trust client-side checks               |
+| **AI Stream**       | Use `onFinish` for conversation persistence              | Save only partial history              |
 | **API calls**       | Call oRPC from forms                                     | Create REST endpoints                  |
 
 ## Status: MVP Phase (Jan 2026)
@@ -229,6 +233,8 @@ pnpm build            # Production build
 - ✅ CV upload with R2 storage and AI integration
 - ✅ Interactive Learning Roadmap UI
 - ✅ Milestone-based progress tracking (Manual + AI verification)
+- ✅ AI SDK Chat Streaming with History Persistence
+- ✅ Markdown chat rendering with Prism syntax highlighting
 - ✅ Lucide to HugeIcons replacement (free-icons set)
 
 ## Reference Files

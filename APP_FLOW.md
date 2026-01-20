@@ -269,6 +269,41 @@ await client.roadmap.completeMilestone({
 - Creates `RoadmapWeek` records (Week 1, Week 2, etc.).
 - Creates `Milestone` records with type, title, description, and initial resources.
 - Updates `Milestone` status (`isCompleted`, `verificationMethod`).
+- Creates `MentorInteraction` record for tracking specific advice.
+
+---
+
+### Step 8: AI Chat Advisor (`/chat`)
+
+**Purpose**: Provide ongoing AI-powered career mentorship and answer specific questions about assessment results, roadmaps, or skill development.
+
+**UI Components**:
+
+- `PageShell` (variant: "default")
+- `ChatWrapper` (context manager for sidebar and content)
+- `ConversationSidebar` (list of past conversations + "New Chat" button)
+- `ChatContent` (real-time message display with auto-scroll)
+- `MarkdownRenderer` (rendering for messages with `prism-react-renderer` syntax highlighting)
+
+**Persistence Flow**:
+
+1. **New Conversation**: Click "New Chat" calls `POST /api/chat/conversations`, which creates a `ChatConversation` record and redirects to `/chat?id={id}`.
+2. **Streaming AI**: `ChatContent` uses `@ai-sdk/react`'s `useChat` hook to send messages to `POST /api/chat`.
+3. **onFinish Persistence**: The stream finishes and triggers the `onFinish` callback in `/api/chat/route.ts`, which persists the entire `UIMessage[]` history into the `ChatConversation.messages` JSON field.
+4. **Loading History**: Opening an existing chat calls `GET /api/chat/conversations/[id]`, which serves the persisted JSON messages as `initialMessages` for the UI.
+
+**API Endpoints**:
+
+- `POST /api/chat` - AI streaming endpoint (handles context fetching from assessments/roadmaps)
+- `GET /api/chat/conversations` - List user's conversations
+- `POST /api/chat/conversations` - Create a new blank conversation
+- `GET /api/chat/conversations/[id]` - Load full history for an ID
+- `DELETE /api/chat/conversations/[id]` - Remove a conversation
+
+**Database Changes**:
+
+- Creates/Updates `ChatConversation` records (`id`, `userId`, `title`, `messages` JSON, `updatedAt`).
+- Still creates traditional `MentorInteraction` records for single question/answer tracking (analytics).
 
 ---
 
@@ -307,7 +342,7 @@ await client.roadmap.completeMilestone({
 
 ## Data Flow Architecture
 
-```
+```text
 User Input → Form Validation → oRPC Call → Business Logic → Database → AI Processing → Response → UI Update
 ```
 
@@ -324,6 +359,7 @@ User Input → Form Validation → oRPC Call → Business Logic → Database →
 
 - **Evidence Ingestion**: Complete GitHub repo analysis and ~~automated CV scraping~~ (CV upload implemented).
 - **Background Processing**: Move heavy AI calculations to background jobs for faster UI response.
+- **AI Chat Advisor**: Persistent chat with history and Markdown support for ongoing mentorship.
 - **Interactive Roadmap**: Convert the results list into an interactive, time-bound learning roadmap.
 
 ### Planned Enhancements
