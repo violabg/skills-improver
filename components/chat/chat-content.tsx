@@ -2,100 +2,49 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useChat } from "@/lib/hooks/use-chat";
-import { client } from "@/lib/orpc/client";
+import { useChat } from "@ai-sdk/react";
 import { AiChat01Icon, SentIcon, UserIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-
-type Message = {
-  id: string;
-  from: "user" | "bot";
-  text: string;
-  suggestions?: string[];
-};
+import { DefaultChatTransport } from "ai";
+import { useEffect, useRef, useState } from "react";
 
 export default function ChatContent() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      from: "bot",
-      text: "Hi! I'm your career advisor. I can help you understand your skill gaps, suggest learning resources, and guide your career transition. What would you like to know?",
-      suggestions: [
-        "What should I focus on first?",
-        "How can I improve my JavaScript skills?",
-        "Tell me about my assessment results",
-      ],
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const { sendMessage, isPending, error } = useChat();
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [input, setInput] = useState("");
 
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+    }),
+  });
+
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const history = await client.mentor.getHistory({ limit: 20 });
-        if (history && history.length > 0) {
-          const formattedHistory: Message[] = history.flatMap((h) => [
-            {
-              id: `u-${h.id}`,
-              from: "user" as const,
-              text: h.userMessage || "",
-            },
-            { id: `b-${h.id}`, from: "bot" as const, text: h.mentorMessage },
-          ]);
-          setMessages(formattedHistory);
-        }
-      } catch (err) {
-        console.error("Failed to load chat history:", err);
-      }
-    };
-    loadHistory();
-  }, []);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
 
-  const messageIdCounter = useRef(0);
-  const handleSendMessage = useCallback(
-    async (messageText?: string) => {
-      const textToSend = messageText || input;
-      if (!textToSend.trim()) return;
+  const handleSendMessage = () => {
+    if (!input.trim()) return;
+    sendMessage({ text: input });
+    setInput("");
+  };
 
-      const userMsg: Message = {
-        id: `u-${messageIdCounter.current++}`,
-        from: "user",
-        text: textToSend,
-      };
-      setMessages((m) => [...m, userMsg]);
-      setInput("");
+  const isLoading = status === "submitted" || status === "streaming";
 
-      const response = await sendMessage(textToSend);
-
-      if (response) {
-        const botMsg: Message = {
-          id: `b-${messageIdCounter.current++}`,
-          from: "bot",
-          text: response.response,
-          suggestions: response.suggestions,
-        };
-        setMessages((m) => [...m, botMsg]);
-
-        setTimeout(() => {
-          scrollRef.current?.scrollTo({
-            top: scrollRef.current.scrollHeight,
-            behavior: "smooth",
-          });
-        }, 100);
-      } else if (error) {
-        const errorMsg: Message = {
-          id: `e-${messageIdCounter.current++}`,
-          from: "bot",
-          text: `Sorry, I encountered an error: ${error}. Please try again.`,
-        };
-        setMessages((m) => [...m, errorMsg]);
-      }
-    },
-    [input, sendMessage, error],
-  );
+  // Extract text content from message parts
+  const getMessageText = (
+    parts: Array<{ type: string; text?: string }>,
+  ): string => {
+    return parts
+      .filter((p) => p.type === "text")
+      .map((p) => p.text || "")
+      .join("");
+  };
 
   return (
     <>
@@ -111,10 +60,30 @@ export default function ChatContent() {
                 className="w-8 h-8 text-muted-foreground"
               />
             </div>
-            <p className="text-muted-foreground">
-              How can I help you today? Ask about your roadmap or assessment
-              results.
+            <p className="mb-6 text-muted-foreground">
+              Hi! I&apos;m your career advisor. Ask about your roadmap,
+              assessment results, or career tips.
             </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                "What should I focus on first?",
+                "How can I improve my JavaScript skills?",
+                "Tell me about my assessment results",
+              ].map((suggestion) => (
+                <Button
+                  key={suggestion}
+                  variant="outline"
+                  size="sm"
+                  className="bg-background/50 hover:bg-background border-primary/20 hover:border-primary/50 rounded-full h-8 text-foreground/80 hover:text-primary text-xs transition-all"
+                  onClick={() => {
+                    sendMessage({ text: suggestion });
+                  }}
+                  disabled={isLoading}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -125,59 +94,44 @@ export default function ChatContent() {
           >
             <div
               className={`flex gap-4 ${
-                m.from === "user" ? "flex-row-reverse" : "flex-row"
+                m.role === "user" ? "flex-row-reverse" : "flex-row"
               }`}
             >
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 shadow-sm ${
-                  m.from === "bot"
+                  m.role === "assistant"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
                 <HugeiconsIcon
-                  icon={m.from === "bot" ? AiChat01Icon : UserIcon}
+                  icon={m.role === "assistant" ? AiChat01Icon : UserIcon}
                   className="w-5 h-5"
                 />
               </div>
 
               <div
                 className={`flex flex-col gap-1 max-w-[80%] ${
-                  m.from === "user" ? "items-end" : "items-start"
+                  m.role === "user" ? "items-end" : "items-start"
                 }`}
               >
                 <div
                   className={`px-5 py-3.5 rounded-2xl shadow-sm text-base leading-relaxed ${
-                    m.from === "user"
+                    m.role === "user"
                       ? "bg-primary text-primary-foreground rounded-tr-none"
                       : "bg-muted/50 border border-border/50 text-foreground rounded-tl-none"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{m.text}</p>
+                  <p className="whitespace-pre-wrap">
+                    {getMessageText(m.parts)}
+                  </p>
                 </div>
               </div>
             </div>
-
-            {/* Suggestions */}
-            {m.from === "bot" && m.suggestions && m.suggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2 ml-14">
-                {m.suggestions.map((suggestion, idx) => (
-                  <Button
-                    key={idx}
-                    variant="outline"
-                    size="sm"
-                    className="bg-background/50 hover:bg-background border-primary/20 hover:border-primary/50 rounded-full h-8 text-foreground/80 hover:text-primary text-xs transition-all"
-                    onClick={() => handleSendMessage(suggestion)}
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
-            )}
           </div>
         ))}
 
-        {isPending && (
+        {status === "submitted" && (
           <div className="flex gap-4">
             <div className="flex justify-center items-center bg-primary shadow-sm rounded-full w-10 h-10 text-primary-foreground shrink-0">
               <HugeiconsIcon icon={AiChat01Icon} className="w-5 h-5" />
@@ -206,11 +160,11 @@ export default function ChatContent() {
                 handleSendMessage();
               }
             }}
-            disabled={isPending}
+            disabled={isLoading}
           />
           <Button
-            onClick={() => handleSendMessage()}
-            disabled={isPending || !input.trim()}
+            onClick={handleSendMessage}
+            disabled={isLoading || !input.trim()}
             size="icon"
             className="shadow-md shadow-primary/20 rounded-full w-12 h-12 shrink-0"
           >

@@ -8,8 +8,8 @@ export default function Page() {
   return (
     <div className="mx-auto p-6 max-w-7xl">
       <Card className="pb-0">
-        <div className="flex flex-col mx-auto h-[calc(100vh-10rem)]">
-          <div className="space-y-2 mb-6 text-center">
+        <div className="flex flex-col mx-auto w-full h-[calc(100vh-10rem)]">
+          <div className="space-y-2 pb-6 border-border/50 border-b text-center">
             <div className="inline-flex justify-center items-center bg-primary/10 mb-2 p-3 rounded-full">
               <HugeiconsIcon
                 icon={AiChat01Icon}
@@ -24,7 +24,7 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="relative flex flex-col flex-1 bg-card shadow-primary/5 shadow-xl border border-border/50 rounded-3xl overflow-hidden">
+          <div className="relative flex flex-col flex-1 bg-card shadow-primary/5 shadow-xl overflow-hidden">
             {/* Background blobs */}
             <div className="top-0 right-0 absolute bg-primary/5 blur-3xl rounded-full w-64 h-64 pointer-events-none" />
             <div className="bottom-0 left-0 absolute bg-blue-500/5 blur-3xl rounded-full w-64 h-64 pointer-events-none" />
