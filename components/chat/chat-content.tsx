@@ -114,9 +114,7 @@ export default function ChatContent({
 
   // Sync initial messages when they change
   useEffect(() => {
-    if (initialMessages && initialMessages.length > 0) {
-      setMessages(initialMessages);
-    }
+    setMessages(initialMessages);
   }, [initialMessages, setMessages]);
 
   // Auto-scroll to bottom when new messages arrive

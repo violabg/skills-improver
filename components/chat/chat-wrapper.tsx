@@ -45,6 +45,17 @@ export default function ChatWrapper({
     }
   }, [currentChatId, isCreating, handleNewChat]);
 
+  // Sync URL with currentChatId if it changes and isn't reflected in URL
+  useEffect(() => {
+    if (currentChatId) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("id") !== currentChatId) {
+        url.searchParams.set("id", currentChatId);
+        window.history.replaceState({}, "", url.pathname + url.search);
+      }
+    }
+  }, [currentChatId]);
+
   const handleSelectChat = useCallback(async (id: string) => {
     setCurrentChatId(id);
     // Update URL without reload
