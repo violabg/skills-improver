@@ -2,6 +2,10 @@
 
 import ChatContent from "@/components/chat/chat-content";
 import ConversationSidebar from "@/components/chat/conversation-sidebar";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Menu01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { UIMessage } from "ai";
 import { useCallback, useEffect, useState } from "react";
 
@@ -19,6 +23,15 @@ export default function ChatWrapper({
   );
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const getLastMessageText = (msgs: UIMessage[]) => {
+    if (msgs.length === 0) return "New conversation";
+    const lastMsg = msgs[msgs.length - 1];
+    return (
+      lastMsg.parts.find((p) => p.type === "text")?.text || "New conversation"
+    );
+  };
 
   const handleNewChat = useCallback(async () => {
     setIsCreating(true);
@@ -28,6 +41,7 @@ export default function ChatWrapper({
         const { id } = await res.json();
         setCurrentChatId(id);
         setMessages([]);
+        setIsSidebarOpen(false);
         // Update URL without reload
         window.history.pushState({}, "", `/chat?id=${id}`);
       }
@@ -58,6 +72,7 @@ export default function ChatWrapper({
 
   const handleSelectChat = useCallback(async (id: string) => {
     setCurrentChatId(id);
+    setIsSidebarOpen(false);
     // Update URL without reload
     window.history.pushState({}, "", `/chat?id=${id}`);
 
@@ -82,13 +97,41 @@ export default function ChatWrapper({
   }
 
   return (
-    <div className="flex w-full h-full">
+    <div className="flex w-full h-full overflow-hidden">
+      {/* Desktop Sidebar */}
       <ConversationSidebar
         currentChatId={currentChatId}
         onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
+        className="hidden lg:flex w-64"
       />
+
+      {/* Mobile Sheet */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-80">
+          <ConversationSidebar
+            currentChatId={currentChatId}
+            onSelectChat={handleSelectChat}
+            onNewChat={handleNewChat}
+            className="flex border-r-0 w-full h-full"
+          />
+        </SheetContent>
+      </Sheet>
+
       <div className="flex flex-col flex-1 min-w-0">
+        <div className="lg:hidden flex items-center gap-2 p-2 border-border/50 border-b">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <HugeiconsIcon icon={Menu01Icon} className="w-5 h-5" />
+            <span className="sr-only">Toggle Sidebar</span>
+          </Button>
+          <div className="flex-1 font-medium text-sm truncate">
+            {getLastMessageText(messages)}
+          </div>
+        </div>
         <ChatContent
           key={currentChatId}
           chatId={currentChatId}

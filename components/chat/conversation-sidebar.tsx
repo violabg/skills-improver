@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Add01Icon,
   AiChat01Icon,
@@ -20,12 +21,14 @@ interface ConversationSidebarProps {
   currentChatId: string | null;
   onSelectChat: (id: string) => void;
   onNewChat: () => void;
+  className?: string;
 }
 
 export default function ConversationSidebar({
   currentChatId,
   onSelectChat,
   onNewChat,
+  className,
 }: ConversationSidebarProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +64,12 @@ export default function ConversationSidebar({
   };
 
   return (
-    <div className="flex flex-col bg-muted/30 border-border/50 border-r w-64 shrink-0">
+    <div
+      className={cn(
+        "flex flex-col bg-muted/30 border-border/50 border-r shrink-0",
+        className,
+      )}
+    >
       <div className="p-4 border-border/50 border-b">
         <Button
           onClick={onNewChat}
