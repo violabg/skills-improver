@@ -20,7 +20,18 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, chatId }: { messages: UIMessage[]; chatId?: string } =
+    await req.json();
+
+  // If chatId provided, verify ownership
+  if (chatId) {
+    const conversation = await db.chatConversation.findFirst({
+      where: { id: chatId, userId: session.user.id },
+    });
+    if (!conversation) {
+      return new Response("Conversation not found", { status: 404 });
+    }
+  }
 
   // Get the latest user message for context building
   const userMessage = messages.findLast((m) => m.role === "user");
@@ -128,19 +139,43 @@ ${contextPrompt}
 4. Keep responses concise (2-3 paragraphs max) and focus on practical guidance`,
     messages: await convertToModelMessages(messages),
     temperature: 0.7,
-    onFinish: async ({ text }) => {
-      // Save interaction to database after stream completes
+  });
+
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    onFinish: async ({ messages: allMessages }) => {
+      // Save interaction to database
       await db.mentorInteraction.create({
         data: {
           userId: session.user.id,
           type: "QUESTION",
           userMessage: userMessageText,
-          mentorMessage: text,
+          mentorMessage:
+            allMessages
+              .findLast((m) => m.role === "assistant")
+              ?.parts?.find((p) => p.type === "text")?.text ?? "",
           context: { contextPrompt },
         },
       });
+
+      // Persist messages to conversation if chatId provided
+      if (chatId) {
+        // Generate title from first user message if not set
+        const firstUserMsg = allMessages.find((m) => m.role === "user");
+        const titleText =
+          firstUserMsg?.parts?.find((p) => p.type === "text")?.text ?? "";
+        const title =
+          titleText.length > 50 ? titleText.slice(0, 50) + "..." : titleText;
+
+        await db.chatConversation.update({
+          where: { id: chatId },
+          data: {
+            messages: allMessages as unknown as object[],
+            title: title || "New conversation",
+            updatedAt: new Date(),
+          },
+        });
+      }
     },
   });
-
-  return result.toUIMessageStreamResponse();
 }

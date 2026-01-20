@@ -5,18 +5,43 @@ import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
 import { AiChat01Icon, SentIcon, UserIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-export default function ChatContent() {
+interface ChatContentProps {
+  chatId: string;
+  initialMessages?: UIMessage[];
+}
+
+export default function ChatContent({
+  chatId,
+  initialMessages = [],
+}: ChatContentProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [input, setInput] = useState("");
 
-  const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-    }),
+  // Memoize transport to avoid recreating on each render
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { chatId },
+      }),
+    [chatId],
+  );
+
+  const { messages, sendMessage, status, setMessages } = useChat({
+    id: chatId,
+    transport,
   });
+
+  // Sync initial messages when they change
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages, setMessages]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
