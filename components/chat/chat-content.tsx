@@ -7,7 +7,83 @@ import { AiChat01Icon, SentIcon, UserIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
+import { Highlight, themes } from "prism-react-renderer";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+
+function MarkdownRenderer({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      components={{
+        p({ children }) {
+          return <p className="mb-4 last:mb-0 leading-relaxed">{children}</p>;
+        },
+        h1({ children }) {
+          return <h1 className="mt-6 mb-4 font-bold text-xl">{children}</h1>;
+        },
+        h2({ children }) {
+          return <h2 className="mt-5 mb-3 font-bold text-lg">{children}</h2>;
+        },
+        h3({ children }) {
+          return <h3 className="mt-4 mb-2 font-bold text-base">{children}</h3>;
+        },
+        ul({ children }) {
+          return <ul className="mb-4 pl-6 list-disc">{children}</ul>;
+        },
+        ol({ children }) {
+          return <ol className="mb-4 pl-6 list-decimal">{children}</ol>;
+        },
+        li({ children }) {
+          return <li className="mb-1 last:mb-0">{children}</li>;
+        },
+        code({
+          inline,
+          className,
+          children,
+          ...props
+        }: React.ComponentPropsWithoutRef<"code"> & { inline?: boolean }) {
+          const match = /language-(\w+)/.exec(className || "");
+          return !inline && match ? (
+            <Highlight
+              theme={themes.vsDark}
+              code={String(children).replace(/\n$/, "")}
+              language={match[1]}
+            >
+              {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                <div className="relative my-4 rounded-md overflow-hidden">
+                  <div className="flex justify-between items-center bg-zinc-700 px-4 py-1 text-zinc-300 text-xs">
+                    <span>{match[1]}</span>
+                  </div>
+                  <pre
+                    className={`${className} p-4 overflow-x-auto text-sm`}
+                    style={style}
+                  >
+                    {tokens.map((line, i) => (
+                      <div key={i} {...getLineProps({ line })}>
+                        {line.map((token, key) => (
+                          <span key={key} {...getTokenProps({ token })} />
+                        ))}
+                      </div>
+                    ))}
+                  </pre>
+                </div>
+              )}
+            </Highlight>
+          ) : (
+            <code
+              className={`${className} bg-muted px-1 py-0.5 rounded font-mono text-sm`}
+              {...props}
+            >
+              {children}
+            </code>
+          );
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
 
 interface ChatContentProps {
   chatId: string;
@@ -60,16 +136,6 @@ export default function ChatContent({
   };
 
   const isLoading = status === "submitted" || status === "streaming";
-
-  // Extract text content from message parts
-  const getMessageText = (
-    parts: Array<{ type: string; text?: string }>,
-  ): string => {
-    return parts
-      .filter((p) => p.type === "text")
-      .map((p) => p.text || "")
-      .join("");
-  };
 
   return (
     <>
@@ -147,9 +213,16 @@ export default function ChatContent({
                       : "bg-muted/50 border border-border/50 text-foreground rounded-tl-none"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">
-                    {getMessageText(m.parts)}
-                  </p>
+                  {m.parts
+                    .filter((part) => part.type === "text")
+                    .map((part, partIndex) => (
+                      <div
+                        key={partIndex}
+                        className="dark:prose-invert max-w-none wrap-break-word prose prose-sm"
+                      >
+                        <MarkdownRenderer content={part.text} />
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>
