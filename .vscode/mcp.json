@@ -2,7 +2,14 @@
   "servers": {
     "shadcn": {
       "command": "npx",
-      "args": ["shadcn@latest", "mcp"]
+      "args": ["shadcn@latest", "mcp"],
+      "type": "stdio"
+    },
+    "ai-elements": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://registry.ai-sdk.dev/api/mcp"],
+      "type": "stdio"
     }
-  }
+  },
+  "inputs": []
 }
