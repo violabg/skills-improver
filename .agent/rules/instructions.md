@@ -6,7 +6,7 @@ trigger: always_on
 
 **Skills Improver** is an AI-powered career growth platform that analyzes skill gaps and generates personalized learning paths for frontend developers transitioning to senior/lead roles.
 
-**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), HugeIcons (free-icons + react), shadcn/ui (base-ui), PostgreSQL (Neon)
+**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), react-markdown 10.1.0, HugeIcons (free-icons + react), shadcn/ui (base-ui), PostgreSQL (Neon)
 
 ## Critical Architecture Patterns
 
@@ -45,44 +45,35 @@ export default function Page() {
 
 ### Component Library (base-ui)
 
-**CRITICAL**: base-ui does NOT support `asChild` prop (unlike Radix UI)
+**CRITICAL**: base-ui does NOT support `asChild` prop. Use `render` prop.
 
 ```tsx
-// ❌ WRONG
-<Button asChild><Link href="/path">Text</Link></Button>
-
 // ✅ CORRECT: Use render prop
-<Button render={(props) => <Link {...props} href="/path">Text</Link>} />
-
-// ✅ CORRECT: Composition with className
-<Link href="/path" className={buttonVariants({ variant: "outline", size: "sm" })}>
-  Text
-</Link>
+<Button
+  render={(props) => (
+    <Link {...props} href="/path">
+      Text
+    </Link>
+  )}
+/>
 ```
 
 ### Dark Theme System
 
-- **OkLCH color system** in `app/globals.css` (semantic tokens, not hardcoded colors)
-- **Always use semantic tokens**: `bg-card`, `text-foreground`, `border-border`, `bg-primary`
-- **Theme provider**: `suppressHydrationWarning` required in root layout to prevent hydration errors
+- **OkLCH color system** in `app/globals.css` (semantic tokens).
+- **Always use tokens**: `bg-card`, `text-foreground`, `border-border`, `bg-primary`.
+- **Theme provider**: `suppressHydrationWarning` required.
 
 ### Client vs Server Components
 
-- **Server components by default** — NO `"use client"` needed
-- **Add `"use client"` ONLY for**:
-  - Form state: `useState`, `useForm`
-  - Browser APIs: `useRouter`, `useSearchParams`
-  - Event handlers: `onClick`, `onChange`
-  - React hooks: `useEffect`, `useCallback`, `useTransition`
-- **Pattern**: Server page → wraps client form component
+- **Server components by default**. Add `"use client"` ONLY for:
+  - Form state (`useState`, `useForm`)
+  - Browser APIs (`useRouter`, `localStorage`)
+  - React hooks (`useEffect`, `useCallback`)
 
-### Server Actions vs API Routes
+## Documentation Rule
 
-- **Prefer Server Actions** — better type safety, co-located with forms
-- **Use API routes only for**:
-  - External webhooks (OAuth callbacks, payment providers)
-  - oRPC endpoints
-  - Public APIs consumed by external clients
+**CRITICAL**: Any edits that change the app flow (e.g., routing, new features) **MUST** be accompanied by updates to `APP_FLOW.md` and `README.md`.
 
 ### Form Handling
 
@@ -141,6 +132,8 @@ submitAnswer: protectedProcedure
 - **Location**: `lib/ai/` — `assessSkill()`, `generateAdvisorResponse()`, schema definitions
 - **Model**: Groq Kimi 2 (`moonshotai/kimi-k2-instruct-0905`), `temperature: 0.3`
 - **Pattern**: AI SDK v6 `generateText()` with `Output.object({ schema })` for structured outputs
+- **Streaming Pattern**: Chat uses `useChat` from `@ai-sdk/react` with `toUIMessageStreamResponse()` for real-time AI responses.
+- **Persistence**: Chat history stored as JSON (`UIMessage[]`) in `ChatConversation` model via `onFinish` callback in `/api/chat/route.ts`.
 - **Validation**: `GapAnalysisSchema`, `SkillEvaluationSchema` validate all LLM responses before persistence
 - **Data flow**: Assessment evaluation in `router.ts` handlers → AI evaluates → Zod validates → stores in `AssessmentResult`
 - **CV Integration**: If user enables `useCvForAnalysis`, CV text extracted via `unpdf` and included in gap analysis prompt
@@ -196,6 +189,7 @@ pnpm build            # Production build
 **Core tables**:
 
 - `User` — GitHub OAuth identity via better-auth, `cvUrl` (String?), `useCvForAnalysis` (Boolean)
+- `ChatConversation` — Tracks full AI chat histories as `messages` (Json array of `UIMessage`).
 - `Skill` — 15 core skills (HARD/SOFT/META categories)
 - `SkillRelation` — Graph edges (prerequisites, dependencies)
 - `Assessment` — Run with status IN_PROGRESS/COMPLETED
@@ -204,7 +198,7 @@ pnpm build            # Production build
 - `GapResources` — Learning materials per gap
 - `Evidence` — User evidence uploads (GitHub, portfolio)
 
-**Pattern**: All tables properly indexed; `onDelete: Cascade` ensures clean removal.
+**Pattern**: All tables properly indexed; `onDelete: Cascade` ensures clean removal
 
 ## Critical Patterns (Do This)
 
@@ -217,6 +211,7 @@ pnpm build            # Production build
 | **Forms**           | `useTransition()` for pending, disable submit            | Missing loading states                 |
 | **rhf-inputs**      | Specific components: `InputField`, `SelectField`         | Generic `Field` component              |
 | **Auth routes**     | Check session in server component, redirect              | Trust client-side checks               |
+| **AI Stream**       | Use `onFinish` for conversation persistence              | Save only partial history              |
 | **API calls**       | Call oRPC from forms                                     | Create REST endpoints                  |
 
 ## Status: MVP Phase (Jan 2026)
@@ -233,6 +228,8 @@ pnpm build            # Production build
 - ✅ CV upload with R2 storage and AI integration
 - ✅ Interactive Learning Roadmap UI
 - ✅ Milestone-based progress tracking (Manual + AI verification)
+- ✅ AI SDK Chat Streaming with History Persistence
+- ✅ Markdown chat rendering with Prism syntax highlighting
 - ✅ Lucide to HugeIcons replacement (free-icons set)
 
 ## Reference Files
@@ -240,5 +237,4 @@ pnpm build            # Production build
 - [oRPC Router](lib/orpc/router.ts) — Procedure definitions (start here for backend logic)
 - [Prisma Schema](prisma/schema.prisma) — Data model + constraints
 - [Assessment Forms](components/assessment/) — All flow forms
-- [AI Functions](lib/ai/) — `assessSkill()`, `generateAdvisorResponse()`
-- [Auth Config](lib/auth.ts) — better-auth setup
+- [AI Functions]

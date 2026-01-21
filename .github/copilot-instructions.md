@@ -41,44 +41,35 @@ export default function Page() {
 
 ### Component Library (base-ui)
 
-**CRITICAL**: base-ui does NOT support `asChild` prop (unlike Radix UI)
+**CRITICAL**: base-ui does NOT support `asChild` prop. Use `render` prop.
 
 ```tsx
-// ❌ WRONG
-<Button asChild><Link href="/path">Text</Link></Button>
-
 // ✅ CORRECT: Use render prop
-<Button render={(props) => <Link {...props} href="/path">Text</Link>} />
-
-// ✅ CORRECT: Composition with className
-<Link href="/path" className={buttonVariants({ variant: "outline", size: "sm" })}>
-  Text
-</Link>
+<Button
+  render={(props) => (
+    <Link {...props} href="/path">
+      Text
+    </Link>
+  )}
+/>
 ```
 
 ### Dark Theme System
 
-- **OkLCH color system** in `app/globals.css` (semantic tokens, not hardcoded colors)
-- **Always use semantic tokens**: `bg-card`, `text-foreground`, `border-border`, `bg-primary`
-- **Theme provider**: `suppressHydrationWarning` required in root layout to prevent hydration errors
+- **OkLCH color system** in `app/globals.css` (semantic tokens).
+- **Always use tokens**: `bg-card`, `text-foreground`, `border-border`, `bg-primary`.
+- **Theme provider**: `suppressHydrationWarning` required.
 
 ### Client vs Server Components
 
-- **Server components by default** — NO `"use client"` needed
-- **Add `"use client"` ONLY for**:
-  - Form state: `useState`, `useForm`
-  - Browser APIs: `useRouter`, `useSearchParams`
-  - Event handlers: `onClick`, `onChange`
-  - React hooks: `useEffect`, `useCallback`, `useTransition`
-- **Pattern**: Server page → wraps client form component
+- **Server components by default**. Add `"use client"` ONLY for:
+  - Form state (`useState`, `useForm`)
+  - Browser APIs (`useRouter`, `localStorage`)
+  - React hooks (`useEffect`, `useCallback`)
 
-### Server Actions vs API Routes
+## Documentation Rule
 
-- **Prefer Server Actions** — better type safety, co-located with forms
-- **Use API routes only for**:
-  - External webhooks (OAuth callbacks, payment providers)
-  - oRPC endpoints
-  - Public APIs consumed by external clients
+**CRITICAL**: Any edits that change the app flow (e.g., routing, new features) **MUST** be accompanied by updates to `APP_FLOW.md` and `README.md`.
 
 ### Form Handling
 

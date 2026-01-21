@@ -59,6 +59,18 @@ export default function ChatWrapper({
     }
   }, [currentChatId, isCreating, handleNewChat]);
 
+  // Close mobile sidebar on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Sync URL with currentChatId if it changes and isn't reflected in URL
   useEffect(() => {
     if (currentChatId) {
@@ -72,6 +84,7 @@ export default function ChatWrapper({
 
   const handleSelectChat = useCallback(async (id: string) => {
     setCurrentChatId(id);
+    setMessages([]); // Clear messages immediately
     setIsSidebarOpen(false);
     // Update URL without reload
     window.history.pushState({}, "", `/chat?id=${id}`);
@@ -81,7 +94,11 @@ export default function ChatWrapper({
       const res = await fetch(`/api/chat/conversations/${id}`);
       if (res.ok) {
         const data = await res.json();
-        setMessages(data.messages || []);
+        const validMessages = (data.messages || []).map((m: UIMessage) => ({
+          ...m,
+          id: m.id || crypto.randomUUID(),
+        }));
+        setMessages(validMessages);
       }
     } catch {
       setMessages([]);
@@ -107,16 +124,18 @@ export default function ChatWrapper({
       />
 
       {/* Mobile Sheet */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-80">
-          <ConversationSidebar
-            currentChatId={currentChatId}
-            onSelectChat={handleSelectChat}
-            onNewChat={handleNewChat}
-            className="flex border-r-0 w-full h-full"
-          />
-        </SheetContent>
-      </Sheet>
+      <div className="">
+        <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+          <SheetContent side="left" className="lg:hidden p-0 w-80">
+            <ConversationSidebar
+              currentChatId={currentChatId}
+              onSelectChat={handleSelectChat}
+              onNewChat={handleNewChat}
+              className="flex border-r-0 w-full h-full"
+            />
+          </SheetContent>
+        </Sheet>
+      </div>
 
       <div className="flex flex-col flex-1 min-w-0">
         <div className="lg:hidden flex items-center gap-2 p-2 border-border/50 border-b">

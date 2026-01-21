@@ -287,10 +287,11 @@ await client.roadmap.completeMilestone({
 
 **Persistence Flow**:
 
-1. **New Conversation**: Click "New Chat" calls `POST /api/chat/conversations`, which creates a `ChatConversation` record and redirects to `/chat?id={id}`.
-2. **Streaming AI**: `ChatContent` uses `@ai-sdk/react`'s `useChat` hook to send messages to `POST /api/chat`.
-3. **onFinish Persistence**: The stream finishes and triggers the `onFinish` callback in `/api/chat/route.ts`, which persists the entire `UIMessage[]` history into the `ChatConversation.messages` JSON field.
-4. **Loading History**: Opening an existing chat calls `GET /api/chat/conversations/[id]`, which serves the persisted JSON messages as `initialMessages` for the UI.
+1. **Initialization**: Opening `/chat` automatically loads the most recent conversation. If an invalid ID is provided in `/chat?id=...`, it redirects to `/chat` (latest).
+2. **New Conversation**: Click "New Chat" calls `POST /api/chat/conversations`, which creates a `ChatConversation` record and redirects to `/chat?id={id}`.
+3. **Streaming AI**: `ChatContent` uses `@ai-sdk/react`'s `useChat` hook to send messages to `POST /api/chat`.
+4. **onFinish Persistence**: The stream finishes and triggers the `onFinish` callback in `/api/chat/route.ts`, which persists the entire `UIMessage[]` history into the `ChatConversation.messages` JSON field.
+5. **Loading History**: Opening an existing chat calls `GET /api/chat/conversations/[id]`, which serves the persisted JSON messages as `initialMessages` for the UI.
 
 **API Endpoints**:
 

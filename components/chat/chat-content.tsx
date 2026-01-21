@@ -122,8 +122,8 @@ export default function ChatContent({
             </ConversationEmptyState>
           ) : (
             <>
-              {messages.map((m) => (
-                <Message key={m.id} from={m.role}>
+              {messages.map((m, index) => (
+                <Message key={m.id || index} from={m.role}>
                   <div
                     className={`flex gap-4 ${
                       m.role === "user" ? "flex-row-reverse" : "flex-row"

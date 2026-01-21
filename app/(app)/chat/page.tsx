@@ -24,14 +24,23 @@ export default async function Page({ searchParams }: PageProps) {
   let initialMessages: UIMessage[] = [];
 
   // Load conversation: specifically requested or latest available
-  const conversation = id
-    ? await db.chatConversation.findFirst({
-        where: { id, userId: session.user.id },
-      })
-    : await db.chatConversation.findFirst({
-        where: { userId: session.user.id },
-        orderBy: { updatedAt: "desc" },
-      });
+  // Load conversation: specifically requested or latest available
+  let conversation;
+
+  if (id) {
+    conversation = await db.chatConversation.findFirst({
+      where: { id, userId: session.user.id },
+    });
+
+    if (!conversation) {
+      redirect("/chat");
+    }
+  } else {
+    conversation = await db.chatConversation.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { updatedAt: "desc" },
+    });
+  }
 
   if (conversation) {
     initialChatId = conversation.id;
