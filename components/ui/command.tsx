@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
-import { Check, Search } from "lucide-react";
+import { CheckIcon, SearchIcon } from "lucide-react";
 
 function Command({
   className,
@@ -76,7 +76,7 @@ function CommandInput({
           {...props}
         />
         <InputGroupAddon>
-          <Search className="opacity-50 size-4 shrink-0" />
+          <SearchIcon className="opacity-50 size-4 shrink-0" />
         </InputGroupAddon>
       </InputGroup>
     </div>
@@ -156,7 +156,7 @@ function CommandItem({
       {...props}
     >
       {children}
-      <Check className="group-has-[[data-slot=command-shortcut]]/command-item:hidden opacity-0 group-data-[checked=true]/command-item:opacity-100 ml-auto" />
+      <CheckIcon className="group-has-[[data-slot=command-shortcut]]/command-item:hidden opacity-0 group-data-[checked=true]/command-item:opacity-100 ml-auto" />
     </CommandPrimitive.Item>
   );
 }
