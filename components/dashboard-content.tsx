@@ -114,6 +114,33 @@ export async function DashboardContent() {
                     </Link>
                   </CardFooter>
                 </Card>
+
+                <Card className="group relative bg-gradient-to-br from-card to-muted/50 hover:border-primary/50 overflow-hidden transition-all">
+                  <div className="top-0 right-0 absolute bg-emerald-500/10 group-hover:bg-emerald-500/20 blur-2xl -mt-4 -mr-4 rounded-full w-24 h-24 transition-all" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <span className="bg-emerald-500/10 p-2 rounded-lg text-emerald-500">
+                        🤖
+                      </span>
+                      AI Career Advisor
+                    </CardTitle>
+                    <CardDescription>Get personalized guidance</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 text-muted-foreground text-sm">
+                      Chat with your AI coach to discuss your career path,
+                      analyze gaps, and get instant feedback.
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Link
+                      href="/chat"
+                      className={`${buttonVariants({ variant: "outline" })} group-hover:border-emerald-500/50 w-full`}
+                    >
+                      Start Chat
+                    </Link>
+                  </CardFooter>
+                </Card>
               </div>
 
               {/* Assessment History */}
