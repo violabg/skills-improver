@@ -2,12 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  Add01Icon,
-  AiChat01Icon,
-  MessageMultiple01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Bot, MessageSquare, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Conversation {
@@ -76,7 +71,7 @@ export default function ConversationSidebar({
           className="justify-start gap-2 w-full"
           variant="outline"
         >
-          <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" />
+          <Plus className="w-4 h-4" />
           New Chat
         </Button>
       </div>
@@ -103,14 +98,13 @@ export default function ConversationSidebar({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <HugeiconsIcon
-                    icon={
-                      currentChatId === conv.id
-                        ? AiChat01Icon
-                        : MessageMultiple01Icon
-                    }
-                    className="w-4 h-4 shrink-0"
-                  />
+                  <div className="shrink-0">
+                    {currentChatId === conv.id ? (
+                      <Bot className="w-4 h-4" />
+                    ) : (
+                      <MessageSquare className="w-4 h-4" />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
                       {conv.title || "New conversation"}

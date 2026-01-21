@@ -5,8 +5,7 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { X } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { X } from "lucide-react";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -33,7 +32,7 @@ function DialogOverlay({
       data-slot="dialog-overlay"
       className={cn(
         "z-50 isolate fixed inset-0 bg-black/10 supports-backdrop-filter:backdrop-blur-xs data-closed:animate-out data-open:animate-in duration-100 data-closed:fade-out-0 data-open:fade-in-0",
-        className
+        className,
       )}
       {...props}
     />
@@ -55,7 +54,7 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "top-1/2 left-1/2 z-50 fixed gap-4 grid bg-background p-4 rounded-xl outline-none ring-1 ring-foreground/10 w-full max-w-[calc(100%-2rem)] sm:max-w-sm text-sm -translate-x-1/2 -translate-y-1/2 data-closed:animate-out data-open:animate-in duration-100 data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95",
-          className
+          className,
         )}
         {...props}
       >
@@ -71,7 +70,7 @@ function DialogContent({
               />
             }
           >
-            <HugeiconsIcon icon={X} className="w-4 h-4" />
+            <X className="w-4 h-4" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
@@ -103,7 +102,7 @@ function DialogFooter({
       data-slot="dialog-footer"
       className={cn(
         "flex sm:flex-row flex-col-reverse sm:justify-end gap-2 bg-muted/50 -mx-4 -mb-4 p-4 border-t rounded-b-xl",
-        className
+        className,
       )}
       {...props}
     >
@@ -136,7 +135,7 @@ function DialogDescription({
       data-slot="dialog-description"
       className={cn(
         "text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3",
-        className
+        className,
       )}
       {...props}
     />

@@ -3,8 +3,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { client } from "@/lib/orpc/client";
 import { GapsData } from "@/types";
-import { Loading03Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -128,10 +127,7 @@ export function ResultsContent({ gapsData }: { gapsData: GapsData }) {
                     >
                       {isPending ? (
                         <>
-                          <HugeiconsIcon
-                            icon={Loading03Icon}
-                            className="mr-2 w-4 h-4 animate-spin"
-                          />
+                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                           Generating...
                         </>
                       ) : (

@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 import { useId, useState } from "react";
 
 import { Input } from "@/components/ui/input";
-import { EyeIcon, EyeOff } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function PasswordInput({
   className,
@@ -34,9 +33,9 @@ export default function PasswordInput({
         aria-controls="password"
       >
         {isVisible ? (
-          <HugeiconsIcon icon={EyeOff} size={16} aria-hidden="true" />
+          <EyeOff size={16} aria-hidden="true" />
         ) : (
-          <HugeiconsIcon icon={EyeIcon} size={16} aria-hidden="true" />
+          <Eye size={16} aria-hidden="true" />
         )}
       </button>
     </div>

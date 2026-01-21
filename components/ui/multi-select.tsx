@@ -17,8 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, X } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Check, ChevronDown, X } from "lucide-react";
 import * as React from "react";
 
 export type OptionType = {
@@ -89,7 +88,7 @@ export function MultiSelect({
               "justify-between w-full h-auto min-h-10",
               "aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-invalid:ring-[3px]",
               selected.length > 0 ? "px-3 py-2" : "",
-              className
+              className,
             )}
           />
         }
@@ -129,18 +128,12 @@ export function MultiSelect({
                   handleUnselect(item);
                 }}
               >
-                <HugeiconsIcon
-                  icon={X}
-                  className="w-3 h-3 hover:text-foreground"
-                />
+                <X className="w-3 h-3 hover:text-foreground" />
               </span>
             </Badge>
           ))}
         </div>
-        <HugeiconsIcon
-          icon={ChevronDown}
-          className="opacity-50 ml-2 w-4 h-4 shrink-0"
-        />
+        <ChevronDown className="opacity-50 ml-2 w-4 h-4 shrink-0" />
       </PopoverTrigger>
       <PopoverContent className="p-0 w-full" align="start">
         <Command className="w-full">
@@ -168,13 +161,10 @@ export function MultiSelect({
                                 "flex justify-center items-center border border-primary rounded-sm size-4",
                                 isSelected
                                   ? "bg-primary text-primary-foreground"
-                                  : "opacity-50 [&_svg]:invisible"
+                                  : "opacity-50 [&_svg]:invisible",
                               )}
                             >
-                              <HugeiconsIcon
-                                icon={Check}
-                                className="w-3 h-3 text-white"
-                              />
+                              <Check className="w-3 h-3 text-white" />
                             </div>
                             <span>{option.label}</span>
                           </CommandItem>
@@ -197,13 +187,10 @@ export function MultiSelect({
                                 "flex justify-center items-center border border-primary rounded-sm size-4",
                                 isSelected
                                   ? "bg-primary text-primary-foreground"
-                                  : "opacity-50 [&_svg]:invisible"
+                                  : "opacity-50 [&_svg]:invisible",
                               )}
                             >
-                              <HugeiconsIcon
-                                icon={Check}
-                                className="w-3 h-3 text-white"
-                              />
+                              <Check className="w-3 h-3 text-white" />
                             </div>
                             <span>{option.label}</span>
                           </CommandItem>
@@ -215,7 +202,7 @@ export function MultiSelect({
                     <CommandSeparator />
                   )}
                 </React.Fragment>
-              )
+              ),
             )}
           </CommandList>
         </Command>

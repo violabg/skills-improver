@@ -18,7 +18,7 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
 ## Tech Stack
 
 | Layer        | Technology                       | Purpose                                |
-| ------------ | -------------------------------- | -------------------------------------- |
+| ------------ | ----------------------------------- | -------------------------------------- |
 | **Frontend** | Next.js 16 (App Router)          | Server components with React 19        |
 | **Backend**  | Node.js + TypeScript             | Server-side logic and AI orchestration |
 | **API**      | oRPC 1.13                        | Type-safe RPC procedures               |
@@ -26,7 +26,7 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
 | **AI**       | AI SDK 6 with Groq (Kimi 2)      | Structured skill evaluation            |
 | **Markdown** | react-markdown 10.1              | Chat message rendering                 |
 | **Auth**     | better-auth 1.4                  | GitHub OAuth                           |
-| **UI**       | shadcn/ui + HugeIcons + Tailwind | Component library with dark theme      |
+| **UI**       | shadcn/ui + Lucide React + Tailwind | Component library with dark theme      |
 | **Forms**    | react-hook-form + Zod            | Type-safe form validation              |
 
 ## Getting Started
@@ -363,7 +363,7 @@ pnpm start
 - Skill gap analysis and report
 - Dark theme implementation
 - CV upload with R2 storage and AI integration
-- Lucide to HugeIcons migration
+- HugeIcons to Lucide React migration
 
 ### ✅ Phase 2 (Feb-Mar 2026)
 

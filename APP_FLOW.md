@@ -235,7 +235,7 @@ await client.assessment.submitAnswer({
 - `RoadmapContent` (client component)
 - `RoadmapSkeleton` (loading state)
 - `MilestoneCard` (individual learning items)
-- `HugeIcons` (visual indicators)
+- `Lucide React` (visual indicators)
 
 **Generation Flow**:
 

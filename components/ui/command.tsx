@@ -12,8 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
-import { Check, Search } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Check, Search } from "lucide-react";
 
 function Command({
   className,
@@ -24,7 +23,7 @@ function Command({
       data-slot="command"
       className={cn(
         "flex flex-col bg-popover p-1 rounded-xl! size-full overflow-hidden text-popover-foreground",
-        className
+        className,
       )}
       {...props}
     />
@@ -72,12 +71,12 @@ function CommandInput({
           data-slot="command-input"
           className={cn(
             "disabled:opacity-50 outline-hidden w-full text-sm disabled:cursor-not-allowed",
-            className
+            className,
           )}
           {...props}
         />
         <InputGroupAddon>
-          <HugeiconsIcon icon={Search} className="opacity-50 size-4 shrink-0" />
+          <Search className="opacity-50 size-4 shrink-0" />
         </InputGroupAddon>
       </InputGroup>
     </div>
@@ -93,7 +92,7 @@ function CommandList({
       data-slot="command-list"
       className={cn(
         "outline-none max-h-72 overflow-x-hidden overflow-y-auto scroll-py-1 no-scrollbar",
-        className
+        className,
       )}
       {...props}
     />
@@ -122,7 +121,7 @@ function CommandGroup({
       data-slot="command-group"
       className={cn(
         "p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 overflow-hidden [&_[cmdk-group-heading]]:font-medium text-foreground [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs",
-        className
+        className,
       )}
       {...props}
     />
@@ -152,15 +151,12 @@ function CommandItem({
       data-slot="command-item"
       className={cn(
         "data-selected:bg-muted data-selected:text-foreground data-selected:*:[svg]:text-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none [&_svg:not([class*='size-'])]:size-4 [[data-slot=dialog-content]_&]:rounded-lg! group/command-item data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-        className
+        className,
       )}
       {...props}
     >
       {children}
-      <HugeiconsIcon
-        icon={Check}
-        className="group-has-[[data-slot=command-shortcut]]/command-item:hidden opacity-0 group-data-[checked=true]/command-item:opacity-100 ml-auto"
-      />
+      <Check className="group-has-[[data-slot=command-shortcut]]/command-item:hidden opacity-0 group-data-[checked=true]/command-item:opacity-100 ml-auto" />
     </CommandPrimitive.Item>
   );
 }
@@ -174,7 +170,7 @@ function CommandShortcut({
       data-slot="command-shortcut"
       className={cn(
         "ml-auto text-muted-foreground group-data-selected/command-item:text-foreground text-xs tracking-widest",
-        className
+        className,
       )}
       {...props}
     />

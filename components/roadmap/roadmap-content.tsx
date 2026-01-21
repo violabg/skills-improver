@@ -2,13 +2,7 @@
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ArrowRight01Icon,
-  CheckmarkCircle01Icon,
-  PlayIcon,
-  Target01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight, CheckCircle, Play, Target } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -105,7 +99,7 @@ export function RoadmapContent({ roadmap }: RoadmapContentProps) {
 
           <div className="z-10 relative">
             <div className="inline-flex items-center gap-2 bg-primary/10 mb-4 px-4 py-1.5 rounded-full font-medium text-primary text-sm">
-              <HugeiconsIcon icon={Target01Icon} className="w-4 h-4" />
+              <Target className="w-4 h-4" />
               {roadmap.assessment.targetRole}
             </div>
 
@@ -162,10 +156,7 @@ export function RoadmapContent({ roadmap }: RoadmapContentProps) {
                     }`}
                   >
                     {isPastWeek ? (
-                      <HugeiconsIcon
-                        icon={CheckmarkCircle01Icon}
-                        className="w-5 h-5"
-                      />
+                      <CheckCircle className="w-5 h-5" />
                     ) : (
                       weekNumber
                     )}
@@ -205,10 +196,7 @@ export function RoadmapContent({ roadmap }: RoadmapContentProps) {
           <Card className="bg-green-500/5 mt-12 border-green-500/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                <HugeiconsIcon
-                  icon={CheckmarkCircle01Icon}
-                  className="w-5 h-5"
-                />
+                <CheckCircle className="w-5 h-5" />
                 Roadmap Complete!
               </CardTitle>
             </CardHeader>
@@ -222,7 +210,7 @@ export function RoadmapContent({ roadmap }: RoadmapContentProps) {
                   href="/assessment/start"
                   className={`${buttonVariants({ variant: "default" })}`}
                 >
-                  <HugeiconsIcon icon={PlayIcon} className="mr-2 w-4 h-4" />
+                  <Play className="mr-2 w-4 h-4" />
                   Start New Assessment
                 </Link>
                 <Link
@@ -230,10 +218,7 @@ export function RoadmapContent({ roadmap }: RoadmapContentProps) {
                   className={`${buttonVariants({ variant: "outline" })}`}
                 >
                   Go to Dashboard
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    className="ml-2 w-4 h-4"
-                  />
+                  <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </div>
             </CardContent>

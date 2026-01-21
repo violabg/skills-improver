@@ -12,15 +12,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { client } from "@/lib/orpc/client";
 import {
-  ArrowDown01Icon,
-  ArrowUp01Icon,
-  BookOpen01Icon,
-  CheckmarkCircle01Icon,
-  Loading03Icon,
-  PlayIcon,
-  SparklesIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+  ArrowDown,
+  ArrowUp,
+  BookOpen,
+  CheckCircle,
+  Loader2,
+  Play,
+  Sparkles,
+} from "lucide-react";
 import { useState, useTransition } from "react";
 
 interface Resource {
@@ -173,12 +172,9 @@ export function MilestoneCard({
                 }`}
               >
                 {isCompleted ? (
-                  <HugeiconsIcon
-                    icon={CheckmarkCircle01Icon}
-                    className="w-4 h-4"
-                  />
+                  <CheckCircle className="w-4 h-4" />
                 ) : (
-                  <HugeiconsIcon icon={BookOpen01Icon} className="w-3 h-3" />
+                  <BookOpen className="w-3 h-3" />
                 )}
               </div>
               <div>
@@ -194,9 +190,9 @@ export function MilestoneCard({
             </div>
             <Button variant="ghost" size="sm" className="p-0 w-8 h-8">
               {isExpanded ? (
-                <HugeiconsIcon icon={ArrowUp01Icon} className="w-4 h-4" />
+                <ArrowUp className="w-4 h-4" />
               ) : (
-                <HugeiconsIcon icon={ArrowDown01Icon} className="w-4 h-4" />
+                <ArrowDown className="w-4 h-4" />
               )}
             </Button>
           </div>
@@ -254,15 +250,9 @@ export function MilestoneCard({
                   disabled={isPending}
                 >
                   {isPending ? (
-                    <HugeiconsIcon
-                      icon={Loading03Icon}
-                      className="mr-2 w-4 h-4 animate-spin"
-                    />
+                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                   ) : (
-                    <HugeiconsIcon
-                      icon={CheckmarkCircle01Icon}
-                      className="mr-2 w-4 h-4"
-                    />
+                    <CheckCircle className="mr-2 w-4 h-4" />
                   )}
                   Mark Complete
                 </Button>
@@ -272,15 +262,9 @@ export function MilestoneCard({
                   disabled={isPending || verificationState === "loading"}
                 >
                   {verificationState === "loading" ? (
-                    <HugeiconsIcon
-                      icon={Loading03Icon}
-                      className="mr-2 w-4 h-4 animate-spin"
-                    />
+                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                   ) : (
-                    <HugeiconsIcon
-                      icon={SparklesIcon}
-                      className="mr-2 w-4 h-4"
-                    />
+                    <Sparkles className="mr-2 w-4 h-4" />
                   )}
                   Verify with AI
                 </Button>
@@ -290,10 +274,7 @@ export function MilestoneCard({
             {/* Completion info */}
             {isCompleted && milestone.progress.length > 0 && (
               <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
-                <HugeiconsIcon
-                  icon={CheckmarkCircle01Icon}
-                  className="w-4 h-4"
-                />
+                <CheckCircle className="w-4 h-4" />
                 Completed via{" "}
                 {milestone.progress[0].verificationMethod === "AI_VERIFIED"
                   ? "AI verification"
@@ -318,10 +299,7 @@ export function MilestoneCard({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <HugeiconsIcon
-                icon={SparklesIcon}
-                className="w-5 h-5 text-primary"
-              />
+              <Sparkles className="w-5 h-5 text-primary" />
               AI Skill Verification
             </DialogTitle>
             <DialogDescription>
@@ -332,10 +310,7 @@ export function MilestoneCard({
 
           {verificationState === "loading" && (
             <div className="flex flex-col justify-center items-center py-8">
-              <HugeiconsIcon
-                icon={Loading03Icon}
-                className="w-8 h-8 text-primary animate-spin"
-              />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
               <p className="mt-4 text-muted-foreground text-sm">
                 {verificationResult
                   ? "Evaluating your answer..."
@@ -361,7 +336,7 @@ export function MilestoneCard({
                   Cancel
                 </Button>
                 <Button onClick={handleSubmitAnswer} disabled={!answer.trim()}>
-                  <HugeiconsIcon icon={PlayIcon} className="mr-2 w-4 h-4" />
+                  <Play className="mr-2 w-4 h-4" />
                   Submit Answer
                 </Button>
               </div>
@@ -379,15 +354,9 @@ export function MilestoneCard({
               >
                 <div className="flex items-center gap-2 mb-2">
                   {verificationResult.passed ? (
-                    <HugeiconsIcon
-                      icon={CheckmarkCircle01Icon}
-                      className="w-5 h-5 text-green-600"
-                    />
+                    <CheckCircle className="w-5 h-5 text-green-600" />
                   ) : (
-                    <HugeiconsIcon
-                      icon={SparklesIcon}
-                      className="w-5 h-5 text-orange-600"
-                    />
+                    <Sparkles className="w-5 h-5 text-orange-600" />
                   )}
                   <span
                     className={`font-semibold ${

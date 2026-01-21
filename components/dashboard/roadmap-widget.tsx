@@ -12,12 +12,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { client } from "@/lib/orpc/client";
-import {
-  CheckmarkCircle01Icon,
-  MapsIcon,
-  PlayIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckCircle, Map, Play } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -85,7 +80,7 @@ export function RoadmapWidget() {
       <Card className="bg-primary/5 shadow-sm border-primary/10 border-dashed">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <HugeiconsIcon icon={MapsIcon} className="w-5 h-5 text-primary" />
+            <Map className="w-5 h-5 text-primary" />
             Learning Roadmap
           </CardTitle>
           <CardDescription>
@@ -103,7 +98,7 @@ export function RoadmapWidget() {
             href="/assessment/start"
             className={`${buttonVariants({ variant: "outline", size: "sm" })} w-full`}
           >
-            <HugeiconsIcon icon={PlayIcon} className="mr-2 w-4 h-4" />
+            <Play className="mr-2 w-4 h-4" />
             Start Assessment
           </Link>
         </CardFooter>
@@ -120,7 +115,7 @@ export function RoadmapWidget() {
       <div className="top-0 right-0 absolute bg-primary/5 group-hover:bg-primary/10 blur-xl -mt-4 -mr-4 rounded-full w-20 h-20 transition-all" />
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <HugeiconsIcon icon={MapsIcon} className="w-5 h-5 text-primary" />
+          <Map className="w-5 h-5 text-primary" />
           Active Roadmap
         </CardTitle>
         <CardDescription className="font-medium text-foreground">
@@ -141,10 +136,7 @@ export function RoadmapWidget() {
         </div>
 
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
-          <HugeiconsIcon
-            icon={CheckmarkCircle01Icon}
-            className="w-4 h-4 text-green-500"
-          />
+          <CheckCircle className="w-4 h-4 text-green-500" />
           <span>
             {roadmap.progress.completed} of {roadmap.progress.total} milestones
             mastered

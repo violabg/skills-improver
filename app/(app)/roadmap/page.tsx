@@ -4,12 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
-import {
-  ArrowRight01Icon,
-  MapsIcon,
-  PlayIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight, Map, Play } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -85,10 +80,7 @@ async function RoadmapContainer({ userId }: { userId: string }) {
         <div className="mx-auto px-4 py-16 max-w-2xl text-center">
           <div className="mb-8">
             <div className="flex justify-center items-center bg-primary/10 mx-auto mb-6 rounded-full w-20 h-20">
-              <HugeiconsIcon
-                icon={MapsIcon}
-                className="w-10 h-10 text-primary"
-              />
+              <Map className="w-10 h-10 text-primary" />
             </div>
             <h1 className="mb-3 font-bold text-foreground text-3xl">
               No Active Roadmap
@@ -120,10 +112,7 @@ async function RoadmapContainer({ userId }: { userId: string }) {
                     className={`${buttonVariants({ variant: "default" })} w-full`}
                   >
                     Generate Roadmap
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      className="ml-2 w-4 h-4"
-                    />
+                    <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
                 </CardContent>
               </Card>
@@ -133,7 +122,7 @@ async function RoadmapContainer({ userId }: { userId: string }) {
               href="/assessment/start"
               className={`${buttonVariants({ variant: "default", size: "lg" })} w-full`}
             >
-              <HugeiconsIcon icon={PlayIcon} className="mr-2 w-5 h-5" />
+              <Play className="mr-2 w-5 h-5" />
               Start Assessment
             </Link>
           )}

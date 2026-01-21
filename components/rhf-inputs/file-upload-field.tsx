@@ -5,14 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { validateResumeFile } from "@/lib/services/r2-storage";
 import { cn } from "@/lib/utils";
-import {
-  FileText,
-  Loader,
-  Trash2,
-  Upload,
-  X,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { FileText, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
 export interface FileUploadProps {
@@ -68,7 +61,7 @@ export function FileUploadField({
       setSelectedFile(file);
       onFileSelect(file);
     },
-    [onFileSelect]
+    [onFileSelect],
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +79,7 @@ export function FileUploadField({
       const file = e.dataTransfer.files?.[0] || null;
       handleFileChange(file);
     },
-    [disabled, isUploading, handleFileChange]
+    [disabled, isUploading, handleFileChange],
   );
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -149,7 +142,7 @@ export function FileUploadField({
           isDragging && "border-primary bg-primary/5",
           displayError && "border-destructive",
           disabled && "opacity-50 cursor-not-allowed",
-          !disabled && !isUploading && "cursor-pointer hover:border-primary/50"
+          !disabled && !isUploading && "cursor-pointer hover:border-primary/50",
         )}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -167,10 +160,7 @@ export function FileUploadField({
 
         {isUploading ? (
           <div className="flex flex-col justify-center items-center py-4">
-            <HugeiconsIcon
-              icon={Loader}
-              className="mb-2 w-8 h-8 text-primary animate-spin"
-            />
+            <Loader2 className="mb-2 w-8 h-8 text-primary animate-spin" />
             <p className="text-muted-foreground text-sm">
               Caricamento in corso...
             </p>
@@ -178,7 +168,7 @@ export function FileUploadField({
         ) : hasSelectedFile ? (
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <HugeiconsIcon icon={FileText} className="w-8 h-8 text-primary" />
+              <FileText className="w-8 h-8 text-primary" />
               <div>
                 <p className="font-medium text-sm">{selectedFile.name}</p>
                 <p className="text-muted-foreground text-xs">
@@ -196,13 +186,13 @@ export function FileUploadField({
               }}
               disabled={disabled}
             >
-              <HugeiconsIcon icon={X} className="size-4" />
+              <X className="size-4" />
             </Button>
           </div>
         ) : hasExistingFile ? (
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <HugeiconsIcon icon={FileText} className="w-8 h-8 text-primary" />
+              <FileText className="w-8 h-8 text-primary" />
               <div>
                 <p className="font-medium text-sm">{existingFileName}</p>
                 <a
@@ -227,7 +217,7 @@ export function FileUploadField({
                 }}
                 disabled={disabled}
               >
-                <HugeiconsIcon icon={Upload} className="mr-1 size-4" />
+                <Upload className="mr-1 size-4" />
                 Sostituisci
               </Button>
               {onRemoveExisting && (
@@ -242,17 +232,14 @@ export function FileUploadField({
                   disabled={disabled}
                   className="text-destructive hover:text-destructive"
                 >
-                  <HugeiconsIcon icon={Trash2} className="size-4" />
+                  <Trash2 className="size-4" />
                 </Button>
               )}
             </div>
           </div>
         ) : (
           <div className="flex flex-col justify-center items-center py-4">
-            <HugeiconsIcon
-              icon={Upload}
-              className="mb-2 w-8 h-8 text-muted-foreground"
-            />
+            <Upload className="mb-2 w-8 h-8 text-muted-foreground" />
             <p className="text-muted-foreground text-sm text-center">
               <span className="font-medium text-primary">
                 Clicca per caricare

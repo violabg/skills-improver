@@ -20,10 +20,9 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { useChat } from "@ai-sdk/react";
-import { AiChat01Icon, UserIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
+import { Bot, User } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 interface ChatContentProps {
@@ -85,19 +84,13 @@ export default function ChatContent({
               description="Ask about your roadmap, assessment results, or career tips."
               icon={
                 <div className="bg-muted p-4 rounded-full">
-                  <HugeiconsIcon
-                    icon={AiChat01Icon}
-                    className="w-8 h-8 text-muted-foreground"
-                  />
+                  <Bot className="w-8 h-8 text-muted-foreground" />
                 </div>
               }
             >
               <div className="flex flex-col justify-center items-center gap-4 pt-4 text-center">
                 <div className="bg-muted p-4 rounded-full">
-                  <HugeiconsIcon
-                    icon={AiChat01Icon}
-                    className="w-8 h-8 text-muted-foreground"
-                  />
+                  <Bot className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-medium text-sm">
@@ -136,10 +129,11 @@ export default function ChatContent({
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      <HugeiconsIcon
-                        icon={m.role === "assistant" ? AiChat01Icon : UserIcon}
-                        className="w-5 h-5"
-                      />
+                      {m.role === "assistant" ? (
+                        <Bot className="w-5 h-5" />
+                      ) : (
+                        <User className="w-5 h-5" />
+                      )}
                     </div>
 
                     <MessageContent
@@ -165,7 +159,7 @@ export default function ChatContent({
                 <Message from="assistant">
                   <div className="flex gap-4">
                     <div className="flex justify-center items-center bg-primary shadow-sm rounded-full w-10 h-10 text-primary-foreground shrink-0">
-                      <HugeiconsIcon icon={AiChat01Icon} className="w-5 h-5" />
+                      <Bot className="w-5 h-5" />
                     </div>
                     <div className="flex items-center gap-2 bg-muted/50 px-5 py-4 border border-border/50 rounded-2xl rounded-tl-none">
                       <Loader size={16} />

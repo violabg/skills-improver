@@ -6,7 +6,7 @@ trigger: always_on
 
 **Skills Improver** is an AI-powered career growth platform that analyzes skill gaps and generates personalized learning paths for frontend developers transitioning to senior/lead roles.
 
-**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), react-markdown 10.1.0, HugeIcons (free-icons + react), shadcn/ui (base-ui), PostgreSQL (Neon)
+**Tech Stack**: Next.js 16.1.1 (App Router, cache components enabled), Prisma 7.2.0 → `lib/prisma`, oRPC 1.13.2, better-auth 1.4.10 (GitHub OAuth), AI SDK 6.0.5 (Groq/Kimi2), react-markdown 10.1.0, lucide-react, shadcn/ui (base-ui), PostgreSQL (Neon)
 
 ## Critical Architecture Patterns
 
@@ -177,8 +177,6 @@ submitAnswer: protectedProcedure
 pnpm dev              # Start dev server (localhost:3000)
 pnpm db:push          # Push Prisma schema to database
 pnpm db:generate      # Regenerate Prisma client (runs auto in build)
-pnpm db:seed          # Seed 15 core skills from prisma/seed.ts
-pnpm prisma studio   # Visual database browser
 pnpm build            # Production build
 ```
 
@@ -198,7 +196,7 @@ pnpm build            # Production build
 - `GapResources` — Learning materials per gap
 - `Evidence` — User evidence uploads (GitHub, portfolio)
 
-**Pattern**: All tables properly indexed; `onDelete: Cascade` ensures clean removal
+**Pattern**: All tables properly indexed; `onDelete: Cascade` ensures clean removal.
 
 ## Critical Patterns (Do This)
 
@@ -230,11 +228,12 @@ pnpm build            # Production build
 - ✅ Milestone-based progress tracking (Manual + AI verification)
 - ✅ AI SDK Chat Streaming with History Persistence
 - ✅ Markdown chat rendering with Prism syntax highlighting
-- ✅ Lucide to HugeIcons replacement (free-icons set)
+- ✅ Lucide React icons
 
 ## Reference Files
 
 - [oRPC Router](lib/orpc/router.ts) — Procedure definitions (start here for backend logic)
 - [Prisma Schema](prisma/schema.prisma) — Data model + constraints
 - [Assessment Forms](components/assessment/) — All flow forms
-- [AI Functions]
+- [AI Functions](lib/ai/) — `assessSkill()`, `generateAdvisorResponse()`
+- [Auth Config](lib/auth.ts) — better-auth setup

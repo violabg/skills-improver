@@ -4,9 +4,8 @@ import ChatContent from "@/components/chat/chat-content";
 import ConversationSidebar from "@/components/chat/conversation-sidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Menu01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import type { UIMessage } from "ai";
+import { Menu } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 interface ChatWrapperProps {
@@ -144,7 +143,7 @@ export default function ChatWrapper({
             size="icon-sm"
             onClick={() => setIsSidebarOpen(true)}
           >
-            <HugeiconsIcon icon={Menu01Icon} className="w-5 h-5" />
+            <Menu className="w-5 h-5" />
             <span className="sr-only">Toggle Sidebar</span>
           </Button>
           <div className="flex-1 font-medium text-sm truncate">
