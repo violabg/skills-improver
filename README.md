@@ -270,6 +270,7 @@ const assessment = await client.assessment.start({
 | ---------------------------------------------------------- | --------------------------------------- |
 | [lib/auth.ts](lib/auth.ts)                                 | better-auth GitHub OAuth setup          |
 | [lib/orpc/router.ts](lib/orpc/router.ts)                   | oRPC procedure definitions              |
+| [CHAT_FLOW.md](CHAT_FLOW.md)                               | AI Chat Advisor architecture & flow     |
 | [prisma/schema.prisma](prisma/schema.prisma)               | Database schema                         |
 | [app/globals.css](app/globals.css)                         | OkLCH dark theme system                 |
 | [components/ui/](components/ui/)                           | shadcn/ui components (base-ui wrappers) |

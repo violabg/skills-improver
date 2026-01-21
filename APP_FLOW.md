@@ -275,7 +275,7 @@ await client.roadmap.completeMilestone({
 
 ### Step 8: AI Chat Advisor (`/chat`)
 
-**Purpose**: Provide ongoing AI-powered career mentorship and answer specific questions about assessment results, roadmaps, or skill development.
+**Purpose**: Provide ongoing AI-powered career mentorship and answer specific questions about assessment results, roadmaps, or skill development. For a deep dive into the chat architecture and context injection logic, see [CHAT_FLOW.md](./CHAT_FLOW.md).
 
 **UI Components**:
 
