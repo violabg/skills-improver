@@ -86,6 +86,7 @@ export const evidenceRouter = {
       z.object({
         retentionDays: z.number().int().min(0).max(365).optional(),
         allowRawStorage: z.boolean().optional(),
+        targetRole: z.string().optional(),
       }),
     )
     .handler(async ({ input, context }) => {
@@ -105,15 +106,15 @@ export const evidenceRouter = {
         );
       }
 
+      const headers = {
+        Authorization: `Bearer ${account.accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      };
+
       // 2. Fetch user's public repos from GitHub API
       const reposRes = await fetch(
-        "https://api.github.com/user/repos?type=owner&sort=updated&per_page=20",
-        {
-          headers: {
-            Authorization: `Bearer ${account.accessToken}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        },
+        "https://api.github.com/user/repos?type=owner&sort=updated&per_page=30",
+        { headers },
       );
 
       if (!reposRes.ok) {
@@ -130,13 +131,14 @@ export const evidenceRouter = {
         topics?: string[];
       }>;
 
-      // 3. Extract signals: languages used, total stars, matched skills
+      // 3. Extract basic signals: languages used, total stars
       const languageCounts: Record<string, number> = {};
       let totalStars = 0;
       const repoSummaries: Array<{
         name: string;
         language: string | null;
         stars: number;
+        description?: string | null;
       }> = [];
 
       for (const repo of repos) {
@@ -149,6 +151,7 @@ export const evidenceRouter = {
           name: repo.full_name,
           language: repo.language,
           stars: repo.stargazers_count,
+          description: repo.description,
         });
       }
 
@@ -158,32 +161,70 @@ export const evidenceRouter = {
         .slice(0, 5)
         .map(([lang]) => lang);
 
-      // 4. Match repos against skills in DB
-      const skills = await ctx.db.skill.findMany();
-      const matchedSkills: Array<{ id: string; name: string }> = [];
+      // 4. Fetch commit activity (last 52 weeks) for top repos
+      let totalCommits = 0;
+      let avgPerWeek = 0;
+      let consistencyScore = 0;
 
-      // Build searchable text from all repos
-      const allText = repos
-        .map(
-          (r) =>
-            `${r.name} ${r.description || ""} ${r.language || ""} ${
-              r.topics?.join(" ") || ""
-            }`,
-        )
-        .join(" ")
-        .toLowerCase();
+      try {
+        // Get stats from top 3 repos
+        const topRepoNames = repos.slice(0, 3).map((r) => r.full_name);
+        const weeklyCommits: number[] = [];
 
-      for (const skill of skills) {
-        const skillName = skill.name.toLowerCase();
-        if (
-          allText.includes(skillName) ||
-          (skill.domain && allText.includes(skill.domain.toLowerCase()))
-        ) {
-          matchedSkills.push({ id: skill.id, name: skill.name });
+        for (const repoName of topRepoNames) {
+          const statsRes = await fetch(
+            `https://api.github.com/repos/${repoName}/stats/participation`,
+            { headers },
+          );
+          if (statsRes.ok) {
+            const stats = (await statsRes.json()) as { owner: number[] };
+            if (stats.owner) {
+              stats.owner.forEach((count, i) => {
+                weeklyCommits[i] = (weeklyCommits[i] || 0) + count;
+              });
+            }
+          }
         }
+
+        if (weeklyCommits.length > 0) {
+          totalCommits = weeklyCommits.reduce((a, b) => a + b, 0);
+          avgPerWeek = totalCommits / weeklyCommits.length;
+          // Consistency: how many weeks had commits vs total weeks
+          const activeWeeks = weeklyCommits.filter((c) => c > 0).length;
+          consistencyScore = activeWeeks / weeklyCommits.length;
+        }
+      } catch (e) {
+        // Stats API can fail for new repos, continue without
+        console.warn("Failed to fetch GitHub stats:", e);
       }
 
-      // 5. Build signals object
+      // 5. Get all skills for AI matching
+      const skills = await ctx.db.skill.findMany();
+      const availableSkills = skills.map((s) => ({
+        id: s.id,
+        name: s.name,
+        category: s.category,
+      }));
+
+      // 6. Run AI analysis for skill inference
+      const { analyzeGithub } = await import("@/lib/ai/analyzeGithub");
+      const aiAnalysis = await analyzeGithub({
+        profileData: {
+          repoCount: repos.length,
+          totalStars,
+          topLanguages,
+          topRepos: repoSummaries.slice(0, 10),
+          commitActivity: {
+            totalCommits,
+            avgPerWeek,
+            consistencyScore,
+          },
+        },
+        targetRole: input.targetRole,
+        availableSkills,
+      });
+
+      // 7. Build enhanced signals object
       const signals = {
         provider: "github",
         extractedAt: new Date().toISOString(),
@@ -192,18 +233,29 @@ export const evidenceRouter = {
           totalStars,
           topLanguages,
           topRepos: repoSummaries.slice(0, 5),
+          commitActivity: {
+            totalCommits,
+            avgPerWeek: Math.round(avgPerWeek * 10) / 10,
+            consistencyScore: Math.round(consistencyScore * 100) / 100,
+          },
         },
-        matchedSkills,
+        aiAnalysis: {
+          inferredSkills: aiAnalysis.inferredSkills,
+          strengths: aiAnalysis.strengths,
+          recommendations: aiAnalysis.recommendations,
+          overallAssessment: aiAnalysis.overallAssessment,
+          estimatedExperienceLevel: aiAnalysis.estimatedExperienceLevel,
+        },
       };
 
-      // 6. Calculate retention
+      // 8. Calculate retention
       const retentionDays = input.retentionDays ?? 0;
       const retentionUntil =
         retentionDays > 0
           ? new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000)
           : null;
 
-      // 7. Create evidence record
+      // 9. Create evidence record
       const evidence = await ctx.db.evidence.create({
         data: {
           userId: ctx.user.id,
@@ -221,7 +273,16 @@ export const evidenceRouter = {
           repoCount: repos.length,
           totalStars,
           topLanguages,
-          matchedSkillsCount: matchedSkills.length,
+          commitActivity: {
+            totalCommits,
+            avgPerWeek: Math.round(avgPerWeek * 10) / 10,
+            consistencyScore: Math.round(consistencyScore * 100) / 100,
+          },
+        },
+        aiAnalysis: {
+          inferredSkillsCount: aiAnalysis.inferredSkills.length,
+          estimatedLevel: aiAnalysis.estimatedExperienceLevel,
+          strengths: aiAnalysis.strengths,
         },
       };
     }),

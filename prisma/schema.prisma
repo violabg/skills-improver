@@ -152,9 +152,10 @@ model Assessment {
   yearsExperience String?
   industry        String?
   careerIntent    String?
-  status          AssessmentStatus @default(IN_PROGRESS)
-  startedAt       DateTime         @default(now())
-  completedAt     DateTime?
+  status            AssessmentStatus @default(IN_PROGRESS)
+  lastStepCompleted Int?             @default(1) // 1=profile, 2=goal, 3=self-eval, 4=test, 5=evidence
+  startedAt         DateTime         @default(now())
+  completedAt       DateTime?
 
   user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   results AssessmentResult[]

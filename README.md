@@ -13,6 +13,8 @@ An AI-powered career growth platform that analyzes skill gaps and generates pers
 - **Interactive Roadmap** - AI-generated weekly learning path with milestones and verification
 - **AI Career Advisor** - Persistent chat with auto-load history, invalid ID handling, and Markdown support
 - **Evidence Integration** - Connect GitHub repos and upload CVs for more accurate analysis
+- **Enhanced GitHub Analysis** - AI-powered skill inference with commit activity tracking and experience level estimation
+- **Assessment Auto-Save** - Automatically tracks progress; resume incomplete assessments from dashboard
 - **Goal-Centric Growth** - Define targets (e.g., "Senior Frontend Developer") and focus your efforts
 
 ## Tech Stack

@@ -341,6 +341,43 @@ await client.roadmap.completeMilestone({
 - **Client State**: `useAssessment()` eliminates the need to pass `assessmentId` through query parameters between steps.
 - **URL State**: The assessment ID is part of the path (`/assessment/[id]/...`), serving as the primary identifier.
 
+### Assessment Auto-Save
+
+The application automatically tracks progress through the assessment flow:
+
+- **Step Tracking**: Each assessment stores `lastStepCompleted` (1-5) in the database
+- **Automatic Updates**: Procedures like `updateGoal` and `saveSelfEvaluations` automatically update progress
+- **Resume Flow**: Dashboard displays a "Continue Assessment" card if an incomplete assessment exists
+- **oRPC Endpoints**:
+  - `assessment.getDraft` - Fetches user's most recent IN_PROGRESS assessment
+  - `assessment.saveProgress` - Manually updates step completion
+
+### Enhanced GitHub Analysis
+
+GitHub connection now includes AI-powered skill inference:
+
+- **Commit Activity**: Fetches participation stats from top 3 repos (52-week history)
+- **Consistency Score**: Measures regularity of contributions (0-1 scale)
+- **AI Skill Inference**: Matches repos to skill database with confidence scores
+- **Experience Level**: Estimates junior/mid/senior/lead based on evidence
+
+**Enhanced Signals Structure:**
+
+```typescript
+{
+  github: {
+    repoCount, totalStars, topLanguages, topRepos,
+    commitActivity: { totalCommits, avgPerWeek, consistencyScore }
+  },
+  aiAnalysis: {
+    inferredSkills: [{ skillId, skillName, confidence, evidence }],
+    strengths: [...],
+    recommendations: [...],
+    estimatedExperienceLevel: "mid" | "senior" | ...
+  }
+}
+```
+
 ## Data Flow Architecture
 
 ```text

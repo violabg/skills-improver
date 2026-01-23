@@ -31,6 +31,33 @@ export async function DashboardContent() {
     select: { cvUrl: true },
   });
 
+  // Check for incomplete (draft) assessment
+  const draftAssessment = await db.assessment.findFirst({
+    where: {
+      userId: session.user.id,
+      status: "IN_PROGRESS",
+    },
+    orderBy: { startedAt: "desc" },
+  });
+
+  // Helper to get the resume URL based on last completed step
+  const getResumeUrl = (assessmentId: string, step: number | null) => {
+    switch (step) {
+      case 1:
+        return `/assessment/${assessmentId}/goal` as const;
+      case 2:
+        return `/assessment/${assessmentId}/self-evaluation` as const;
+      case 3:
+        return `/assessment/${assessmentId}/test` as const;
+      case 4:
+        return `/assessment/${assessmentId}/evidence` as const;
+      case 5:
+        return `/assessment/${assessmentId}/results` as const;
+      default:
+        return `/assessment/${assessmentId}/goal` as const;
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <main className="mx-auto max-w-7xl">
@@ -57,6 +84,59 @@ export async function DashboardContent() {
           <div className="gap-6 grid grid-cols-1 lg:grid-cols-12">
             {/* Main Content Column */}
             <div className="space-y-8 lg:col-span-8">
+              {/* Continue Assessment Card - shown when draft exists */}
+              {draftAssessment && (
+                <Card className="relative bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/30 overflow-hidden">
+                  <div className="top-0 right-0 absolute bg-amber-500/20 blur-2xl -mt-4 -mr-4 rounded-full w-32 h-32" />
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <span className="bg-amber-500/20 p-2 rounded-lg text-amber-600 dark:text-amber-400">
+                        ⏸️
+                      </span>
+                      Continue Your Assessment
+                    </CardTitle>
+                    <CardDescription>
+                      You have an incomplete assessment from{" "}
+                      {new Date(draftAssessment.startedAt).toLocaleDateString()}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 mb-4">
+                      {[1, 2, 3, 4, 5].map((step) => (
+                        <div
+                          key={step}
+                          className={`h-2 flex-1 rounded-full ${
+                            step <= (draftAssessment.lastStepCompleted ?? 1)
+                              ? "bg-amber-500"
+                              : "bg-muted"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      Step {draftAssessment.lastStepCompleted ?? 1} of 5
+                      completed
+                      {draftAssessment.targetRole && (
+                        <span className="ml-2 text-foreground/80">
+                          • Goal: {draftAssessment.targetRole}
+                        </span>
+                      )}
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Link
+                      href={getResumeUrl(
+                        draftAssessment.id,
+                        draftAssessment.lastStepCompleted,
+                      )}
+                      className={`${buttonVariants({ variant: "default" })} bg-amber-600 hover:bg-amber-700 w-full`}
+                    >
+                      Continue Assessment →
+                    </Link>
+                  </CardFooter>
+                </Card>
+              )}
+
               {/* Featured Card */}
               <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                 <Card className="group relative bg-gradient-to-br from-card to-muted/50 hover:border-primary/50 overflow-hidden transition-all">

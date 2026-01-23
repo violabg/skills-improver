@@ -25,10 +25,53 @@ export const assessmentRouter = {
           industry: input.industry,
           careerIntent: input.careerIntent,
           status: "IN_PROGRESS",
+          lastStepCompleted: 1, // Profile setup is step 1
         },
       });
 
       return assessment;
+    }),
+
+  // Get user's most recent draft (incomplete) assessment
+  getDraft: protectedProcedure.handler(async ({ context }) => {
+    const ctx = context as AuthenticatedContext;
+    const draft = await ctx.db.assessment.findFirst({
+      where: {
+        userId: ctx.user.id,
+        status: "IN_PROGRESS",
+      },
+      orderBy: { startedAt: "desc" },
+      include: {
+        results: {
+          include: { skill: true },
+        },
+      },
+    });
+    return draft;
+  }),
+
+  // Save progress (update which step user completed)
+  saveProgress: protectedProcedure
+    .input(
+      z.object({
+        assessmentId: z.string().uuid(),
+        step: z.number().int().min(1).max(5),
+      }),
+    )
+    .handler(async ({ input, context }) => {
+      const ctx = context as AuthenticatedContext;
+      const assessment = await ctx.db.assessment.findFirst({
+        where: { id: input.assessmentId, userId: ctx.user.id },
+      });
+
+      if (!assessment) throw new Error("Assessment not found");
+
+      const updated = await ctx.db.assessment.update({
+        where: { id: input.assessmentId },
+        data: { lastStepCompleted: input.step },
+      });
+
+      return updated;
     }),
 
   // Submit an answer for evaluation
@@ -135,7 +178,10 @@ export const assessmentRouter = {
 
       const updated = await ctx.db.assessment.update({
         where: { id: input.assessmentId },
-        data: { targetRole: input.targetRole },
+        data: {
+          targetRole: input.targetRole,
+          lastStepCompleted: 2, // Goal is step 2
+        },
       });
 
       return updated;
@@ -216,6 +262,12 @@ export const assessmentRouter = {
 
         results.push(created);
       }
+
+      // Update assessment progress to step 3 (self-evaluation)
+      await ctx.db.assessment.update({
+        where: { id: input.assessmentId },
+        data: { lastStepCompleted: 3 },
+      });
 
       return { ok: true, saved: results.length };
     }),
