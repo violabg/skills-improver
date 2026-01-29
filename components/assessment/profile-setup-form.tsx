@@ -153,7 +153,7 @@ export function ProfileSetupForm() {
     >
       <div className="gap-6 grid md:grid-cols-2">
         {/* Role & Experience */}
-        <Card className="md:col-span-2 shadow-sm border-border/50">
+        <Card className="shadow-sm border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span className="bg-primary/10 p-1.5 rounded-md text-primary">
@@ -187,7 +187,7 @@ export function ProfileSetupForm() {
               )}
             </div>
 
-            <div className="gap-6 grid sm:grid-cols-2">
+            <div className="space-y-4">
               <SelectField
                 label="Years of Experience"
                 control={form.control}
@@ -231,7 +231,7 @@ export function ProfileSetupForm() {
         </Card>
 
         {/* Career Intent */}
-        <Card className="md:col-span-2 shadow-sm border-border/50">
+        <Card className="shadow-sm border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span className="bg-blue-500/10 p-1.5 rounded-md text-blue-500">
@@ -252,7 +252,7 @@ export function ProfileSetupForm() {
                 description: i.description,
               }))}
               required
-              className="gap-4 grid sm:grid-cols-3"
+              className="gap-4 grid grid-cols-1"
             />
           </CardContent>
         </Card>
