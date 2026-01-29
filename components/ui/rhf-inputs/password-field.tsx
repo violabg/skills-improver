@@ -1,6 +1,6 @@
 import { InputHTMLAttributes } from "react";
 import { FieldValues } from "react-hook-form";
-import PasswordInput from "../ui/password-input";
+import PasswordInput from "../password-input";
 import { BaseController, BaseControllerProps } from "./base-controller";
 
 type FieldInputProps<T extends FieldValues> = Omit<

@@ -1,6 +1,5 @@
 "use client";
 
-import { InputField } from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { InputField } from "@/components/ui/rhf-inputs";
 import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,7 +32,7 @@ const CareerGoalSchema = z
     {
       message: "Please describe your custom goal",
       path: ["customGoal"],
-    }
+    },
   );
 
 type CareerGoalData = z.infer<typeof CareerGoalSchema>;

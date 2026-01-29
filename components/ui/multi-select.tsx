@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -48,6 +48,7 @@ export function MultiSelect({
   disabled = false,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const scrollPosRef = React.useRef<{ x: number; y: number } | null>(null);
 
   const handleUnselect = (item: string) => {
     onChange(selected.filter((i) => i !== item));
@@ -74,19 +75,44 @@ export function MultiSelect({
     }, {});
   }, [options, grouped]);
 
+  // Handle open state change with scroll preservation
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      // Save scroll position before opening
+      scrollPosRef.current = { x: window.scrollX, y: window.scrollY };
+
+      // Restore scroll position after popover animation and focus
+      requestAnimationFrame(() => {
+        if (scrollPosRef.current) {
+          window.scrollTo(scrollPosRef.current.x, scrollPosRef.current.y);
+        }
+      });
+      // Also use setTimeout as a fallback
+      setTimeout(() => {
+        if (scrollPosRef.current) {
+          window.scrollTo(scrollPosRef.current.x, scrollPosRef.current.y);
+          scrollPosRef.current = null;
+        }
+      }, 50);
+    }
+    setOpen(isOpen);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         render={
           <Button
-            variant="outline"
+            variant="default"
             role="combobox"
             aria-expanded={open}
             aria-invalid={invalid}
             disabled={disabled}
             className={cn(
               "justify-between w-full h-auto min-h-10",
-              "aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-invalid:ring-[3px]",
+              "bg-transparent dark:bg-input/30 border-input border hover:bg-transparent hover:text-foreground transition-colors",
+              "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+              "aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 aria-invalid:focus-visible:ring-destructive/50 aria-invalid:focus-visible:border-destructive aria-invalid:ring-0",
               selected.length > 0 ? "px-3 py-2" : "",
               className,
             )}
@@ -94,31 +120,21 @@ export function MultiSelect({
         }
       >
         <div className="flex flex-wrap gap-1">
-          {selected.length === 0 && placeholder}
+          {selected.length === 0 && (
+            <span className="text-muted-foreground">{placeholder}</span>
+          )}
           {selected.map((item) => (
             <Badge
               variant="secondary"
               key={item}
-              className="mr-1 mb-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleUnselect(item);
-              }}
+              className="group/badge relative ps-2 pe-1 border-none rounded-md h-7 font-medium text-secondary-foreground text-xs transition-colors"
             >
-              {options.find((option) => option.value === item)?.label || item}
+              <span className="max-w-[120px] truncate">
+                {options.find((option) => option.value === item)?.label || item}
+              </span>
               <span
                 role="button"
-                tabIndex={0}
-                aria-label={`Remove ${
-                  options.find((option) => option.value === item)?.label || item
-                }`}
-                className="ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring ring-offset-background focus:ring-offset-2"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleUnselect(item);
-                  }
-                }}
+                className={`${buttonVariants({ variant: "ghost", size: "icon-xs" })} text-muted-foreground hover:text-foreground`}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -127,8 +143,12 @@ export function MultiSelect({
                   e.stopPropagation();
                   handleUnselect(item);
                 }}
+                aria-disabled={disabled}
+                aria-label={`Remove ${
+                  options.find((option) => option.value === item)?.label || item
+                }`}
               >
-                <X className="w-3 h-3 hover:text-foreground" />
+                <X className="size-3.5" />
               </span>
             </Badge>
           ))}

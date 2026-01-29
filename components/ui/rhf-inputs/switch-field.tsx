@@ -5,8 +5,8 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "../ui/field";
-import { Switch } from "../ui/switch";
+} from "../field";
+import { Switch } from "../switch";
 
 type FieldSwitchProps<T extends FieldValues> = Omit<
   React.ComponentProps<typeof Switch>,

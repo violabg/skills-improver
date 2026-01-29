@@ -14,7 +14,7 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "../ui/field";
+} from "../field";
 
 type ControllerRenderParams<T extends FieldValues> = {
   field: ControllerRenderProps<T, FieldPath<T>>;
@@ -49,7 +49,7 @@ export function BaseController<T extends FieldValues>({
       render={({ field, fieldState, formState }) => (
         <Field data-invalid={fieldState.invalid}>
           {label && (
-            <FieldLabel htmlFor={field.name}>
+            <FieldLabel htmlFor={field.name} className="font-bold">
               {label}
               {required && (
                 <span aria-hidden className="ps-1 text-destructive">
@@ -58,7 +58,7 @@ export function BaseController<T extends FieldValues>({
               )}
             </FieldLabel>
           )}
-          <FieldContent>
+          <FieldContent className="gap-1">
             {children({ field, fieldState, formState })}
             {description && <FieldDescription>{description}</FieldDescription>}
             {!disableFieldError && fieldState.invalid && (

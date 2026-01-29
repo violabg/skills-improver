@@ -52,8 +52,8 @@ function DateSegment({ className, ...props }: DateSegmentProps) {
       className={composeRenderProps(className, (className) =>
         cn(
           "inline data-focused:bg-accent data-invalid:data-focused:bg-destructive data-disabled:opacity-50 p-0.5 data-[type=literal]:px-0 rounded outline-hidden text-foreground data-[type=literal]:text-muted-foreground/70 data-focused:data-placeholder:text-foreground data-focused:text-foreground data-invalid:data-focused:data-placeholder:text-white data-invalid:data-focused:text-white data-invalid:data-placeholder:text-destructive data-invalid:text-destructive data-placeholder:text-muted-foreground/70 caret-transparent data-disabled:cursor-not-allowed",
-          className
-        )
+          className,
+        ),
       )}
       {...props}
       data-invalid
@@ -62,7 +62,7 @@ function DateSegment({ className, ...props }: DateSegmentProps) {
 }
 
 const dateInputStyle =
-  "relative inline-flex h-9 w-full items-center overflow-hidden whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none data-focus-within:border-ring data-focus-within:ring-ring/50 data-focus-within:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive";
+  "relative inline-flex h-9 w-full items-center overflow-hidden whitespace-nowrap rounded-md border border-input bg-transparent dark:bg-input/30 px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none data-focus-within:border-ring data-focus-within:ring-ring/50 data-focus-within:ring-[3px] aria-invalid:border-destructive aria-invalid:data-focus-within:ring-destructive/50 aria-invalid:data-focus-within:border-destructive";
 
 interface DateInputProps extends DateInputPropsRac {
   className?: string;
@@ -77,7 +77,7 @@ function DateInput({
   return (
     <DateInputRac
       className={composeRenderProps(className, (className) =>
-        cn(!unstyled && dateInputStyle, className)
+        cn(!unstyled && dateInputStyle, className),
       )}
       {...props}
     >

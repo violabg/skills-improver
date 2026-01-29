@@ -1,6 +1,6 @@
 import { DateFieldProps, DateValue } from "react-aria-components";
 import { FieldValues } from "react-hook-form";
-import { DateField, DateInput, DateInputProps } from "../ui/datefield-rac";
+import { DateField, DateInput, DateInputProps } from "../datefield-rac";
 import { BaseController, BaseControllerProps } from "./base-controller";
 
 type FieldInputProps<T extends FieldValues> = Omit<

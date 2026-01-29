@@ -1,16 +1,15 @@
-import { InputHTMLAttributes } from "react";
 import { FieldValues } from "react-hook-form";
-import { Input } from "../ui/input";
+import { Textarea } from "../textarea";
 import { BaseController, BaseControllerProps } from "./base-controller";
 
-type FieldInputProps<T extends FieldValues> = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
+type FieldTextareaProps<T extends FieldValues> = Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
   "name" | "id"
 > & {
   maxLength?: number;
 } & Omit<BaseControllerProps<T>, "children">;
 
-export function InputField<T extends FieldValues>({
+export function TextareaField<T extends FieldValues>({
   control,
   name,
   label,
@@ -18,8 +17,8 @@ export function InputField<T extends FieldValues>({
   maxLength,
   disableFieldError = false,
   required,
-  ...inputProps
-}: FieldInputProps<T> & { required?: boolean }) {
+  ...textareaProps
+}: FieldTextareaProps<T> & { required?: boolean }) {
   return (
     <BaseController
       control={control}
@@ -31,22 +30,21 @@ export function InputField<T extends FieldValues>({
     >
       {({ field, fieldState }) => (
         <div className="relative">
-          <Input
+          <Textarea
             id={field.name}
-            aria-invalid={!!fieldState.error}
             aria-required={required}
+            {...field}
+            {...textareaProps}
+            aria-invalid={!!fieldState.error}
             aria-describedby={
               fieldState.error ? `${field.name}-error` : undefined
             }
-            {...field}
-            value={field.value ?? ""}
-            {...inputProps}
             className={`${maxLength ? "pr-16" : ""} ${
-              inputProps.className || ""
+              textareaProps.className || ""
             }`}
           />
           {maxLength && (
-            <div className="top-1/2 right-3 absolute text-muted-foreground text-xs -translate-y-1/2 pointer-events-none">
+            <div className="top-3 right-3 absolute bg-background/80 px-1 rounded text-muted-foreground text-xs pointer-events-none">
               {(field.value || "").length}/{maxLength}
             </div>
           )}

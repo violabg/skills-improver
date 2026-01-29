@@ -156,16 +156,16 @@ submitAnswer: protectedProcedure
 
 ## Key Directories
 
-| Path                     | Purpose                                                                                   |
-| ------------------------ | ----------------------------------------------------------------------------------------- |
-| `app/(app)/`             | Protected routes (auth required)                                                          |
-| `components/assessment/` | Client forms: `ProfileSetupForm`, `SelfEvaluationForm`, `SkillTestForm`, `ResultsContent` |
-| `components/ui/`         | shadcn/ui wrappers (base-ui components)                                                   |
-| `components/rhf-inputs/` | react-hook-form field components                                                          |
-| `lib/ai/`                | AI orchestration: `assessSkill()`, `generateAdvisorResponse()`                            |
-| `lib/orpc/`              | Router (procedures), client, context                                                      |
-| `prisma/`                | Schema, migrations, seed data                                                             |
-| `plan/`                  | Project specs: `1.main-spec.md`, `implementation-plan.md`                                 |
+| Path                        | Purpose                                                                                   |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| `app/(app)/`                | Protected routes (auth required)                                                          |
+| `components/assessment/`    | Client forms: `ProfileSetupForm`, `SelfEvaluationForm`, `SkillTestForm`, `ResultsContent` |
+| `components/ui/`            | shadcn/ui wrappers (base-ui components)                                                   |
+| `components/ui/rhf-inputs/` | react-hook-form field components                                                          |
+| `lib/ai/`                   | AI orchestration: `assessSkill()`, `generateAdvisorResponse()`                            |
+| `lib/orpc/`                 | Router (procedures), client, context                                                      |
+| `prisma/`                   | Schema, migrations, seed data                                                             |
+| `plan/`                     | Project specs: `1.main-spec.md`, `implementation-plan.md`                                 |
 
 ## Development Commands
 

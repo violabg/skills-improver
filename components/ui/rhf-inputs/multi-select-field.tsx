@@ -1,5 +1,5 @@
 import { FieldValues } from "react-hook-form";
-import { MultiSelect, OptionType } from "../ui/multi-select";
+import { MultiSelect, OptionType } from "../multi-select";
 import { BaseController, BaseControllerProps } from "./base-controller";
 
 type FieldSelectProps<T extends FieldValues> = {

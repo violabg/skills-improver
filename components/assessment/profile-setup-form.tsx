@@ -1,9 +1,4 @@
 "use client";
-import {
-  InputField,
-  RadioGroupField,
-  SelectField,
-} from "@/components/rhf-inputs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,6 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  InputField,
+  RadioGroupField,
+  SelectField,
+} from "@/components/ui/rhf-inputs";
 import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -38,7 +38,7 @@ const ProfileSetupSchema = z
     {
       message: "Please specify your role",
       path: ["customRole"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -50,7 +50,7 @@ const ProfileSetupSchema = z
     {
       message: "Please specify your industry",
       path: ["customIndustry"],
-    }
+    },
   );
 
 type ProfileSetupData = z.infer<typeof ProfileSetupSchema>;

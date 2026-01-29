@@ -1,12 +1,12 @@
 import { Controller, FieldValues } from "react-hook-form";
-import { Checkbox } from "../ui/checkbox";
+import { Checkbox } from "../checkbox";
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "../ui/field";
+} from "../field";
 import { BaseControllerProps } from "./base-controller";
 
 type FieldCheckboxProps<T extends FieldValues> = Omit<

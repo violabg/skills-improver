@@ -1,6 +1,6 @@
 import { FieldValues } from "react-hook-form";
-import { Label } from "../ui/label";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Label } from "../label";
+import { RadioGroup, RadioGroupItem } from "../radio-group";
 import { BaseController, BaseControllerProps } from "./base-controller";
 
 type RadioOption = {

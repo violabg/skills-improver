@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "../select";
 import { BaseController, BaseControllerProps } from "./base-controller";
 
 const EMPTY_SELECT_VALUE = "";

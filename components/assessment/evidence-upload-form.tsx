@@ -1,16 +1,16 @@
 "use client";
-
-import { FileUploadField } from "@/components/rhf-inputs";
-import { SwitchField } from "@/components/rhf-inputs/switch-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
+import { validateResumeFile } from "@/lib/services/r2-storage";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Controller, useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
+import { FileUpload } from "../ui/file-upload";
+import { SwitchField } from "../ui/rhf-inputs";
 
 const EvidenceUploadSchema = z.object({
   retentionChoice: z.enum(["discard", "30d", "90d"]).default("discard"),
@@ -40,7 +40,7 @@ export function EvidenceUploadForm({
   const [isDeletingCv, setIsDeletingCv] = useState(false);
 
   const resolver = zodResolver(
-    EvidenceUploadSchema as unknown as never
+    EvidenceUploadSchema as unknown as never,
   ) as Resolver<EvidenceUploadData>;
 
   const form = useForm<EvidenceUploadData>({
@@ -67,7 +67,7 @@ export function EvidenceUploadForm({
     } catch (error) {
       console.error("Failed to connect GitHub:", error);
       alert(
-        "Failed to fetch GitHub data. Make sure you're logged in with GitHub."
+        "Failed to fetch GitHub data. Make sure you're logged in with GitHub.",
       );
     } finally {
       setConnectingGithub(false);
@@ -87,8 +87,8 @@ export function EvidenceUploadForm({
       const base64 = btoa(
         new Uint8Array(arrayBuffer).reduce(
           (data, byte) => data + String.fromCharCode(byte),
-          ""
-        )
+          "",
+        ),
       );
 
       const result = await client.user.uploadCv({
@@ -147,8 +147,8 @@ export function EvidenceUploadForm({
               retentionChoice === "30d"
                 ? 30
                 : retentionChoice === "90d"
-                ? 90
-                : 0;
+                  ? 90
+                  : 0;
 
             // Update user's CV preference
             await client.user.update({ useCvForAnalysis });
@@ -157,7 +157,7 @@ export function EvidenceUploadForm({
           } catch (error) {
             console.error("Failed to save evidence preferences:", error);
             alert(
-              "We could not save your evidence preferences. Please retry or skip."
+              "We could not save your evidence preferences. Please retry or skip.",
             );
           }
         });
@@ -181,7 +181,7 @@ export function EvidenceUploadForm({
               <div>
                 <h3 className="font-semibold text-lg">Connect GitHub</h3>
                 <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
-                  We'll analyze your public code contributions to assess
+                  We&apos;ll analyze your public code contributions to assess
                   architectural patterns and code quality.
                 </p>
               </div>
@@ -211,12 +211,13 @@ export function EvidenceUploadForm({
         {/* Resume / CV Upload */}
         <Card className="bg-card shadow-sm hover:shadow-md border-border/50 hover:border-primary/20 h-full transition-all">
           <div className="flex flex-col space-y-4 p-6 h-full">
-            <FileUploadField
+            <FileUpload
               label="Upload Resume / CV"
               description="PDF or Word documents (Max 10MB)"
               currentFileUrl={currentCvUrl}
               onFileSelect={handleFileSelect}
               onRemoveExisting={handleCvDelete}
+              validateFile={validateResumeFile}
               isUploading={isUploadingCv}
               disabled={isPending || isDeletingCv}
             />

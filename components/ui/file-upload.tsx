@@ -2,11 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { validateResumeFile } from "@/lib/services/r2-storage";
 import { cn } from "@/lib/utils";
 import { FileText, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+import { Label } from "./label";
 
 export interface FileUploadProps {
   /** Current file URL (for edit mode) */
@@ -27,21 +26,41 @@ export interface FileUploadProps {
   disabled?: boolean;
   /** Whether the field is required */
   required?: boolean;
-  /** Custom className */
+  showError?: boolean;
   className?: string;
+  validateFile?: (file: File) => {
+    valid: boolean;
+    error?: string | undefined;
+  };
+  clickToUploadText?: string;
+  orDragAndDropText?: string;
+  fileTypesText?: string;
+  invalidFileErrorText?: string;
+  uploadingText?: string;
+  viewCurrentFileText?: string;
+  replaceText?: string;
 }
 
-export function FileUploadField({
+export function FileUpload({
   currentFileUrl,
   onFileSelect,
   onRemoveExisting,
   isUploading = false,
   error,
-  label = "Curriculum",
-  description = "Carica il curriculum del candidato (PDF, DOC, DOCX - max 10MB)",
+  label = "File Upload",
+  description = "Upload your file here.",
   disabled = false,
   required = false,
   className,
+  validateFile,
+  clickToUploadText = "Click to upload",
+  orDragAndDropText = "or drag and drop",
+  fileTypesText = "PDF, DOC, DOCX (max 10MB)",
+  invalidFileErrorText = "Invalid file",
+  uploadingText = "Uploading...",
+  viewCurrentFileText = "View current file",
+  replaceText = "Replace",
+  showError = true,
 }: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -50,10 +69,10 @@ export function FileUploadField({
 
   const handleFileChange = useCallback(
     (file: File | null) => {
-      if (file) {
-        const validation = validateResumeFile(file);
+      if (validateFile && file) {
+        const validation = validateFile(file);
         if (!validation.valid) {
-          setValidationError(validation.error || "File non valido");
+          setValidationError(validation.error || invalidFileErrorText);
           return;
         }
       }
@@ -61,7 +80,7 @@ export function FileUploadField({
       setSelectedFile(file);
       onFileSelect(file);
     },
-    [onFileSelect],
+    [onFileSelect, validateFile, invalidFileErrorText],
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,14 +154,15 @@ export function FileUploadField({
           )}
         </Label>
       )}
-
       <div
         className={cn(
-          "relative p-4 border-2 border-dashed rounded-lg transition-colors",
+          "bg-muted/50 shadow-sm border-2 border-transparent border-dashed rounded-lg transition-all",
           isDragging && "border-primary bg-primary/5",
           displayError && "border-destructive",
           disabled && "opacity-50 cursor-not-allowed",
-          !disabled && !isUploading && "cursor-pointer hover:border-primary/50",
+          !disabled &&
+            !isUploading &&
+            "cursor-pointer hover:bg-muted/80 hover:border-ring/30",
         )}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -161,9 +181,7 @@ export function FileUploadField({
         {isUploading ? (
           <div className="flex flex-col justify-center items-center py-4">
             <Loader2 className="mb-2 w-8 h-8 text-primary animate-spin" />
-            <p className="text-muted-foreground text-sm">
-              Caricamento in corso...
-            </p>
+            <p className="text-muted-foreground text-sm">{uploadingText}</p>
           </div>
         ) : hasSelectedFile ? (
           <div className="flex justify-between items-center">
@@ -202,7 +220,7 @@ export function FileUploadField({
                   className="text-primary text-xs hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Visualizza file corrente
+                  {viewCurrentFileText}
                 </a>
               </div>
             </div>
@@ -218,7 +236,7 @@ export function FileUploadField({
                 disabled={disabled}
               >
                 <Upload className="mr-1 size-4" />
-                Sostituisci
+                {replaceText}
               </Button>
               {onRemoveExisting && (
                 <Button
@@ -242,12 +260,12 @@ export function FileUploadField({
             <Upload className="mb-2 w-8 h-8 text-muted-foreground" />
             <p className="text-muted-foreground text-sm text-center">
               <span className="font-medium text-primary">
-                Clicca per caricare
+                {clickToUploadText}
               </span>{" "}
-              o trascina qui il file
+              {orDragAndDropText}
             </p>
             <p className="mt-1 text-muted-foreground text-xs">
-              PDF, DOC, DOCX (max 10MB)
+              {fileTypesText}
             </p>
           </div>
         )}
@@ -257,7 +275,7 @@ export function FileUploadField({
         <p className="text-muted-foreground text-sm">{description}</p>
       )}
 
-      {displayError && (
+      {showError && displayError && (
         <p className="text-destructive text-sm">{displayError}</p>
       )}
     </div>
