@@ -1,5 +1,3 @@
-"use client";
-
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -10,71 +8,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { client } from "@/lib/orpc/client";
+import type { DashboardData } from "@/lib/data/dashboard";
 import { CheckCircle, Map, Play } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-interface RoadmapProgress {
-  id: string;
-  title: string;
-  totalWeeks: number;
-  progress: {
-    total: number;
-    completed: number;
-  };
-  targetRole?: string | null;
+interface RoadmapWidgetProps {
+  roadmap: DashboardData["activeRoadmap"];
 }
 
-export function RoadmapWidget() {
-  const [roadmap, setRoadmap] = useState<RoadmapProgress | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadRoadmap = async () => {
-      try {
-        setLoading(true);
-        // Using active roadmap
-        const data = await client.roadmap.getActive();
-        if (data) {
-          setRoadmap({
-            id: data.id,
-            title: data.title,
-            totalWeeks: data.totalWeeks,
-            targetRole: data.assessment.targetRole,
-            progress: {
-              total: data.milestones.length,
-              completed: data.milestones.filter((m) => m.status === "COMPLETED")
-                .length,
-            },
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load roadmap progress:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadRoadmap();
-  }, []);
-
-  if (loading) {
-    return (
-      <Card className="shadow-sm border-primary/20">
-        <CardHeader className="pb-2">
-          <Skeleton className="w-48 h-5" />
-          <Skeleton className="w-32 h-4" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="w-full h-2" />
-          <Skeleton className="w-full h-10" />
-        </CardContent>
-      </Card>
-    );
-  }
-
+export function RoadmapWidget({ roadmap }: RoadmapWidgetProps) {
   if (!roadmap) {
     return (
       <Card className="bg-primary/5 shadow-sm border-primary/10 border-dashed">
@@ -106,8 +48,13 @@ export function RoadmapWidget() {
     );
   }
 
+  const totalMilestones = roadmap.milestones.length;
+  const completedMilestones = roadmap.milestones.filter(
+    (milestone) => milestone.status === "COMPLETED",
+  ).length;
+
   const percentage = Math.round(
-    (roadmap.progress.completed / roadmap.progress.total) * 100,
+    totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0,
   );
 
   return (
@@ -138,8 +85,7 @@ export function RoadmapWidget() {
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <CheckCircle className="w-4 h-4 text-green-500" />
           <span>
-            {roadmap.progress.completed} of {roadmap.progress.total} milestones
-            mastered
+            {completedMilestones} of {totalMilestones} milestones mastered
           </span>
         </div>
       </CardContent>

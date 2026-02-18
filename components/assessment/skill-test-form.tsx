@@ -3,9 +3,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Textarea } from "@/components/ui/textarea";
-import { submitServerAction } from "@/lib/actions/skill-test";
 import { useAssessment } from "@/lib/hooks/use-assessment";
+import { client } from "@/lib/orpc/client";
+import { showError, showSuccess } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -30,23 +32,14 @@ interface SkillTestFormProps {
 
 export function SkillTestForm({
   questions,
-  selfEvaluations,
+  selfEvaluations: _selfEvaluations,
 }: SkillTestFormProps) {
   const router = useRouter();
-  const assessment = useAssessment();
-  const assessmentId = assessment.id;
   const [isPending, startTransition] = useTransition();
+  const assessment = useAssessment();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentAnswer, setCurrentAnswer] = useState("");
-
-  // Build map from selfEvaluations array
-  const selfEvalMap = new Map(
-    selfEvaluations.map((e) => [
-      e.skillId,
-      { level: e.level, skillName: e.skillName },
-    ])
-  );
 
   const currentQuestion = questions[currentQuestionIndex];
   const progress =
@@ -63,7 +56,7 @@ export function SkillTestForm({
     setCurrentAnswer("");
 
     if (isLastQuestion) {
-      handleSubmit(updatedAnswers);
+      onSubmit(updatedAnswers);
     } else {
       setCurrentQuestionIndex((prev) => prev + 1);
     }
@@ -79,33 +72,47 @@ export function SkillTestForm({
     }
   };
 
-  const handleSubmit = async (finalAnswers: Record<string, string>) => {
-    if (!assessmentId || isPending) return;
+  const onSubmit = async (finalAnswers: Record<string, string>) => {
+    if (!assessment.id || isPending) return;
 
     startTransition(async () => {
       try {
-        const submissions = questions.map((q) => ({
-          skillId: q.skillId,
-          question: q.question,
-          answer: finalAnswers[q.id] || "",
-        }));
+        const submissions = questions
+          .map((q) => ({
+            skillId: q.skillId,
+            question: q.question,
+            answer: (finalAnswers[q.id] || "").trim(),
+          }))
+          .filter((submission) => submission.answer.length > 0);
 
-        await submitServerAction({ assessmentId, submissions });
-      } catch (err) {
-        // Suppress alert for redirects
-        if (
-          err instanceof Error &&
-          (err.message.includes("NEXT_REDIRECT") ||
-            (typeof err === "object" &&
-              "digest" in err &&
-              typeof err.digest === "string" &&
-              err.digest.includes("NEXT_REDIRECT")))
-        ) {
-          return;
+        for (const submission of submissions) {
+          await client.assessment.submitAnswer({
+            assessmentId: assessment.id,
+            skillId: submission.skillId,
+            question: submission.question,
+            answer: submission.answer,
+          });
         }
-        console.error("Server submission failed:", err);
-        alert("Failed to submit answers. Please try again.");
+
+        showSuccess("Skill test submitted successfully!");
+        router.push(`/assessment/${assessment.id}/evidence`);
+      } catch (error) {
+        showError(error);
       }
+    });
+  };
+
+  const handleSkipQuestion = () => {
+    setCurrentAnswer("");
+
+    if (!isLastQuestion) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+      return;
+    }
+
+    onSubmit({
+      ...answers,
+      [currentQuestion.id]: "",
     });
   };
 
@@ -169,7 +176,7 @@ export function SkillTestForm({
         </div>
         <div className="bg-muted ring-border/50 rounded-full ring-1 w-full h-2.5 overflow-hidden">
           <div
-            className="bg-primary bg-gradient-to-r from-primary/80 to-primary shadow-lg shadow-primary/20 h-full transition-all duration-500 ease-out"
+            className="bg-primary bg-linear-to-r from-primary/80 to-primary shadow-lg shadow-primary/20 h-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -185,7 +192,7 @@ export function SkillTestForm({
           <div className="flex items-center gap-3">
             <Badge
               className={`${getTypeColor(
-                currentQuestion.type
+                currentQuestion.type,
               )} border-transparent px-3 py-1 font-medium bg-opacity-20`}
             >
               {getTypeLabel(currentQuestion.type)}
@@ -233,32 +240,24 @@ export function SkillTestForm({
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => {
-                  setCurrentAnswer("");
-                  if (!isLastQuestion) {
-                    setCurrentQuestionIndex((prev) => prev + 1);
-                  } else {
-                    handleSubmit(answers);
-                  }
-                }}
+                onClick={handleSkipQuestion}
                 disabled={isPending}
                 className="text-muted-foreground hover:text-foreground"
               >
                 Skip Question
               </Button>
 
-              <Button
-                onClick={handleNext}
-                disabled={!currentAnswer.trim() || isPending}
+              <LoadingButton
+                type="button"
+                loading={isPending}
+                loadingText="Submitting skill test..."
                 className="shadow-lg shadow-primary/20 px-8 rounded-full"
+                onClick={handleNext}
+                disabled={!currentAnswer.trim()}
                 size="lg"
               >
-                {isPending
-                  ? "Submitting..."
-                  : isLastQuestion
-                  ? "Finish Assessment"
-                  : "Next Question →"}
-              </Button>
+                {isLastQuestion ? "Finish Assessment" : "Next Question →"}
+              </LoadingButton>
             </div>
           </div>
         </div>

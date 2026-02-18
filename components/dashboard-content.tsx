@@ -9,36 +9,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { auth } from "@/lib/auth";
-import db from "@/lib/db";
-import { headers } from "next/headers";
+import type { DashboardData } from "@/lib/data/dashboard";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
 
-export async function DashboardContent() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+interface DashboardContentProps {
+  data: DashboardData;
+}
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  // Fetch user's CV information
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { cvUrl: true },
-  });
-
-  // Check for incomplete (draft) assessment
-  const draftAssessment = await db.assessment.findFirst({
-    where: {
-      userId: session.user.id,
-      status: "IN_PROGRESS",
-    },
-    orderBy: { startedAt: "desc" },
-  });
+export function DashboardContent({ data }: DashboardContentProps) {
+  const { user, draftAssessment, recentAssessments, activeRoadmap } = data;
 
   // Helper to get the resume URL based on last completed step
   const getResumeUrl = (assessmentId: string, step: number | null) => {
@@ -236,37 +215,28 @@ export async function DashboardContent() {
                     View all history →
                   </Link>
                 </div>
-                <Suspense
-                  fallback={
-                    <div className="space-y-4 bg-card/50 p-8 border border-border/50 rounded-xl text-center">
-                      <div className="bg-muted mx-auto rounded w-3/4 h-4 animate-pulse" />
-                      <div className="bg-muted mx-auto rounded w-1/2 h-4 animate-pulse" />
-                    </div>
-                  }
-                >
-                  <AssessmentsList />
-                </Suspense>
+                <AssessmentsList assessments={recentAssessments} />
               </div>
             </div>
 
             {/* Sidebar Column */}
             <div className="space-y-6 lg:col-span-4">
               {/* Roadmap Widget */}
-              <RoadmapWidget />
+              <RoadmapWidget roadmap={activeRoadmap} />
 
               {/* Profile Card */}
               <Card className="shadow-sm border-border/60">
                 <CardHeader className="bg-muted/20 pb-3 border-border/40 border-b">
                   <div className="flex items-center gap-3">
                     <div className="flex justify-center items-center bg-primary/10 rounded-full w-10 h-10 font-bold text-primary">
-                      {session.user.name?.charAt(0) || "U"}
+                      {user?.name?.charAt(0) || "U"}
                     </div>
                     <div>
                       <CardTitle className="text-base">
-                        {session.user.name || "User"}
+                        {user?.name || "User"}
                       </CardTitle>
                       <CardDescription className="max-w-[200px] text-xs truncate">
-                        {session.user.email}
+                        {user?.email || ""}
                       </CardDescription>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 import { LandingHeader } from "@/components/landing-header";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
@@ -71,6 +72,7 @@ export default function RootLayout({
             </Suspense>
             {children}
           </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

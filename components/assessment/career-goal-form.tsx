@@ -1,5 +1,11 @@
 "use client";
 
+import { useAssessment } from "@/lib/hooks/use-assessment";
+import { client } from "@/lib/orpc/client";
+import { showError, showSuccess } from "@/lib/toast";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,12 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { InputField } from "@/components/ui/rhf-inputs";
-import { useAssessment } from "@/lib/hooks/use-assessment";
-import { client } from "@/lib/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -66,7 +69,6 @@ const COMMON_GOALS = [
 
 export function CareerGoalForm() {
   const router = useRouter();
-  const assessment = useAssessment();
   const [isPending, startTransition] = useTransition();
   const form = useForm<CareerGoalData>({
     resolver: zodResolver(CareerGoalSchema),
@@ -75,38 +77,31 @@ export function CareerGoalForm() {
       customGoal: "",
     },
   });
+  const assessment = useAssessment();
 
   const goalType = form.watch("goalType");
 
-  return (
-    <form
-      onSubmit={form.handleSubmit((data) => {
-        startTransition(async () => {
-          try {
-            // Store the goal in session state and navigate to next step
-            // Persist selected goal to the assessment (best-effort)
-            const goal =
-              data.goalType === "custom" ? data.customGoal : data.goalType;
+  const onSubmit = async (data: CareerGoalData) => {
+    startTransition(async () => {
+      try {
+        const goal =
+          data.goalType === "custom" ? data.customGoal : data.goalType;
 
-            try {
-              await client.assessment.updateGoal({
-                assessmentId: assessment.id,
-                targetRole: goal as string,
-              });
-            } catch (err) {
-              // Log and continue navigation; saving is best-effort
-
-              console.error("Failed to save goal:", err);
-            }
-
-            router.push(`/assessment/${assessment.id}/self-evaluation`);
-          } catch (error) {
-            console.error("Failed to save goal:", error);
-          }
+        await client.assessment.updateGoal({
+          assessmentId: assessment.id,
+          targetRole: goal as string,
         });
-      })}
-      className="space-y-8 mx-auto"
-    >
+
+        showSuccess("Career goal saved successfully!");
+        router.push(`/assessment/${assessment.id}/self-evaluation`);
+      } catch (error) {
+        showError(error);
+      }
+    });
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mx-auto">
       <div className="space-y-6">
         <Card className="shadow-sm border-border/50 overflow-hidden">
           <div className="bg-muted/30 p-6 border-border/50 border-b">
@@ -249,14 +244,16 @@ export function CareerGoalForm() {
           >
             ← Back
           </Button>
-          <Button
+          <LoadingButton
             type="submit"
-            disabled={!goalType || isPending}
-            size="lg"
+            loading={isPending}
+            loadingText="Saving goal..."
             className="shadow-lg shadow-primary/20 px-8 rounded-full"
+            disabled={!goalType}
+            size="lg"
           >
-            {isPending ? "Saving..." : "Continue →"}
-          </Button>
+            Continue →
+          </LoadingButton>
         </div>
       </div>
     </form>

@@ -1,3 +1,4 @@
+import { ErrorBoundary } from "@/components/error-boundary";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { AssessmentProvider } from "@/lib/hooks/use-assessment";
@@ -31,6 +32,8 @@ export default async function AssessmentLayout({
   }
 
   return (
-    <AssessmentProvider assessment={assessment}>{children}</AssessmentProvider>
+    <AssessmentProvider assessment={assessment}>
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </AssessmentProvider>
   );
 }

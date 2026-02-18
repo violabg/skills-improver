@@ -1,9 +1,12 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
 import { validateResumeFile } from "@/lib/services/r2-storage";
+import { showError, showSuccess } from "@/lib/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -29,15 +32,8 @@ export function EvidenceUploadForm({
   initialCvUrl,
   initialUseCvForAnalysis,
 }: EvidenceUploadFormProps) {
-  const assessment = useAssessment();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [connectingGithub, setConnectingGithub] = useState(false);
-  const [githubConnected, setGithubConnected] = useState(false);
-  const [cvFile, setCvFile] = useState<File | null>(null);
-  const [currentCvUrl, setCurrentCvUrl] = useState<string | null>(initialCvUrl);
-  const [isUploadingCv, setIsUploadingCv] = useState(false);
-  const [isDeletingCv, setIsDeletingCv] = useState(false);
 
   const resolver = zodResolver(
     EvidenceUploadSchema as unknown as never,
@@ -51,6 +47,13 @@ export function EvidenceUploadForm({
       useCvForAnalysis: initialUseCvForAnalysis,
     },
   });
+  const assessment = useAssessment();
+  const [connectingGithub, setConnectingGithub] = useState(false);
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [currentCvUrl, setCurrentCvUrl] = useState<string | null>(initialCvUrl);
+  const [isUploadingCv, setIsUploadingCv] = useState(false);
+  const [isDeletingCv, setIsDeletingCv] = useState(false);
 
   const handleGithubConnect = async () => {
     setConnectingGithub(true);
@@ -65,10 +68,7 @@ export function EvidenceUploadForm({
       });
       setGithubConnected(true);
     } catch (error) {
-      console.error("Failed to connect GitHub:", error);
-      alert(
-        "Failed to fetch GitHub data. Make sure you're logged in with GitHub.",
-      );
+      showError(error);
     } finally {
       setConnectingGithub(false);
     }
@@ -101,8 +101,7 @@ export function EvidenceUploadForm({
       setCurrentCvUrl(result.cvUrl);
       setCvFile(null);
     } catch (error) {
-      console.error("Failed to upload CV:", error);
-      alert("Failed to upload CV. Please try again.");
+      showError(error);
     } finally {
       setIsUploadingCv(false);
     }
@@ -115,8 +114,7 @@ export function EvidenceUploadForm({
       setCurrentCvUrl(null);
       setCvFile(null);
     } catch (error) {
-      console.error("Failed to delete CV:", error);
-      alert("Failed to delete CV. Please try again.");
+      showError(error);
     } finally {
       setIsDeletingCv(false);
     }
@@ -130,40 +128,25 @@ export function EvidenceUploadForm({
   };
 
   const handleSkip = () => {
+    router.push(`/assessment/${assessment.id}/results`);
+  };
+
+  const onSubmit = async () => {
     startTransition(async () => {
-      router.push(`/assessment/${assessment.id}/results`);
+      try {
+        const { useCvForAnalysis } = form.getValues();
+
+        await client.user.update({ useCvForAnalysis });
+        showSuccess("Evidence preferences saved successfully!");
+        router.push(`/assessment/${assessment.id}/results`);
+      } catch (error) {
+        showError(error);
+      }
     });
   };
 
   return (
-    <form
-      onSubmit={form.handleSubmit(() => {
-        startTransition(async () => {
-          try {
-            const { retentionChoice, allowRawStorage, useCvForAnalysis } =
-              form.getValues();
-
-            const retentionDays =
-              retentionChoice === "30d"
-                ? 30
-                : retentionChoice === "90d"
-                  ? 90
-                  : 0;
-
-            // Update user's CV preference
-            await client.user.update({ useCvForAnalysis });
-
-            router.push(`/assessment/${assessment.id}/results`);
-          } catch (error) {
-            console.error("Failed to save evidence preferences:", error);
-            alert(
-              "We could not save your evidence preferences. Please retry or skip.",
-            );
-          }
-        });
-      })}
-      className="space-y-8 mx-auto"
-    >
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mx-auto">
       <div className="gap-6 grid md:grid-cols-2">
         {/* GitHub Connection */}
         <Card className="bg-card shadow-sm hover:shadow-md border-border/50 hover:border-primary/20 h-full transition-all">
@@ -346,14 +329,16 @@ export function EvidenceUploadForm({
           >
             Skip for now
           </Button>
-          <Button
+          <LoadingButton
             type="submit"
-            disabled={isPending || isUploadingCv}
+            loading={isPending}
+            loadingText="Saving evidence preferences..."
             className="shadow-lg shadow-primary/20 px-8 rounded-full"
+            disabled={isUploadingCv}
             size="lg"
           >
-            {isPending ? "Generating Results..." : "Complete Assessment →"}
-          </Button>
+            Complete Assessment →
+          </LoadingButton>
         </div>
       </div>
     </form>

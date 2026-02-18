@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
@@ -7,12 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   InputField,
   RadioGroupField,
   SelectField,
 } from "@/components/ui/rhf-inputs";
 import { client } from "@/lib/orpc/client";
+import { showError, showSuccess } from "@/lib/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -117,40 +119,35 @@ export function ProfileSetupForm() {
   const currentRole = form.watch("currentRole");
   const industry = form.watch("industry");
 
-  return (
-    <form
-      onSubmit={form.handleSubmit((data) => {
-        startTransition(async () => {
-          try {
-            // Use custom values if "Other" is selected
-            const finalRole =
-              data.currentRole === "Other" && data.customRole
-                ? data.customRole
-                : data.currentRole;
-            const finalIndustry =
-              data.industry === "Other" && data.customIndustry
-                ? data.customIndustry
-                : data.industry;
+  const onSubmit = async (data: ProfileSetupData) => {
+    startTransition(async () => {
+      try {
+        const finalRole =
+          data.currentRole === "Other" && data.customRole
+            ? data.customRole
+            : data.currentRole;
+        const finalIndustry =
+          data.industry === "Other" && data.customIndustry
+            ? data.customIndustry
+            : data.industry;
 
-            // Call oRPC assessment.start with all profile data
-            const assessment = await client.assessment.start({
-              currentRole: finalRole,
-              yearsExperience: data.yearsExperience,
-              industry: finalIndustry,
-              careerIntent: data.careerIntent,
-            });
-
-            // Navigate to next step with assessment ID
-            if (assessment.id) {
-              router.push(`/assessment/${assessment.id}/goal`);
-            }
-          } catch (error) {
-            console.error("Failed to start assessment:", error);
-          }
+        const assessment = await client.assessment.start({
+          currentRole: finalRole,
+          yearsExperience: data.yearsExperience,
+          industry: finalIndustry,
+          careerIntent: data.careerIntent,
         });
-      })}
-      className="space-y-8"
-    >
+
+        showSuccess("Profile saved successfully!");
+        router.push(`/assessment/${assessment.id}/goal`);
+      } catch (error) {
+        showError(error);
+      }
+    });
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       <div className="gap-6 grid md:grid-cols-2">
         {/* Role & Experience */}
         <Card className="shadow-sm border-border/50">
@@ -259,14 +256,15 @@ export function ProfileSetupForm() {
       </div>
 
       <div className="flex justify-end pt-4">
-        <Button
+        <LoadingButton
           type="submit"
-          disabled={isPending}
-          size="lg"
+          loading={isPending}
+          loadingText="Saving profile..."
           className="shadow-lg shadow-primary/20 hover:shadow-primary/30 px-8 rounded-full w-full sm:w-auto transition-all"
+          size="lg"
         >
-          {isPending ? "Setting up..." : "Begin Assessment →"}
-        </Button>
+          Continue
+        </LoadingButton>
       </div>
     </form>
   );

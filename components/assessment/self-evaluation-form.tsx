@@ -2,10 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { useAssessment } from "@/lib/hooks/use-assessment";
 import { client } from "@/lib/orpc/client";
+import { showError, showSuccess } from "@/lib/toast";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 
 const CONFIDENCE_LEVELS = [
   {
@@ -45,8 +47,8 @@ export function SelfEvaluationForm({
   reasoning,
 }: SelfEvaluationFormProps) {
   const router = useRouter();
-  const assessment = useAssessment();
   const [isPending, startTransition] = useTransition();
+  const assessment = useAssessment();
 
   // Form state
   const [ratings, setRatings] = useState<Record<string, number>>({});
@@ -74,19 +76,22 @@ export function SelfEvaluationForm({
   };
 
   // Group skills by category
-  const groupedSkills = skills.reduce((acc, skill) => {
-    const cat = skill.category || "Other";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(skill);
-    return acc;
-  }, {} as Record<string, typeof skills>);
+  const groupedSkills = skills.reduce(
+    (acc, skill) => {
+      const cat = skill.category || "Other";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(skill);
+      return acc;
+    },
+    {} as Record<string, typeof skills>,
+  );
 
   const allRated =
     skills.length > 0 &&
     skills.every((skill) => ratings[skill.id] !== undefined);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
     if (!allRated || isPending) return;
 
@@ -105,15 +110,16 @@ export function SelfEvaluationForm({
           });
         }
 
+        showSuccess("Self-evaluation saved successfully!");
         router.push(`/assessment/${assessment.id}/test`);
       } catch (error) {
-        console.error("Failed to save self-evaluation:", error);
+        showError(error);
       }
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 mx-auto pb-12">
+    <form onSubmit={onSubmit} className="space-y-8 mx-auto pb-12">
       {reasoning && (
         <div className="bg-primary/5 shadow-sm p-4 border border-primary/20 rounded-xl text-sm">
           <div className="flex items-start gap-3">
@@ -189,6 +195,7 @@ export function SelfEvaluationForm({
                       key={level.value}
                       type="button"
                       onClick={() => handleRatingChange(skill.id, level.value)}
+                      aria-label={`Rate ${skill.name} as ${level.label}`}
                       className={`
                         relative group/btn flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg border-2 transition-all duration-200
                         ${
@@ -252,13 +259,15 @@ export function SelfEvaluationForm({
             </span>
           </div>
           <div className="hidden sm:block bg-border w-px h-4" />
-          <Button
+          <LoadingButton
             type="submit"
-            disabled={!allRated || isPending}
+            loading={isPending}
+            loadingText="Saving self-evaluation..."
             className="shadow-lg shadow-primary/20 px-8 rounded-full"
+            disabled={!allRated}
           >
-            {isPending ? "Saving..." : "Continue to Test →"}
-          </Button>
+            Continue to Test →
+          </LoadingButton>
         </div>
       </div>
     </form>

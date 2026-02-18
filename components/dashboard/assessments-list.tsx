@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -9,93 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { client } from "@/lib/orpc/client";
+import type { DashboardData } from "@/lib/data/dashboard";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-interface Assessment {
-  id: string;
-  targetRole: string | null;
-  status: string;
-  startedAt: Date;
-  completedAt: Date | null;
-  results: Array<{
-    id: string;
-    level: number;
-    confidence: number;
-    skill: {
-      name: string;
-      category: string;
-    };
-  }>;
+interface AssessmentsListProps {
+  assessments: DashboardData["recentAssessments"];
 }
 
-export function AssessmentsList() {
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadAssessments = async () => {
-      try {
-        setLoading(true);
-        const data = await client.assessment.list();
-        console.log("Loaded assessments:", data);
-        setAssessments(data as Assessment[]);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to load assessments:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load assessments",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAssessments();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="w-32 h-5" />
-                  <Skeleton className="w-48 h-4" />
-                </div>
-                <Skeleton className="w-16 h-6" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Skeleton className="w-full h-4" />
-                <Skeleton className="w-24 h-10" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="bg-destructive/10 border-destructive/30">
-        <CardHeader>
-          <CardTitle className="text-destructive">Error</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+export function AssessmentsList({ assessments }: AssessmentsListProps) {
   if (assessments.length === 0) {
     return (
       <Card className="bg-muted/50">
@@ -193,7 +112,7 @@ export function AssessmentsList() {
                       year: "numeric",
                     })}
               </span>
-              {assessment.results.length > 0 && (
+              {assessment.resultsCount > 0 && (
                 <span className="flex items-center gap-1">
                   <svg
                     className="w-3.5 h-3.5"
@@ -208,7 +127,7 @@ export function AssessmentsList() {
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                     />
                   </svg>
-                  {assessment.results.length} skills evaluated
+                  {assessment.resultsCount} skills evaluated
                 </span>
               )}
             </div>
