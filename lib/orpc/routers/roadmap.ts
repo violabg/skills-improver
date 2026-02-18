@@ -145,7 +145,6 @@ export const roadmapRouter = {
     .handler(async ({ input, context }) => {
       const ctx = context as AuthenticatedContext;
 
-      // Verify ownership
       const milestone = await ctx.db.roadmapMilestone.findFirst({
         where: { id: input.milestoneId },
         include: { roadmap: true },
@@ -155,47 +154,47 @@ export const roadmapRouter = {
         throw new Error("Milestone not found");
       }
 
-      // Create progress record
-      const progress = await ctx.db.milestoneProgress.create({
-        data: {
-          milestoneId: input.milestoneId,
-          verificationMethod: input.method as VerificationMethod,
-          selfReportedAt: input.method === "SELF_REPORTED" ? new Date() : null,
-        },
-      });
-
-      // Update milestone status
-      await ctx.db.roadmapMilestone.update({
-        where: { id: input.milestoneId },
-        data: { status: "COMPLETED" as MilestoneStatus },
-      });
-
-      // Update UserSkillHistory for cross-assessment knowledge
-      await ctx.db.userSkillHistory.create({
-        data: {
-          userId: ctx.user.id,
-          skillId: milestone.skillId,
-          level: 4, // Assume level 4 for self-reported completion
-          confidence: input.method === "SELF_REPORTED" ? 0.6 : 0.8,
-          source: input.method as VerificationMethod,
-          assessmentId: milestone.roadmap.assessmentId,
-        },
-      });
-
-      // Check if all milestones completed
-      const allMilestones = await ctx.db.roadmapMilestone.findMany({
-        where: { roadmapId: milestone.roadmapId },
-      });
-      const allCompleted = allMilestones.every((m) => m.status === "COMPLETED");
-
-      if (allCompleted) {
-        await ctx.db.roadmap.update({
-          where: { id: milestone.roadmapId },
-          data: { completedAt: new Date() },
+      const result = await ctx.db.$transaction(async (tx) => {
+        const progress = await tx.milestoneProgress.create({
+          data: {
+            milestoneId: input.milestoneId,
+            verificationMethod: input.method as VerificationMethod,
+            selfReportedAt: input.method === "SELF_REPORTED" ? new Date() : null,
+          },
         });
-      }
 
-      return { success: true, progressId: progress.id };
+        await tx.roadmapMilestone.update({
+          where: { id: input.milestoneId },
+          data: { status: "COMPLETED" as MilestoneStatus },
+        });
+
+        await tx.userSkillHistory.create({
+          data: {
+            userId: ctx.user.id,
+            skillId: milestone.skillId,
+            level: 4,
+            confidence: input.method === "SELF_REPORTED" ? 0.6 : 0.8,
+            source: input.method as VerificationMethod,
+            assessmentId: milestone.roadmap.assessmentId,
+          },
+        });
+
+        const allMilestones = await tx.roadmapMilestone.findMany({
+          where: { roadmapId: milestone.roadmapId },
+        });
+        const allCompleted = allMilestones.every((m) => m.status === "COMPLETED");
+
+        if (allCompleted) {
+          await tx.roadmap.update({
+            where: { id: milestone.roadmapId },
+            data: { completedAt: new Date() },
+          });
+        }
+
+        return progress;
+      });
+
+      return { success: true, progressId: result.id };
     }),
 
   // Start AI verification quiz for milestone
@@ -282,49 +281,47 @@ export const roadmapRouter = {
       });
 
       if (result.passed) {
-        // Create progress record
-        await ctx.db.milestoneProgress.create({
-          data: {
-            milestoneId: input.milestoneId,
-            verificationMethod: "AI_VERIFIED" as VerificationMethod,
-            aiVerifiedAt: new Date(),
-            aiVerificationScore: result.score,
-            aiVerificationNotes: result.feedback,
-          },
-        });
-
-        // Update milestone status
-        await ctx.db.roadmapMilestone.update({
-          where: { id: input.milestoneId },
-          data: { status: "COMPLETED" as MilestoneStatus },
-        });
-
-        // Update UserSkillHistory
-        await ctx.db.userSkillHistory.create({
-          data: {
-            userId: ctx.user.id,
-            skillId: milestone.skillId,
-            level: result.newLevel,
-            confidence: result.score,
-            source: "AI_VERIFIED" as VerificationMethod,
-            assessmentId: milestone.roadmap.assessmentId,
-          },
-        });
-
-        // Check if all milestones completed
-        const allMilestones = await ctx.db.roadmapMilestone.findMany({
-          where: { roadmapId: milestone.roadmapId },
-        });
-        const allCompleted = allMilestones.every(
-          (m) => m.status === "COMPLETED" || m.id === input.milestoneId,
-        );
-
-        if (allCompleted) {
-          await ctx.db.roadmap.update({
-            where: { id: milestone.roadmapId },
-            data: { completedAt: new Date() },
+        await ctx.db.$transaction(async (tx) => {
+          await tx.milestoneProgress.create({
+            data: {
+              milestoneId: input.milestoneId,
+              verificationMethod: "AI_VERIFIED" as VerificationMethod,
+              aiVerifiedAt: new Date(),
+              aiVerificationScore: result.score,
+              aiVerificationNotes: result.feedback,
+            },
           });
-        }
+
+          await tx.roadmapMilestone.update({
+            where: { id: input.milestoneId },
+            data: { status: "COMPLETED" as MilestoneStatus },
+          });
+
+          await tx.userSkillHistory.create({
+            data: {
+              userId: ctx.user.id,
+              skillId: milestone.skillId,
+              level: result.newLevel,
+              confidence: result.score,
+              source: "AI_VERIFIED" as VerificationMethod,
+              assessmentId: milestone.roadmap.assessmentId,
+            },
+          });
+
+          const allMilestones = await tx.roadmapMilestone.findMany({
+            where: { roadmapId: milestone.roadmapId },
+          });
+          const allCompleted = allMilestones.every(
+            (m) => m.status === "COMPLETED" || m.id === input.milestoneId,
+          );
+
+          if (allCompleted) {
+            await tx.roadmap.update({
+              where: { id: milestone.roadmapId },
+              data: { completedAt: new Date() },
+            });
+          }
+        });
       }
 
       return {

@@ -32,7 +32,6 @@ interface SkillTestFormProps {
 
 export function SkillTestForm({
   questions,
-  selfEvaluations: _selfEvaluations,
 }: SkillTestFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -270,8 +269,8 @@ export function SkillTestForm({
           <p className="font-medium text-foreground">Tip for success</p>
           <p className="leading-relaxed">
             We&apos;re analyzing your problem-solving approach, not just the
-            final code. Explain your reasoning ("why") alongside your solution
-            ("how"). Real-world examples boost your score.
+            final code. Explain your reasoning (&quot;why&quot;) alongside your solution
+            (&quot;how&quot;). Real-world examples boost your score.
           </p>
         </div>
       </div>

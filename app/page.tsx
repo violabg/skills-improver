@@ -19,7 +19,7 @@ export default function LandingPage() {
         </div>
 
         <h1 className="slide-in-from-bottom-6 mb-8 font-black text-5xl md:text-7xl leading-[1.1] tracking-tighter animate-in duration-700 fade-in">
-          Discover what's <br className="hidden sm:block" />
+          Discover what&apos;s <br className="hidden sm:block" />
           <span className="bg-clip-text bg-gradient-to-r from-primary to-blue-600 text-transparent">
             holding you back
           </span>
@@ -72,7 +72,7 @@ export default function LandingPage() {
               </div>
               <h3 className="mb-3 font-bold text-xl">20 Minute Checkup</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Quick assessment, deep insights. Don't waste hours on generic
+                Quick assessment, deep insights. Don&apos;t waste hours on generic
                 tests. Get straight to the data that matters.
               </p>
             </div>

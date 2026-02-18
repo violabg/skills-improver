@@ -366,60 +366,28 @@ ${truncatedCvText}
         where: { userId: ctx.user.id },
       });
 
-      // Batch fetch ResourceSkill links for all gap skills and attach resources.
       const skillIds = gaps.map((g) => g.skillId);
-      let resourceLinks: Array<{ skillId: string; resource: unknown }> = [];
-      try {
-        const dbAny = ctx.db as unknown as Record<string, unknown>;
-        if (
-          dbAny.resourceSkill &&
-          typeof (dbAny.resourceSkill as Record<string, unknown>).findMany ===
-            "function"
-        ) {
-          resourceLinks = await (
-            dbAny.resourceSkill as {
-              findMany: (
-                args: unknown,
-              ) => Promise<Array<{ skillId: string; resource: unknown }>>;
-            }
-          ).findMany({
-            where: { skillId: { in: skillIds } },
-            include: { resource: true },
-          });
-        } else {
-          throw new Error("resourceSkill model not present on client");
-        }
-      } catch {
-        // Fallback: substring-match resources per skill (less efficient)
-        resourceLinks = [];
-        for (const s of allSkills) {
-          const matchedResources = await ctx.db.resource.findMany({
-            where: {
-              OR: [
-                { title: { contains: s.name, mode: "insensitive" } },
-                { url: { contains: s.name, mode: "insensitive" } },
-              ],
-            },
-            orderBy: { createdAt: "desc" },
-          });
-          for (const r of matchedResources) {
-            resourceLinks.push({ skillId: s.id, resource: r });
-          }
-        }
-      }
+      let resourceLinks: Array<{ skillId: string; resource: Resource }> = [];
+      
+      const resourceSkills = await ctx.db.resourceSkill.findMany({
+        where: { skillId: { in: skillIds } },
+        include: { resource: true },
+      });
+      resourceLinks = resourceSkills.map((rs) => ({
+        skillId: rs.skillId,
+        resource: rs.resource,
+      }));
 
       const resourcesBySkill = new Map<string, Array<Resource>>();
       for (const link of resourceLinks) {
         const arr = resourcesBySkill.get(link.skillId) || [];
-        // simple de-duplication by url/title where available
-        const resource = link.resource as Resource;
         const exists = arr.some((r) => {
-          if (resource.url && r.url === resource.url) return true;
-          if (resource.title && r.title === resource.title) return true;
+          if (link.resource.url && r.url === link.resource.url) return true;
+          if (link.resource.title && r.title === link.resource.title) return true;
           return false;
         });
         if (!exists) {
-          arr.push(resource);
+          arr.push(link.resource);
           resourcesBySkill.set(link.skillId, arr);
         }
       }

@@ -19,6 +19,7 @@ import { storageLogger } from "./logger";
 // This allows client components to import validateResumeFile without errors
 function getEnvModule() {
   // Dynamic import to prevent bundler from including env.ts in client bundles
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require("../env") as typeof import("../env");
 }
 

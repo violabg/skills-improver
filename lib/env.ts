@@ -19,24 +19,27 @@ import { z } from "zod";
 
 // Schema for server-side environment variables
 const serverEnvSchema = z.object({
-  // Database
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
-  // Cloudflare R2 Storage
   R2_ACCOUNT_ID: z.string().min(1, "R2_ACCOUNT_ID is required"),
   R2_ACCESS_KEY_ID: z.string().min(1, "R2_ACCESS_KEY_ID is required"),
   R2_SECRET_ACCESS_KEY: z.string().min(1, "R2_SECRET_ACCESS_KEY is required"),
   R2_BUCKET_NAME: z.string().min(1, "R2_BUCKET_NAME is required"),
-  R2_PUBLIC_URL: z.string().optional(), // Optional: custom domain for public access
+  R2_PUBLIC_URL: z.string().optional(),
 
-  // AI Services (Groq)
-  GROQ_API_KEY: z.string().optional(), // Optional: AI features disabled if missing
+  GROQ_API_KEY: z.string().optional(),
 
-  // Auth
-  BETTER_AUTH_SECRET: z.string().optional(),
+  BETTER_AUTH_SECRET: z.string().refine(
+    (val) => {
+      if (process.env.NODE_ENV === "production" && !val) {
+        return false;
+      }
+      return true;
+    },
+    { message: "BETTER_AUTH_SECRET is required in production" }
+  ),
   BETTER_AUTH_URL: z.string().optional(),
 
-  // Node environment
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
