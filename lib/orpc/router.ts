@@ -1,3 +1,4 @@
+import { os } from "./procedures";
 import { assessmentRouter } from "./routers/assessment";
 import { chatRouter } from "./routers/chat";
 import { evidenceRouter } from "./routers/evidence";
@@ -11,7 +12,12 @@ import { skillHistoryRouter } from "./routers/skillHistory";
 import { skillsRouter } from "./routers/skills";
 import { userRouter } from "./routers/user";
 
-export const router = {
+/**
+ * Root router assembled with os.router() for full contract enforcement.
+ * This ensures every implementation satisfies the contract at both
+ * compile-time and runtime.
+ */
+export const router = os.router({
   health: healthRouter,
   assessment: assessmentRouter,
   skills: skillsRouter,
@@ -24,6 +30,6 @@ export const router = {
   roadmap: roadmapRouter,
   mentor: mentorRouter,
   skillHistory: skillHistoryRouter,
-};
+});
 
 export type Router = typeof router;

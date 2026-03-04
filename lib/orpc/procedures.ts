@@ -1,9 +1,10 @@
 import { auth } from "@/lib/auth";
-import { os } from "@orpc/server";
+import { contract } from "@/lib/contract/router";
+import { implement } from "@orpc/server";
 import type { BaseContext } from "./context";
 
-// Base procedure with db in context
-export const baseProcedure = os;
+// Create implementer from contract — replaces the old `os` from @orpc/server
+export const os = implement(contract);
 
 // Auth middleware that validates session and extends context with user
 const authMiddleware = os.middleware(async ({ context, next }) => {
@@ -36,8 +37,14 @@ const authMiddleware = os.middleware(async ({ context, next }) => {
   });
 });
 
-// Public procedure (no auth required)
-export const publicProcedure = baseProcedure;
+/**
+ * Public implementer — no auth required, navigates the contract tree.
+ * Usage: pub.health.ping.handler(...)
+ */
+export const pub = os;
 
-// Protected procedure (auth required)
-export const protectedProcedure = baseProcedure.use(authMiddleware);
+/**
+ * Authed implementer — auth required, navigates the contract tree.
+ * Usage: authed.assessment.start.handler(...)
+ */
+export const authed = os.use(authMiddleware);

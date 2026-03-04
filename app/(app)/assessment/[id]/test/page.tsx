@@ -62,7 +62,7 @@ async function SkillTestFormLoader({ assessmentId }: { assessmentId: string }) {
   }> = [];
   const testSkillIds: string[] = [];
 
-  assessment.results.forEach((result) => {
+  assessment.results?.forEach((result) => {
     selfEvaluations.push({
       skillId: result.skillId,
       level: result.level,

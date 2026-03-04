@@ -1,7 +1,7 @@
-import { publicProcedure } from "../procedures";
+import { pub } from "../procedures";
 
 export const healthRouter = {
-  ping: publicProcedure.handler(async () => {
+  ping: pub.health.ping.handler(async () => {
     return { ok: true, timestamp: new Date().toISOString() };
   }),
 };

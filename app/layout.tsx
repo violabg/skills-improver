@@ -1,4 +1,5 @@
 import { LandingHeader } from "@/components/landing-header";
+import { Providers } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
@@ -61,18 +62,20 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative bg-background min-h-screen overflow-hidden">
-            {/* Background Gradients */}
-            <div className="top-0 left-1/2 -z-10 absolute bg-primary/20 opacity-40 blur-[120px] rounded-full w-[1000px] h-[1000px] -translate-x-1/2 pointer-events-none" />
-            <div className="right-0 bottom-0 -z-10 absolute bg-secondary/20 opacity-40 blur-[120px] rounded-full w-[800px] h-[800px] pointer-events-none" />
+          <Providers>
+            <div className="relative bg-background min-h-screen overflow-hidden">
+              {/* Background Gradients */}
+              <div className="top-0 left-1/2 -z-10 absolute bg-primary/20 opacity-40 blur-[120px] rounded-full w-[1000px] h-[1000px] -translate-x-1/2 pointer-events-none" />
+              <div className="right-0 bottom-0 -z-10 absolute bg-secondary/20 opacity-40 blur-[120px] rounded-full w-[800px] h-[800px] pointer-events-none" />
 
-            {/* Header */}
-            <Suspense fallback={<HeaderSkeleton />}>
-              <LandingHeader />
-            </Suspense>
-            {children}
-          </div>
-          <Toaster />
+              {/* Header */}
+              <Suspense fallback={<HeaderSkeleton />}>
+                <LandingHeader />
+              </Suspense>
+              {children}
+            </div>
+            <Toaster />
+          </Providers>
         </ThemeProvider>
       </body>
     </html>

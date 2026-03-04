@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "orpc-contract-first": {
+      "source": "langgenius/dify",
+      "sourceType": "github",
+      "computedHash": "c1ae8fb08c7b1d2579c341c1a7b782f637077e8ed04bfe6960d7be5e6bc90398"
+    }
+  }
+}

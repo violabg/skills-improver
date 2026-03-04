@@ -40,7 +40,7 @@ export const AIResourceResponseSchema = z.object({
 
 // Full schema with skill context (for database storage)
 export const ResourceListSchema = z.object({
-  skillId: z.string().uuid(),
+  skillId: z.uuid(),
   skillName: z.string(),
   recommendations: z
     .array(ResourceRecommendationSchema)

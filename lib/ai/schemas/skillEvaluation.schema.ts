@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const SkillEvaluationSchema = z.object({
-  skillId: z.string().uuid(),
+  skillId: z.uuid(),
   level: z
     .number()
     .min(0, "Level must be at least 0")

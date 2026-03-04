@@ -33,7 +33,7 @@ export const GapExplanationSchema = z.object({
 export type GapExplanation = z.infer<typeof GapExplanationSchema>;
 
 export const GapAnalysisSchema = z.object({
-  assessmentId: z.string().uuid(),
+  assessmentId: z.uuid(),
   targetRole: z.string(),
   readinessScore: z
     .number()

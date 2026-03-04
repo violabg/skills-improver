@@ -6,10 +6,11 @@ import { Card } from "@/components/ui/card";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAssessment } from "@/lib/hooks/use-assessment";
-import { client } from "@/lib/orpc/client";
+import { appQuery } from "@/lib/service/client";
 import { showError, showSuccess } from "@/lib/toast";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 interface Question {
   id: string;
@@ -30,11 +31,12 @@ interface SkillTestFormProps {
   }>;
 }
 
-export function SkillTestForm({
-  questions,
-}: SkillTestFormProps) {
+export function SkillTestForm({ questions }: SkillTestFormProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const submitAnswerMutation = useMutation(
+    appQuery.assessment.submitAnswer.mutationOptions(),
+  );
+  const isPending = submitAnswerMutation.isPending;
   const assessment = useAssessment();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -74,31 +76,29 @@ export function SkillTestForm({
   const onSubmit = async (finalAnswers: Record<string, string>) => {
     if (!assessment.id || isPending) return;
 
-    startTransition(async () => {
-      try {
-        const submissions = questions
-          .map((q) => ({
-            skillId: q.skillId,
-            question: q.question,
-            answer: (finalAnswers[q.id] || "").trim(),
-          }))
-          .filter((submission) => submission.answer.length > 0);
+    try {
+      const submissions = questions
+        .map((q) => ({
+          skillId: q.skillId,
+          question: q.question,
+          answer: (finalAnswers[q.id] || "").trim(),
+        }))
+        .filter((submission) => submission.answer.length > 0);
 
-        for (const submission of submissions) {
-          await client.assessment.submitAnswer({
-            assessmentId: assessment.id,
-            skillId: submission.skillId,
-            question: submission.question,
-            answer: submission.answer,
-          });
-        }
-
-        showSuccess("Skill test submitted successfully!");
-        router.push(`/assessment/${assessment.id}/evidence`);
-      } catch (error) {
-        showError(error);
+      for (const submission of submissions) {
+        await submitAnswerMutation.mutateAsync({
+          assessmentId: assessment.id,
+          skillId: submission.skillId,
+          question: submission.question,
+          answer: submission.answer,
+        });
       }
-    });
+
+      showSuccess("Skill test submitted successfully!");
+      router.push(`/assessment/${assessment.id}/evidence`);
+    } catch (error) {
+      showError(error);
+    }
   };
 
   const handleSkipQuestion = () => {
@@ -269,8 +269,8 @@ export function SkillTestForm({
           <p className="font-medium text-foreground">Tip for success</p>
           <p className="leading-relaxed">
             We&apos;re analyzing your problem-solving approach, not just the
-            final code. Explain your reasoning (&quot;why&quot;) alongside your solution
-            (&quot;how&quot;). Real-world examples boost your score.
+            final code. Explain your reasoning (&quot;why&quot;) alongside your
+            solution (&quot;how&quot;). Real-world examples boost your score.
           </p>
         </div>
       </div>
