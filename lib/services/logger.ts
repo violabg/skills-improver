@@ -17,6 +17,9 @@
  * ```
  */
 
+import { ENV } from "varlock/env";
+import { isDevelopment } from "../ai/utils";
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -39,8 +42,7 @@ interface LogEntry {
 // Configuration
 // ============================================================================
 
-const isDevelopment = process.env.NODE_ENV === "development";
-const isTest = process.env.NODE_ENV === "test";
+const isTest = ENV.APP_ENV === "test";
 
 // Minimum log level to output (debug < info < warn < error)
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {

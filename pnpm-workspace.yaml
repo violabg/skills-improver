@@ -1,5 +1,7 @@
 packages:
   - .
+overrides:
+  "@next/env": "npm:@varlock/nextjs-integration"
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

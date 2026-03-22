@@ -1,1 +1,3 @@
-export const isDevelopment = process.env.NODE_ENV === "development";
+import { ENV } from "varlock/env";
+
+export const isDevelopment = ENV.APP_ENV === "development";

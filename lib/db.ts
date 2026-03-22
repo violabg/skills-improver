@@ -1,8 +1,8 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { env } from "process";
+import { ENV } from "varlock/env";
 import { PrismaClient } from "./prisma/client";
 
-const adapter = new PrismaPg({ connectionString: env.DATABASE_URL });
+const adapter = new PrismaPg({ connectionString: ENV.DATABASE_URL });
 
 const globalForPrisma = global as unknown as {
   prisma: PrismaClient;
@@ -10,6 +10,6 @@ const globalForPrisma = global as unknown as {
 
 const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (ENV.APP_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default prisma;

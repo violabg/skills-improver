@@ -1,5 +1,6 @@
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { betterAuth } from "better-auth";
+import { ENV } from "varlock/env";
 import db from "./db";
 
 export const auth = betterAuth({
@@ -12,11 +13,11 @@ export const auth = betterAuth({
   socialProviders: {
     github: {
       enabled: true,
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      clientId: ENV.GITHUB_CLIENT_ID,
+      clientSecret: ENV.GITHUB_CLIENT_SECRET,
     },
   },
-  trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"],
+  trustedOrigins: [ENV.NEXT_PUBLIC_APP_URL],
 });
 
 export type Session = typeof auth.$Infer.Session;

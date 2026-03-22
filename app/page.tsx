@@ -72,8 +72,8 @@ export default function LandingPage() {
               </div>
               <h3 className="mb-3 font-bold text-xl">20 Minute Checkup</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Quick assessment, deep insights. Don&apos;t waste hours on generic
-                tests. Get straight to the data that matters.
+                Quick assessment, deep insights. Don&apos;t waste hours on
+                generic tests. Get straight to the data that matters.
               </p>
             </div>
           </div>

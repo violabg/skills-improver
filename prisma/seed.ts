@@ -2,9 +2,10 @@ import "dotenv/config";
 
 import { SkillCategory } from "@/lib/prisma/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { ENV } from "varlock/env";
 import { PrismaClient } from "../lib/prisma/client.js";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const adapter = new PrismaPg({ connectionString: ENV.DATABASE_URL });
 const db = new PrismaClient({ adapter });
 
 async function main() {

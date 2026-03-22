@@ -1,3 +1,4 @@
+import { varlockNextConfigPlugin } from "@varlock/nextjs-integration/plugin";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -43,7 +44,8 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; connect-src 'self' https://api.groq.com https://github.com https://api.github.com; frame-ancestors 'none'",
+            value:
+              "default-src 'self'; connect-src 'self' https://api.groq.com https://github.com https://api.github.com; frame-ancestors 'none'",
           },
         ],
       },
@@ -51,4 +53,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default varlockNextConfigPlugin()(nextConfig);

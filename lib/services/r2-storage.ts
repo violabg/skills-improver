@@ -13,34 +13,19 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { ENV } from "varlock/env";
 import { storageLogger } from "./logger";
-
-// Lazy import to avoid validation at module load time
-// This allows client components to import validateResumeFile without errors
-function getEnvModule() {
-  // Dynamic import to prevent bundler from including env.ts in client bundles
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require("../env") as typeof import("../env");
-}
 
 /**
  * Create S3 client configured for Cloudflare R2
  */
 function getR2Client(): S3Client {
-  const { env, isR2Configured } = getEnvModule();
-
-  if (!isR2Configured()) {
-    throw new Error(
-      "R2 storage is not configured. Please set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME environment variables."
-    );
-  }
-
   return new S3Client({
     region: "auto",
-    endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    endpoint: `https://${ENV.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: env.R2_SECRET_ACCESS_KEY!,
+      accessKeyId: ENV.R2_ACCESS_KEY_ID!,
+      secretAccessKey: ENV.R2_SECRET_ACCESS_KEY!,
     },
     // Use path-style addressing instead of virtual-hosted-style
     forcePathStyle: true,
@@ -52,7 +37,7 @@ function getR2Client(): S3Client {
  */
 function generateResumeKey(
   candidateId: string,
-  originalFilename: string
+  originalFilename: string,
 ): string {
   const timestamp = Date.now();
   const ext = originalFilename.split(".").pop() || "pdf";
@@ -64,8 +49,6 @@ function generateResumeKey(
  * Extract the file key from a resume URL
  */
 export function extractKeyFromResumeUrl(url: string): string | null {
-  const { env } = getEnvModule();
-
   try {
     const urlObj = new URL(url);
     // Handle both R2 public URL and custom domain
@@ -73,8 +56,8 @@ export function extractKeyFromResumeUrl(url: string): string | null {
     // Remove leading slash and bucket name if present
     let key = pathname.startsWith("/") ? pathname.slice(1) : pathname;
     // If the URL includes the bucket name, remove it
-    if (key.startsWith(`${env.R2_BUCKET_NAME}/`)) {
-      key = key.slice(env.R2_BUCKET_NAME!.length + 1);
+    if (key.startsWith(`${ENV.R2_BUCKET_NAME}/`)) {
+      key = key.slice(ENV.R2_BUCKET_NAME!.length + 1);
     }
     return key;
   } catch {
@@ -91,16 +74,8 @@ export function extractKeyFromResumeUrl(url: string): string | null {
  */
 export async function uploadResumeToR2(
   file: File,
-  candidateId: string
+  candidateId: string,
 ): Promise<string> {
-  const { env, isR2Configured } = getEnvModule();
-
-  if (!isR2Configured()) {
-    throw new Error(
-      "R2 storage is not configured. Please set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME environment variables."
-    );
-  }
-
   const client = getR2Client();
   const key = generateResumeKey(candidateId, file.name);
 
@@ -109,7 +84,7 @@ export async function uploadResumeToR2(
   const fileBody = new Uint8Array(fileBuffer);
 
   const command = new PutObjectCommand({
-    Bucket: env.R2_BUCKET_NAME,
+    Bucket: ENV.R2_BUCKET_NAME,
     Key: key,
     Body: fileBody,
     ContentType: file.type || "application/octet-stream",
@@ -123,17 +98,17 @@ export async function uploadResumeToR2(
     throw new Error(
       `Failed to upload file to R2: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 
   // Return the public URL
-  if (env.R2_PUBLIC_URL) {
-    return `${env.R2_PUBLIC_URL}/${key}`;
+  if (ENV.R2_PUBLIC_URL) {
+    return `${ENV.R2_PUBLIC_URL}/${key}`;
   }
 
   // Fallback to R2.dev public URL (requires public bucket)
-  return `https://${env.R2_BUCKET_NAME}.${env.R2_ACCOUNT_ID}.r2.dev/${key}`;
+  return `https://${ENV.R2_BUCKET_NAME}.${ENV.R2_ACCOUNT_ID}.r2.dev/${key}`;
 }
 
 /**
@@ -142,19 +117,10 @@ export async function uploadResumeToR2(
  * @param key - The file key to delete
  */
 export async function deleteFileFromR2(key: string): Promise<void> {
-  const { env, isR2Configured } = getEnvModule();
-
-  if (!isR2Configured()) {
-    storageLogger.warn("R2 storage not configured, skipping file deletion", {
-      key,
-    });
-    return;
-  }
-
   const client = getR2Client();
 
   const command = new DeleteObjectCommand({
-    Bucket: env.R2_BUCKET_NAME,
+    Bucket: ENV.R2_BUCKET_NAME,
     Key: key,
   });
 
@@ -167,7 +133,7 @@ export async function deleteFileFromR2(key: string): Promise<void> {
       throw new Error(
         `Failed to delete file from R2: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     }
   }

@@ -1,5 +1,3 @@
-"use cache";
-
 import db from "@/lib/db";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -8,6 +6,7 @@ import { cacheLife, cacheTag } from "next/cache";
  * Cached for ~1 day since skills rarely change.
  */
 export async function getSkillGraph() {
+  "use cache";
   cacheLife("days");
   cacheTag("skills");
 
@@ -27,6 +26,7 @@ export async function getSkillGraph() {
  * Cached for ~1 day since skills rarely change.
  */
 export async function getAllSkills() {
+  "use cache";
   cacheLife("days");
   cacheTag("skills");
 
