@@ -8,11 +8,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { ENV } from "varlock/env";
-
-export const isDevelopment = ENV.APP_ENV === "development";
-console.log("🚀 ~ isDevelopment:", isDevelopment);
-console.log("🚀 ~ ENV.APP_ENV:", ENV.APP_ENV);
 
 export function ThemeToggle() {
   const { setTheme } = useTheme();
