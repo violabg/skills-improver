@@ -53,6 +53,9 @@ importers:
       '@varlock/nextjs-integration':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.1(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(varlock@0.6.2))(varlock@0.6.2)
+      '@varlock/pass-plugin':
+        specifier: ^0.0.5
+        version: 0.0.5(varlock@0.6.2)
       ai:
         specifier: ^6.0.134
         version: 6.0.134(zod@4.3.6)
@@ -3341,6 +3344,12 @@ packages:
     peerDependencies:
       next: '>=14'
       varlock: ^0.6.1
+
+  '@varlock/pass-plugin@0.0.5':
+    resolution: {integrity: sha512-1uQWH5gZTujOEXDx9RWxKztkN/9YdrBwpgk3o7KkvtpwZFcWzGJ2WWSyKUJMO0w/vNrPu+JTfxnCLtJ//SWaAg==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      varlock: ^0.6.0
 
   '@vercel/oidc@3.1.0':
     resolution: {integrity: sha512-Fw28YZpRnA3cAHHDlkt7xQHiJ0fcL+NRcIqsocZQUSmbzeIKRpwttJjik5ZGanXP+vlA4SbTg+AbA3bP363l+w==}
@@ -10871,6 +10880,10 @@ snapshots:
   '@varlock/nextjs-integration@0.3.1(next@16.2.1(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(varlock@0.6.2))(varlock@0.6.2)':
     dependencies:
       next: 16.2.1(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(varlock@0.6.2)
+      varlock: 0.6.2
+
+  '@varlock/pass-plugin@0.0.5(varlock@0.6.2)':
+    dependencies:
       varlock: 0.6.2
 
   '@vercel/oidc@3.1.0': {}
