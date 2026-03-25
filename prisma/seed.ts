@@ -1,7 +1,6 @@
-import "dotenv/config";
-
 import { SkillCategory } from "@/lib/prisma/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
+import "varlock/auto-load";
 import { ENV } from "varlock/env";
 import { PrismaClient } from "../lib/prisma/client.js";
 
