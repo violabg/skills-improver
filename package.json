@@ -81,5 +81,12 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@next/env": "npm:@varlock/nextjs-integration",
+      "@types/react": "19.2.14",
+      "@types/react-dom": "19.2.3"
+    }
   }
 }
