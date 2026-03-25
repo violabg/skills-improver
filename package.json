@@ -84,9 +84,13 @@
   },
   "pnpm": {
     "overrides": {
-      "@next/env": "npm:@varlock/nextjs-integration",
       "@types/react": "19.2.14",
       "@types/react-dom": "19.2.3"
+    }
+  },
+  "overrides": {
+    "next": {
+      "@next/env": "npm:@varlock/nextjs-integration"
     }
   }
 }
